@@ -1,5 +1,6 @@
+ 
 (function(){
-    var source = 'https://uaflix.net'; // Основний сайт
+    var source = 'https://uaflix.net';
 
     var plugin = {
         id: 'uaflix',
@@ -8,9 +9,9 @@
         search: true,
         movie: true,
         series: true,
-        
+
         onSearch: function (query, page, callback) {
-            var url = source + '/search/' + encodeURIComponent(query); // URL для пошуку
+            var url = source + '/search/' + encodeURIComponent(query);
             fetch(url)
                 .then(res => res.text())
                 .then(html => {
@@ -18,11 +19,14 @@
                     var doc = parser.parseFromString(html, 'text/html');
                     var items = [];
 
-                    doc.querySelectorAll('.movie-item').forEach(el => {
-                        var title = el.querySelector('.title').textContent.trim();
-                        var link = el.querySelector('a').href;
-                        var poster = el.querySelector('img').src;
-                        items.push({ title: title, link: link, poster: poster });
+                    doc.querySelectorAll('.movie-item, .serial-item').forEach(el => {
+                        var title = el.querySelector('.title')?.textContent.trim();
+                        var link = el.querySelector('a')?.href;
+                        var poster = el.querySelector('img')?.src;
+
+                        if (title && link) {
+                            items.push({ title: title, link: link, poster: poster });
+                        }
                     });
 
                     callback(items);
@@ -37,7 +41,12 @@
                     var parser = new DOMParser();
                     var doc = parser.parseFromString(html, 'text/html');
                     var videoUrl = doc.querySelector('video source')?.src;
-                    callback([{ url: videoUrl, quality: 'HD' }]);
+
+                    if (videoUrl) {
+                        callback([{ url: videoUrl, quality: 'HD', source: 'UAFLIX' }]);
+                    } else {
+                        console.error('UAFLIX: Не вдалося знайти відео.');
+                    }
                 })
                 .catch(err => console.error('UAFLIX movie error:', err));
         },
@@ -53,7 +62,10 @@
                     doc.querySelectorAll('.series-list a').forEach((el, index) => {
                         var episodeTitle = el.textContent.trim();
                         var episodeUrl = el.href;
-                        episodes.push({ episode: index + 1, title: episodeTitle, url: episodeUrl });
+
+                        if (episodeUrl) {
+                            episodes.push({ episode: index + 1, title: episodeTitle, url: episodeUrl });
+                        }
                     });
 
                     callback(episodes);
