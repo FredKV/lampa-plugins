@@ -1,4 +1,3 @@
- 
 (function(){
     var source = 'https://uaflix.net';
 
@@ -40,12 +39,14 @@
                 .then(html => {
                     var parser = new DOMParser();
                     var doc = parser.parseFromString(html, 'text/html');
-                    var videoUrl = doc.querySelector('video source')?.src;
+                    var videoElement = doc.querySelector('video source');
 
-                    if (videoUrl) {
+                    if (videoElement) {
+                        var videoUrl = videoElement.src;
                         callback([{ url: videoUrl, quality: 'HD', source: 'UAFLIX' }]);
                     } else {
                         console.error('UAFLIX: Не вдалося знайти відео.');
+                        callback([]);
                     }
                 })
                 .catch(err => console.error('UAFLIX movie error:', err));
