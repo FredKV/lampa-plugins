@@ -19,18 +19,21 @@
                     var items = [];
 
                     doc.querySelectorAll('.movie-item, .serial-item').forEach(el => {
-                        var title = el.querySelector('.title')?.textContent.trim();
-                        var link = el.querySelector('a')?.href;
-                        var poster = el.querySelector('img')?.src;
+                        var title = el.querySelector('.title')?.textContent?.trim() || 'Без назви';
+                        var link = el.querySelector('a')?.href || '#';
+                        var poster = el.querySelector('img')?.src || '';
 
-                        if (title && link) {
+                        if (title && link !== '#') {
                             items.push({ title: title, link: link, poster: poster });
                         }
                     });
 
                     callback(items);
                 })
-                .catch(err => console.error('UAFLIX search error:', err));
+                .catch(err => {
+                    console.error('UAFLIX search error:', err);
+                    callback([]);
+                });
         },
 
         onMovie: function (url, callback) {
@@ -49,7 +52,10 @@
                         callback([]);
                     }
                 })
-                .catch(err => console.error('UAFLIX movie error:', err));
+                .catch(err => {
+                    console.error('UAFLIX movie error:', err);
+                    callback([]);
+                });
         },
 
         onSeries: function (url, callback) {
@@ -61,8 +67,8 @@
                     var episodes = [];
 
                     doc.querySelectorAll('.series-list a').forEach((el, index) => {
-                        var episodeTitle = el.textContent.trim();
-                        var episodeUrl = el.href;
+                        var episodeTitle = el.textContent?.trim() || 'Серія ' + (index + 1);
+                        var episodeUrl = el.href || '';
 
                         if (episodeUrl) {
                             episodes.push({ episode: index + 1, title: episodeTitle, url: episodeUrl });
@@ -71,7 +77,10 @@
 
                     callback(episodes);
                 })
-                .catch(err => console.error('UAFLIX series error:', err));
+                .catch(err => {
+                    console.error('UAFLIX series error:', err);
+                    callback([]);
+                });
         }
     };
 
