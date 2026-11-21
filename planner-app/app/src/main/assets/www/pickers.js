@@ -10,8 +10,8 @@ const WH = 44; // wheel row height, px
 function pickLabel(kind, v) {
   if (!v) return kind === 'date' ? 'Оберіть дату' : 'Без часу';
   if (kind === 'time') return v;
-  const d = parseYmd(v), wd = WD_FULL[d.getDay()];
-  return `${wd.slice(0, 1).toUpperCase() + wd.slice(1)}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}${d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : ''}`;
+  const d = parseYmd(v);
+  return `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}${d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : ''}`;
 }
 function enhancePickers(root = document) {
   $$('input[type="date"], input[type="time"]', root).forEach(inp => {
@@ -19,7 +19,7 @@ function enhancePickers(root = document) {
     const kind = inp.type; inp.dataset.pk = kind;
     if (inp.classList.contains('due-hidden')) { inp.type = 'hidden'; return; } // opened by its own calendar button
     const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'input pick-btn' + (inp.value ? '' : ' empty');
+    btn.type = 'button'; btn.className = 'input pick-btn' + (inp.value ? '' : ' pk-empty');
     btn.dataset.a = 'openPicker'; btn.dataset.for = inp.id;
     btn.innerHTML = `<span>${esc(pickLabel(kind, inp.value))}</span>${kind === 'date' ? '📅' : '🕒'}`;
     inp.type = 'hidden'; inp.after(btn);
@@ -28,7 +28,7 @@ function enhancePickers(root = document) {
 function syncPickBtn(inp) {
   const btn = inp.parentNode && inp.parentNode.querySelector(`.pick-btn[data-for="${inp.id}"]`);
   if (!btn) return;
-  btn.classList.toggle('empty', !inp.value);
+  btn.classList.toggle('pk-empty', !inp.value);
   btn.querySelector('span').textContent = pickLabel(inp.dataset.pk, inp.value);
 }
 
@@ -70,7 +70,6 @@ const Picker = {
       wrap.innerHTML = `<div class="picker-bg" data-a="pickCancel"></div><div class="picker">
         <div class="grab"></div><h2>Час</h2><div class="pk-sub" id="pkSub"></div>
         <div class="pk-wheels time">${wheelHtml('pkH', Array.from({ length: 24 }, (_, i) => pad(i)), h)}<div class="pk-colon">:</div>${wheelHtml('pkMi', Array.from({ length: 12 }, (_, i) => pad(i * 5)), m / 5)}</div>
-        <div class="row" style="gap:8px;margin-bottom:12px"><button class="chip grow" data-a="pickQuick" data-v="clear">Без часу</button><button class="chip grow" data-a="pickQuick" data-v="now">Зараз</button></div>
         <div class="btns two" style="margin:0"><button class="btn ghost" data-a="pickCancel">Скасувати</button><button class="btn" data-a="pickDone">Готово</button></div></div>`;
     }
     document.body.appendChild(wrap);

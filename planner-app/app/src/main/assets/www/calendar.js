@@ -134,9 +134,7 @@ function dayEntries(date, cmap, withCycle) {
   dd.tasks.forEach(t => out.push({ cls: 'pl', text: t.title, done: t.done, attrs: `data-a="taskEdit" data-id="${t.id}"` }));
   if (withCycle && dd.cyc) {
     const prev = cmap[addDays(date, -1)];
-    if (dd.cyc === 'ovulation') out.push({ cls: 'cy', text: '🌱 Овуляція (прогноз)', attrs: 'data-a="go" data-page="cycle"' });
-    else if (dd.cyc === 'period' && prev !== 'period') out.push({ cls: 'cy', text: '🩸 Менструація', attrs: 'data-a="go" data-page="cycle"' });
-    else if (dd.cyc === 'predicted' && prev !== 'predicted' && prev !== 'period') out.push({ cls: 'cy', text: '🩸 Цикл (прогноз)', attrs: 'data-a="go" data-page="cycle"' });
+
   }
   return out;
 }
@@ -151,22 +149,23 @@ function calMonthView(cmap, showCycle) {
     const ds = ymd(d), list = dayEntries(ds, cmap, showCycle), cyc = showCycle ? cmap[ds] : '';
     const shown = list.slice(0, 3);
     cells += `<button class="mcell ${d.getMonth() !== m ? 'other' : ''} ${i % 7 > 4 ? 'we' : ''} ${ds === tdy ? 'today' : ''} ${ds === U.calSel ? 'sel' : ''} ${cyc ? 'c-' + cyc : ''}" data-a="calPick" data-d="${ds}">
-      <span class="mnum">${d.getDate()}</span>
+      <span class="mnum">${d.getDate()}${cyc && CYC_DROP[cyc] ? `<i class="cdrop c-${cyc}">${CYC_DROP[cyc]}</i>` : ''}</span>
       ${shown.map(e => `<span class="mline ${e.cls} ${e.done ? 'done' : ''}">${esc(e.text)}</span>`).join('')}
       ${list.length > 3 ? `<span class="mmore">+${list.length - 3}</span>` : ''}</button>`;
   }
   return `<div class="mgrid" id="cgrid">${cells}</div>`;
 }
 
+const CYC_DROP = { period: '🩸', predicted: '🩸', ovulation: '🌱' };
 function calWeekView(cmap, showCycle) {
   const tdy = today(), mon = U.calWeek || mondayOf(tdy);
   const days = Array.from({ length: 7 }, (_, i) => addDays(mon, i));
   return `<div class="wstrip" id="cgrid">${days.map((ds, i) => { const d = parseYmd(ds), n = dayEntries(ds, cmap, showCycle).length;
-      return `<button class="${ds === tdy ? 'today' : ''} ${ds === U.calSel ? 'sel' : ''} ${i > 4 ? 'we' : ''}" data-a="calWeekPick" data-d="${ds}">${WD[i]}<b>${d.getDate()}</b><i class="${n ? 'has' : ''}"></i></button>`; }).join('')}</div>
+      return `<button class="${ds === tdy ? 'today' : ''} ${ds === U.calSel ? 'sel' : ''} ${i > 4 ? 'we' : ''}" data-a="calWeekPick" data-d="${ds}">${WD[i]}<b>${d.getDate()}</b><i class="${n ? 'has' : ''}"></i>${showCycle && CYC_DROP[cmap[ds]] ? `<em class="cdrop c-${cmap[ds]}">${CYC_DROP[cmap[ds]]}</em>` : ''}</button>`; }).join('')}</div>
     <div class="list wlist">${days.map((ds, i) => {
       const d = parseYmd(ds), list = dayEntries(ds, cmap, showCycle);
       return `<div class="wday ${ds === tdy ? 'today' : ''}" id="wd-${ds}">
-        <button class="wdn" data-a="calPick" data-d="${ds}"><b>${d.getDate()}</b><span>${WD[i]}</span></button>
+        <button class="wdn" data-a="calPick" data-d="${ds}"><b>${d.getDate()}</b><span>${WD[i]}${showCycle && CYC_DROP[cmap[ds]] ? ` <i class="cdrop c-${cmap[ds]}">${CYC_DROP[cmap[ds]]}</i>` : ''}</span></button>
         <div class="wen">${list.length ? list.map(e => `<button class="went ${e.cls} ${e.done ? 'done' : ''}" ${e.attrs}>${esc(e.text)}</button>`).join('')
           : `<button class="wempty" data-a="calAddOn" data-d="${ds}">+ додати</button>`}</div></div>`;
     }).join('')}</div>`;
@@ -262,14 +261,6 @@ function daySheet(date) {
   const dd = dayData(date, cmap), tdy = today();
   const spent = S.tx.filter(t => t.date === date && t.type === 'exp').reduce((a, t) => a + t.amount, 0);
   const inc = S.tx.filter(t => t.date === date && t.type === 'inc').reduce((a, t) => a + t.amount, 0);
-  const on = Cycle.ongoing();
-  const inPeriod = S.cycle.periods.find(p => date >= p.start && date <= (p.end || p.start));
-  const cycBtns = [];
-  if (!S.cycle.hide && date <= tdy) {
-    if (on && date >= on.start) cycBtns.push(`<button class="chip" data-a="cycEnd" data-d="${date}">Останній день менструації</button>`);
-    else if (!inPeriod) cycBtns.push(`<button class="chip" data-a="cycStart" data-d="${date}">🩸 Початок менструації</button>`);
-    if (inPeriod) cycBtns.push(`<button class="chip" data-a="cycEdit" data-id="${inPeriod.id}">Редагувати цикл</button>`);
-  }
   const empty = !dd.evs.length && !dd.tasks.length && !dd.bds.length && !dd.cyc && !spent && !inc;
   openSheet(`<h2 style="margin-bottom:4px">${dateLabel(date)}</h2>
     <div class="small muted" style="margin-bottom:14px">${date !== tdy ? shortDate(date) + ' · ' : ''}${dd.evs.length + dd.bds.length + dd.tasks.length} ${plural(dd.evs.length + dd.bds.length + dd.tasks.length, 'запис', 'записи', 'записів')}</div>
@@ -280,8 +271,7 @@ function daySheet(date) {
         <div class="grow"><div class="title">${e.important ? '⭐ ' : ''}${esc(e.title)}</div><div class="meta">${e.remind ? `🔔 ${({ day: 'нагадування в день', prev: 'нагадування за день', hour: 'нагадування за годину' })[e.remind]}` : 'без нагадування'}${e.note ? ' · ' + esc(e.note) : ''}</div></div></div>`).join('')}
       ${dd.tasks.map(t => `<div class="item"><div class="emoji sm">📝</div><div class="grow" data-a="taskEdit" data-id="${t.id}"><div class="title ${t.done ? 'muted' : ''}">${esc(t.title)}</div><div class="meta">План${t.done ? ' · виконано' : ''}</div></div></div>`).join('')}
     </div>` : ''}
-    ${dd.cyc || cycBtns.length ? `<div class="day-cyc">${dd.cyc ? `<b>${CYC_LABEL[dd.cyc]}</b>${Cycle.cycleDay(date) ? ` <span class="small muted">· ${Cycle.cycleDay(date)}-й день циклу</span>` : ''}` : ''}
-      <div class="chips" style="margin-top:${dd.cyc ? 8 : 0}px">${cycBtns.join('')}<button class="chip" data-a="dayGo" data-page="cycle">Мій цикл</button></div></div>` : ''}
+    ${dd.cyc ? `<div class="day-cyc"><b>${CYC_DROP[dd.cyc] || ''} ${CYC_LABEL[dd.cyc]}</b>${Cycle.cycleDay(date) ? ` <span class="small muted">· ${Cycle.cycleDay(date)}-й день циклу</span>` : ''}</div>` : ''}
     ${spent || inc ? `<div class="day-fin" data-a="dayFin" data-d="${date}">💳 ${spent ? `Витрати: <b>${money(spent)}</b>` : ''}${spent && inc ? ' · ' : ''}${inc ? `Доходи: <b class="green">${money(inc)}</b>` : ''}</div>` : ''}
     ${empty ? '<div class="muted" style="padding:6px 2px 4px">Записів на цей день немає.</div>' : ''}
     <div class="btns two"><button class="btn ghost" data-a="dayAddTask" data-d="${date}">+ План</button><button class="btn" data-a="dayAddEvent" data-d="${date}">+ Подія</button></div>`);

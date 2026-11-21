@@ -215,8 +215,8 @@ function vFinOps() {
   const shown = list.slice(0, f.limit);
   return `
     <div class="field"><input class="input card-bg" id="finSearch" placeholder="Пошук: коментар, категорія, сума" value="${esc(f.q)}"></div>
-    <div class="chips" style="margin-bottom:6px">${[['all', 'Усі'], ['exp', 'Витрати'], ['inc', 'Доходи'], ['save', 'Накопичення']].map(([v, l]) =>
-      `<button class="chip ${f.type === v ? 'on' : 'card-bg'}" data-a="finType" data-v="${v}">${l}</button>`).join('')}</div>
+    <div class="seg seg-sm">${[['all', 'Усі'], ['exp', 'Витрати'], ['inc', 'Доходи'], ['save', 'Накопичення']].map(([v, l]) =>
+      `<button class="${f.type === v ? 'on' : ''}" data-a="finType" data-v="${v}">${l}</button>`).join('')}</div>
     ${shown.length ? txGroups(shown) : `<div class="card empty">Нічого не знайдено</div>`}
     ${list.length > shown.length ? `<button class="btn ghost" data-a="finMore">Показати ще (${list.length - shown.length})</button>` : ''}`;
 }

@@ -129,9 +129,9 @@ async function pickDate(p, id, v) {
   await p.click('.mcell.today'); await p.waitForTimeout(250);
   await p.click('#dayPop [data-a=popOpen]'); await p.waitForTimeout(350);
   ok(await p.evaluate(() => !$('#dayPop') && $('#sheetWrap').classList.contains('open') && /Стоматолог/.test($('#sheetBody').textContent)), '«Відкрити ›» → повна картка дня');
-  await p.click('#sheetBody [data-a=cycStart]'); await p.waitForTimeout(250);
-  ok(await p.evaluate(() => !!Cycle.ongoing()), 'менструація почалась сьогодні (з картки дня)');
-  await p.evaluate(() => closeSheet());
+  ok(await p.locator('#sheetBody [data-a=cycStart], #sheetBody [data-page=cycle]').count() === 0, 'у картці дня немає кнопок циклу');
+  await p.evaluate(() => { closeSheet(); A.cycStart({ d: today() }); }); await p.waitForTimeout(250);
+  ok(await p.evaluate(() => !!Cycle.ongoing() && !!$('.mcell.today .cdrop')), 'дні менструації позначено краплинкою');
   const m0 = await p.evaluate(() => U.cal.m); await swipe(p, -150); await p.waitForTimeout(100);
   ok(await p.evaluate(m => U.cal.m === (m + 1) % 12, m0), 'свайп — наступний місяць');
   await swipe(p, 150); await p.waitForTimeout(100);

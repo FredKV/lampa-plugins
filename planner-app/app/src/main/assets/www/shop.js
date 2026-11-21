@@ -82,7 +82,7 @@ function vShop() {
       <div class="emoji">${dishEmoji(d.name)}</div>
       <div class="grow" style="min-width:0"><div class="title ellipsis">${esc(d.name)}</div>
         <div class="meta">${d.bought}/${d.total} куплено${d.left ? ' · ' + money(d.left) : d.bought === d.total ? ' · усе є ✓' : ''}</div>
-        ${progressBar(d.bought / d.total * 100, 'var(--green)')}</div><span class="muted">›</span></div>`).join('')}</div>
+        ${progressBar(d.bought / d.total * 100, 'var(--green)')}</div><button class="del-btn" data-a="shopDishDel" data-id="${esc(d.name)}" aria-label="Прибрати страву">${ICONS.trash}</button></div>`).join('')}</div>
       <div class="small muted" style="margin:6px">Натисніть на страву, щоб відкрити її список. «Усі продукти» — однакові продукти з різних страв обʼєднано.</div>
       ${boughtActions()}`;
   }
@@ -143,7 +143,9 @@ Object.assign(A, {
   shopDishDel: async d => {
     const n = S.shop.filter(i => dishOf(i) === d.id).length;
     if (!await ask({ title: `Прибрати «${d.id}»?`, text: `${n} ${plural(n, 'товар', 'товари', 'товарів')} буде видалено зі списку покупок.`, ok: 'Прибрати', danger: true })) return;
-    S.shop = S.shop.filter(i => dishOf(i) !== d.id); save(); back(); toast('Страву прибрано зі списку');
+    S.shop = S.shop.filter(i => dishOf(i) !== d.id); save();
+    const top = U.stack[U.stack.length - 1]; if (top && top.page === 'shopDish') back(); else render();
+    toast('Страву прибрано зі списку');
   },
   shopToggle: d => { const i = S.shop.find(x => x.id === d.id); if (!i) return; i.bought = !i.bought; save(); render(); },
   shopEdit: d => shopSheet(d.id),

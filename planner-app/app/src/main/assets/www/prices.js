@@ -335,7 +335,7 @@ PAGES.prices = () => {
     ${DP.loading ? `<div class="card empty"><div class="spinner"></div>Складаю рецепт і список інгредієнтів…</div>` : ''}
     ${DP.err && !DP.loading ? `<div class="card"><b class="red">Не вдалося</b><div class="small muted" style="margin-top:6px">${esc(DP.err)}</div></div>` : ''}
     ${S.recipes.length ? `<h2>Збережені рецепти</h2><div class="list">${S.recipes.map(r => `<div class="item" data-a="dpOpen" data-id="${r.id}"><div class="emoji sm">🍽</div>
-      <div class="grow"><div class="title">${esc(r.dish)}</div><div class="meta">${r.servings} порц. · ${r.ingredients.length} інгр.${r.results ? ` · ціни від ${fmtDateTime(r.results.ts)}` : ''}</div></div><span class="muted">›</span></div>`).join('')}</div>` : ''}
+      <div class="grow"><div class="title">${esc(r.dish)}</div><div class="meta">${r.servings} порц. · ${r.ingredients.length} інгр.${r.results ? ` · ціни від ${fmtDateTime(r.results.ts)}` : ''}</div></div><button class="del-btn" data-a="recipeDel" data-id="${r.id}" aria-label="Видалити рецепт">${ICONS.trash}</button></div>`).join('')}</div>` : ''}
 `
   };
 };
@@ -498,6 +498,11 @@ Object.assign(A, {
     DP.loading = true; DP.err = ''; render();
     try { U.dp.recipe = await buildRecipe(U.dp.dish, U.dp.servings); DP.loading = false; navigate('recipe'); }
     catch (e) { DP.loading = false; DP.err = e.message || String(e); render(); }
+  },
+  recipeDel: async d => {
+    const r = S.recipes.find(x => x.id === d.id); if (!r) return;
+    if (!await ask({ title: `Видалити рецепт «${r.dish}»?`, text: 'Список покупок не зміниться.', ok: 'Видалити', danger: true })) return;
+    S.recipes = S.recipes.filter(x => x.id !== d.id); save(); render(); toast('Рецепт видалено');
   },
   dpOpen: d => { const r = S.recipes.find(x => x.id === d.id); if (!r) return; U.dp.recipe = clone(r); DP.view = 'combined'; navigate('recipe'); },
   rcSrv: d => {
