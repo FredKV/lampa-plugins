@@ -114,6 +114,11 @@ async function pickDate(p, id, v) {
   const pop = await p.evaluate(() => { const el = $('#dayPop'); if (!el) return null; const r = el.getBoundingClientRect(), c = $('.mcell.today').getBoundingClientRect(); return { txt: el.textContent, above: r.bottom <= c.top + 1 || r.top >= c.bottom - 1, inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 }; });
   ok(pop && /10:30 Стоматолог/.test(pop.txt) && pop.above && pop.inView, 'натискання на дату → спливаюча картка з повним текстом над/під днем');
   await p.screenshot({ path: shots + '04b-daypop.png' });
+  await p.click('#dayPopBg', { position: { x: 10, y: 10 } }); await p.waitForTimeout(100);
+  await p.click('.mcell.other >> nth=0'); await p.waitForTimeout(250);
+  ok(await p.evaluate(() => !!$('#dayPop') && !$('#sheetWrap').classList.contains('open')), 'день сусіднього місяця — така сама спливаюча картка');
+  await p.click('#dayPopBg', { position: { x: 10, y: 10 } }); await p.waitForTimeout(100);
+  await p.click('.mcell.today'); await p.waitForTimeout(250);
   await p.click('#dayPop [data-a=popOpen]'); await p.waitForTimeout(350);
   ok(await p.evaluate(() => !$('#dayPop') && $('#sheetWrap').classList.contains('open') && /Стоматолог/.test($('#sheetBody').textContent)), '«Відкрити ›» → повна картка дня');
   await p.click('#sheetBody [data-a=cycStart]'); await p.waitForTimeout(250);

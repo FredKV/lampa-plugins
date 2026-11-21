@@ -381,7 +381,7 @@ Object.assign(A, {
   calAddOn: d => { U.calSel = d.d; daySheet(d.d); },
   calPick: (d, el) => {
     U.calSel = d.d; const dt = parseYmd(d.d);
-    if (U.calView === 'month' && el && el.classList.contains('mcell') && dt.getMonth() === U.cal.m) {
+    if (U.calView === 'month' && el && el.classList.contains('mcell')) {
       $$('.mcell.sel').forEach(c => c.classList.remove('sel')); el.classList.add('sel');
       dayPopover(d.d, el); return;
     }
