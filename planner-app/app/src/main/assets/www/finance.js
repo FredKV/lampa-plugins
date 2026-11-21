@@ -171,12 +171,11 @@ function vFinOverview() {
         <b class="grow" style="text-align:center">${esc(p.label)}</b>
         <button class="nav-btn sm" data-a="finNav" data-d="1" aria-label="Наступний період" ${U.finOff >= 0 ? 'disabled style="opacity:.3"' : ''}>›</button>
       </div>
-      <div class="row between fin-bal"><div><span class="muted small">Баланс за період</span><div class="small muted">загальний: <b style="color:var(--text)">${money(total)}</b></div></div>
-        <b class="${st.bal < 0 ? 'red' : ''}">${money(st.bal)}</b></div>
-      <div class="sumgrid three">
-        <div><span>Доходи</span><b class="green">${money(st.inc, st.inc > 0)}</b></div>
-        <div><span>Витрати</span><b>${st.exp ? '−' + money(st.exp) : money(0)}</b></div>
-        <div data-a="go" data-page="wishes" style="cursor:pointer"><span>Відкладено${savedAll > 0 ? ' ›' : ''}</span><b class="violet">${money(st.saved)}</b></div>
+      <div class="fin-tiles">
+        <div class="ft"><span>Баланс</span><b class="${st.bal < 0 ? 'red' : ''}">${money(st.bal)}</b><small>загальний ${money(total)}</small></div>
+        <div class="ft g" data-a="finTile" data-v="inc"><span>↑ Доходи</span><b class="green">${money(st.inc)}</b></div>
+        <div class="ft r" data-a="finTile" data-v="exp"><span>↓ Витрати</span><b>${money(st.exp)}</b></div>
+        <div class="ft v" data-a="go" data-page="wishes"><span>💖 Відкладено</span><b class="violet">${money(st.saved)}</b></div>
       </div>
     </div>
     <div class="row" style="gap:8px;margin-bottom:12px">
@@ -301,6 +300,7 @@ function catSheet(type = 'exp') {
 /* ---------------- actions ---------------- */
 Object.assign(A, {
   finNav: d => { U.finOff = Math.min(0, U.finOff + +d.d); render(); },
+  finTile: d => { U.finFilter.type = d.v; U.finFilter.q = ''; U.finFilter.limit = 60; U.seg.fin = 'ops'; render(); },
   finType: d => { U.finFilter.type = d.v; U.finFilter.limit = 60; render(); },
   finMore: () => { U.finFilter.limit += 100; render(); },
   barTip: d => toast(d.t),

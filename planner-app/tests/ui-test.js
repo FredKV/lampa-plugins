@@ -66,7 +66,7 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
   await p.click('[data-tab=finance]'); await p.waitForTimeout(150);
   ok(await p.locator('.donut').count() === 1, 'діаграма категорій'); ok(await p.locator('.bars').count() === 1, 'порівняння місяців');
   const fs1 = await p.evaluate(() => { const c = $('.fin-sum'); return c ? { h: c.getBoundingClientRect().height, txt: c.textContent } : null; });
-  ok(fs1 && fs1.h < 150 && /Баланс/.test(fs1.txt) && /Доходи/.test(fs1.txt) && /Витрати/.test(fs1.txt) && /Відкладено/.test(fs1.txt) && !(await p.locator('#view .mono').count()), `компактний підсумок фінансів (${fs1 && Math.round(fs1.h)}px)`);
+  ok(fs1 && fs1.h < 190 && /Баланс/.test(fs1.txt) && /Доходи/.test(fs1.txt) && /Витрати/.test(fs1.txt) && /Відкладено/.test(fs1.txt) && !(await p.locator('#view .mono').count()), `компактний підсумок фінансів (${fs1 && Math.round(fs1.h)}px)`);
   await p.screenshot({ path: shots + '02-finance.png', fullPage: true });
   await p.click('[data-a=useg][data-val=budget]'); await p.waitForTimeout(100);
   await p.click('[data-a=budCat][data-cat=cafe]'); await p.fill('#askNum', '2000'); await p.click('[data-a=askNumOk]'); await p.waitForTimeout(350);
