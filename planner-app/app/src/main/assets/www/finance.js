@@ -153,7 +153,6 @@ function vFinOverview() {
   const p = finPeriod();
   const st = Fin.stats(p.from, p.to);
   const total = Fin.totalBalance(), savedAll = Fin.totalSaved();
-  const [ip, fp] = money(st.bal).replace(' ₴', '').split(',');
   const byCat = {};
   st.list.filter(t => t.type === 'exp').forEach(t => byCat[t.cat] = (byCat[t.cat] || 0) + t.amount);
   const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
@@ -166,24 +165,24 @@ function vFinOverview() {
 
   return `
     ${segUI('finPer', [['day', 'День'], ['week', 'Тиждень'], ['month', 'Місяць']], 'flat-card', 'month')}
-    <div class="cal-head" style="margin:0 2px 12px"><button class="nav-btn card-bg" data-a="finNav" data-d="-1">‹</button>
-      <b>${esc(p.label)}</b><button class="nav-btn card-bg" data-a="finNav" data-d="1" ${U.finOff >= 0 ? 'disabled style="opacity:.3"' : ''}>›</button></div>
-    <div class="mono">
-      <div class="total">Загальний баланс<br><b style="font-size:14px;opacity:1">${money(total)}</b></div>
-      <div class="lbl">Баланс за період</div>
-      <div class="sum">${ip}${fp ? `<small>,${fp}</small>` : ''} <small>₴</small></div>
-      <div class="row3">
-        <div class="box"><div>Доходи</div><div>${money(st.inc, st.inc > 0)}</div></div>
-        <div class="box"><div>Витрати</div><div>${st.exp ? '−' + money(st.exp) : money(0)}</div></div>
-        <div class="box"><div>Відкладено</div><div>${money(st.saved)}</div></div>
+    <div class="card fin-sum">
+      <div class="row between" style="gap:6px">
+        <button class="nav-btn sm" data-a="finNav" data-d="-1" aria-label="Попередній період">‹</button>
+        <b class="grow" style="text-align:center">${esc(p.label)}</b>
+        <button class="nav-btn sm" data-a="finNav" data-d="1" aria-label="Наступний період" ${U.finOff >= 0 ? 'disabled style="opacity:.3"' : ''}>›</button>
+      </div>
+      <div class="row between fin-bal"><div><span class="muted small">Баланс за період</span><div class="small muted">загальний: <b style="color:var(--text)">${money(total)}</b></div></div>
+        <b class="${st.bal < 0 ? 'red' : ''}">${money(st.bal)}</b></div>
+      <div class="sumgrid three">
+        <div><span>Доходи</span><b class="green">${money(st.inc, st.inc > 0)}</b></div>
+        <div><span>Витрати</span><b>${st.exp ? '−' + money(st.exp) : money(0)}</b></div>
+        <div data-a="go" data-page="wishes" style="cursor:pointer"><span>Відкладено${savedAll > 0 ? ' ›' : ''}</span><b class="violet">${money(st.saved)}</b></div>
       </div>
     </div>
-    <div class="btns two" style="margin:0 0 12px">
-      <button class="btn card-btn" data-a="txNew" data-type="exp">− Витрата</button>
-      <button class="btn card-btn" data-a="txNew" data-type="inc">+ Дохід</button>
+    <div class="row" style="gap:8px;margin-bottom:12px">
+      <button class="btn sm card-btn grow" data-a="txNew" data-type="exp">− Витрата</button>
+      <button class="btn sm card-btn grow" data-a="txNew" data-type="inc">+ Дохід</button>
     </div>
-    ${savedAll > 0 ? `<div class="card row" data-a="go" data-page="wishes" style="cursor:pointer"><div class="emoji">🐷</div>
-      <div class="grow"><b>Накопичення на хотілки</b><div class="small muted">Окремо від витрат · не входять у «Витрати»</div></div><b>${money(savedAll)}</b></div>` : ''}
     ${lim && segOf('finPer', 'month') === 'month' && U.finOff === 0 ? `<div class="card" data-a="useg" data-key="fin" data-val="budget">
       <div class="row between"><b>Бюджет на місяць</b><span class="small muted">${money(spentM)} з ${money(lim)}</span></div>
       ${progressBar(spentM / lim * 100, spentM > lim ? 'var(--red)' : spentM > lim * .8 ? 'var(--amber)' : '')}

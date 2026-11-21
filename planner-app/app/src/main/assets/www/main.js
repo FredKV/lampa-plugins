@@ -11,11 +11,10 @@ VIEWS.more = () => {
     ['birthdays', '🎂', 'Дні народження', bd ? `${bd.p.name} — ${Birthdays.countdown(bd.days)}` : `${S.people.length} ${plural(S.people.length, 'людина', 'людини', 'людей')}`],
     ['wishes', '🐷', 'Мої хотілки', act.length ? `${act.length} ${plural(act.length, 'ціль', 'цілі', 'цілей')} · ${money(act.reduce((a, x) => a + Wishes.saved(x), 0))}` : 'Цілі накопичення'],
     ['weather', '🌤', 'Погода', w ? `${Math.round(w.data.current.temperature_2m)}° · ${Weather.place().name}` : 'Прогноз на 7 днів'],
-    ['prices', '🔎', 'Пошук цін', S.prices.favs.some(f => f.track) ? `Відстежується: ${S.prices.favs.filter(f => f.track).length}` : 'Де купити дешевше'],
-    ['cycle', '🌸', 'Мій цикл', cyc && !S.cycle.hide ? cyc.line : 'Відстеження циклу'],
-    ['kitchen', '🍳', 'Кухня', 'Страва → список покупок']
+    ['prices', '🧺', 'Вигідні продукти', S.recipes.length ? `${S.recipes.length} ${plural(S.recipes.length, 'рецепт', 'рецепти', 'рецептів')} · ${cityName(priceCity())}` : 'Страва → де купити дешевше'],
+    ['cycle', '🌸', 'Мій цикл', cyc && !S.cycle.hide ? cyc.line : 'Відстеження циклу']
   ];
-  return `<div class="tiles">${tiles.map(t => `<button class="tile" data-a="${t[0] === 'kitchen' ? 'tabSeg' : 'go'}" data-page="${t[0]}" data-tab="shop" data-key="shop" data-val="kitchen">
+  return `<div class="tiles">${tiles.map(t => `<button class="tile" data-a="go" data-page="${t[0]}">
       <span class="tile-ic">${t[1]}</span><b>${t[2]}</b><span class="small muted ellipsis">${esc(t[3])}</span></button>`).join('')}</div>
     <div class="list" style="margin-top:4px">
       <div class="item" data-a="tabSeg" data-tab="finance" data-key="fin" data-val="budget"><div class="emoji sm">📊</div><div class="grow"><div class="title">Бюджет і категорії</div></div><span class="muted">›</span></div>
@@ -38,13 +37,12 @@ function settingsSheet() {
     <div class="switch"><div><b>PIN-код при вході</b><div class="small muted">Захищає фінанси, цикл та інші особисті дані</div></div>${toggleHtml('stPin', !!s.pin).replace('data-a="toggle"', 'data-a="pinToggle"')}</div>
 
     <h3 class="st-h">✨ Gemini AI <span class="ai-badge" style="vertical-align:middle">безкоштовно</span></h3>
-    <div class="small muted" style="margin:0 0 12px;line-height:1.45">Потрібен для «Кухні» та «Пошуку цін». Ключ зберігається в захищеному сховищі застосунку на телефоні й не потрапляє в експорт.
+    <div class="small muted" style="margin:0 0 12px;line-height:1.45">Потрібен, щоб складати рецепт і список продуктів у «Вигідних продуктах» (самі ціни беруться з магазинів). Ключ зберігається в захищеному сховищі застосунку на телефоні й не потрапляє в експорт.
       <br><b class="link" data-a="openKey">Отримати ключ → aistudio.google.com/apikey</b></div>
     <div class="field"><label>API ключ ${hint ? `<span class="pill green" style="margin-left:6px">збережено: ${esc(hint)}</span>` : ''}</label>
       <input class="input" id="stKey" type="password" autocomplete="off" placeholder="${hint ? 'Введіть новий, щоб замінити' : 'AIza…'}"></div>
     <div class="field"><label>Модель</label><input class="input" id="stModel" placeholder="gemini-2.5-flash" value="${esc(s.model)}">
       <div class="chips" style="margin-top:8px">${['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest'].map(m => `<button class="chip" data-a="pickModel" data-m="${m}">${m}</button>`).join('')}</div></div>
-    <div class="switch"><div><b>Актуальні ціни для Кухні через Google Пошук</b><div class="small muted">Точніше, але повільніше</div></div>${toggleHtml('stSearch', s.search)}</div>
     <div class="btns two"><button class="btn ghost" data-a="testKey">Перевірити ключ</button>${hint ? `<button class="btn danger" data-a="keyDel">Видалити ключ</button>` : '<span></span>'}</div>
     <div class="btns"><button class="btn" data-a="settingsSave">Зберегти</button></div>
 
@@ -59,7 +57,7 @@ function readSettingsForm() {
   return {
     name: $('#stName', r).value.trim().slice(0, 30), theme: segVal(r, 'theme') || 'auto',
     model: $('#stModel', r).value.trim() || 'gemini-2.5-flash',
-    search: $('#stSearch', r).classList.contains('on'), notif: $('#stNotif', r).classList.contains('on')
+    notif: $('#stNotif', r).classList.contains('on')
   };
 }
 
@@ -93,11 +91,11 @@ Object.assign(A, {
     const notifOn = f.notif && !S.settings.notif;
     S.settings = { ...S.settings, ...f }; save(); applyTheme(); closeSheet(); render();
     if (notifOn) ensureNotifPermission();
-    Prices.syncWatch(); syncReminders();
+    syncReminders();
     toast('Збережено');
   },
   keyDel: async () => {
-    if (!await ask({ title: 'Видалити ключ Gemini?', text: 'Кухня та пошук цін перестануть працювати, доки не додасте новий.', ok: 'Видалити', danger: true })) return;
+    if (!await ask({ title: 'Видалити ключ Gemini?', text: 'Складання рецептів для «Вигідних продуктів» перестане працювати, доки не додасте новий.', ok: 'Видалити', danger: true })) return;
     Keys.set(''); toast('Ключ видалено'); render();
   },
   testKey: async (d, el) => {
@@ -141,14 +139,14 @@ Object.assign(A, {
     if (parsed.photos) for (const [id, v] of Object.entries(parsed.photos)) {
       if (typeof v === 'string' && v.startsWith('data:image/')) { try { const db = await new Promise((res, rej) => { const r = indexedDB.open('tanichka-photos', 1); r.onsuccess = () => res(r.result); r.onerror = rej; }); await new Promise(res => { const t = db.transaction('p', 'readwrite'); t.objectStore('p').put(v, id); t.oncomplete = res; t.onerror = res; }); } catch (e) { } }
     }
-    save(); applyTheme(); render(); Prices.syncWatch(); toast('Дані імпортовано');
+    save(); applyTheme(); render(); toast('Дані імпортовано');
   },
   resetData: async () => {
     if (!await ask({ title: 'Видалити ВСІ дані?', text: 'Плани, події, фінанси, цикл, дні народження, хотілки, покупки та фото буде видалено безповоротно.', ok: 'Видалити все', danger: true })) return;
     const keep = S.settings; S = clone(DEF); S.settings = keep;
     await Photos.clear().catch(() => { });
     try { localStorage.removeItem(CACHE_KEY); } catch (e) { }
-    U.stack = []; save(); Prices.syncWatch(); render(); toast('Дані видалено');
+    U.stack = []; save(); render(); toast('Дані видалено');
   }
 });
 
@@ -165,7 +163,6 @@ window.onAndroidBack = () => {
   if ($('#lock').classList.contains('show')) { A.pinCancel(); return true; }
   if (closeSheet()) return true;
   if (back()) return true;
-  if (U.tab === 'shop' && segOf('shop', 'list') === 'kitchen' && (U.kitchen || U.kError)) { U.kitchen = null; U.kError = ''; render(); return true; }
   if (U.tab !== 'home') { go('home'); return true; }
   return false;
 };
@@ -179,8 +176,7 @@ window.addEventListener('error', e => console.error(e.message));
   applyTheme();
   if (S.settings.pin) Lock.show('unlock');
   render();
-  Prices.pullBackground();
-  Prices.syncWatch();
+  Dir.load().catch(() => { });
   syncReminders();
   setInterval(() => { if (!U.stack.length && !$('#sheetWrap').classList.contains('open')) renderHeader(); }, 60000);
 })();

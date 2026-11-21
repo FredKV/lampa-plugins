@@ -78,16 +78,16 @@ function paintIcons(root = document) {
 
 /* ---------------- storage + migrations ---------------- */
 const KEY = 'planer.v1';           // historic key name kept so existing data is found
-const SCHEMA = 2;
+const SCHEMA = 3;
 const DEF = {
   v: SCHEMA,
-  tasks: [], events: [], tx: [], shop: [], dishes: [],
+  tasks: [], events: [], tx: [], shop: [], recipes: [],
   customCats: [], budget: { total: 0, cats: {} },
   cycle: { periods: [], remind: true, remindDays: 2, hide: false },
   people: [], wishes: [],
-  prices: { history: [], favs: [] },
+  prices: { city: '', stores: null, lastRun: null },
   weather: { mode: 'auto', place: null },
-  settings: { model: 'gemini-2.5-flash', search: false, theme: 'auto', name: '', pin: '', notif: true }
+  settings: { model: 'gemini-2.5-flash', theme: 'auto', name: '', pin: '', notif: true }
 };
 
 const MIGRATIONS = {
@@ -103,8 +103,42 @@ const MIGRATIONS = {
     if (d.settings && d.settings.apiKey) { d._legacyKey = d.settings.apiKey; delete d.settings.apiKey; }
     d.v = 2;
     return d;
+  },
+  // v2 → v3: product price search replaced by dish → ingredients → store comparison.
+  // Kitchen history becomes saved recipes; product favourites are dropped (kept in the automatic backup).
+  2: d => {
+    d.recipes = d.recipes || [];
+    (d.dishes || []).forEach(x => {
+      if (!x || !x.dish || d.recipes.some(r => r.dish.toLowerCase() === String(x.dish).toLowerCase())) return;
+      const servings = +x.servings || 2;
+      d.recipes.push({
+        id: x.id || uid(), dish: String(x.dish), servings, base: servings, steps: Array.isArray(x.steps) ? x.steps : [], ts: Date.now(),
+        ingredients: (x.items || []).map(i => ({ id: uid(), name: String(i.name || ''), ...parseAmount(i.amount), have: false }))
+      });
+    });
+    delete d.dishes;
+    d.prices = { city: '', stores: null, lastRun: null };
+    if (d.settings) delete d.settings.search;
+    d.v = 3;
+    return d;
   }
 };
+
+/** "500 г" / "2 шт" / "1,5 кг" / "2 ст. л." / "за смаком" → {qty, unit, grams, count} (grams = g or ml, approximate for spoons). */
+function parseAmount(txt) {
+  const t = String(txt || '').toLowerCase().replace(',', '.').trim();
+  const m = t.match(/(\d+(?:\.\d+)?)\s*(кг|г|гр|л|мл|шт|ст\.?\s*л|ч\.?\s*л|зубч\w*|пуч\w*|склян\w*|банк\w*)?/);
+  if (!m) return { qty: 0, unit: 'за смаком', grams: 0, count: 0 };
+  const q = parseFloat(m[1]), u = (m[2] || 'шт').replace(/\s/g, '');
+  const map = { кг: ['кг', q * 1000], г: ['г', q], гр: ['г', q], л: ['л', q * 1000], мл: ['мл', q], шт: ['шт', 0] };
+  if (map[u]) return { qty: q, unit: map[u][0], grams: map[u][1], count: u === 'шт' ? q : 0 };
+  if (/^ст/.test(u)) return { qty: q, unit: 'ст. л.', grams: q * 15, count: 0 };
+  if (/^ч/.test(u)) return { qty: q, unit: 'ч. л.', grams: q * 5, count: 0 };
+  if (/^зуб/.test(u)) return { qty: q, unit: 'зубч.', grams: q * 5, count: 0 };
+  if (/^пуч/.test(u)) return { qty: q, unit: 'пучок', grams: q * 50, count: 0 };
+  if (/^скл/.test(u)) return { qty: q, unit: 'склянка', grams: q * 250, count: 0 };
+  return { qty: q, unit: 'шт', grams: 0, count: q };
+}
 
 function migrate(d) {
   if (!d || typeof d !== 'object') return clone(DEF);
@@ -117,7 +151,7 @@ function migrate(d) {
   out.cycle = { ...DEF.cycle, ...(d.cycle || {}) };
   out.prices = { ...DEF.prices, ...(d.prices || {}) };
   out.weather = { ...DEF.weather, ...(d.weather || {}) };
-  ['tasks', 'events', 'tx', 'shop', 'dishes', 'customCats', 'people', 'wishes'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+  ['tasks', 'events', 'tx', 'shop', 'recipes', 'customCats', 'people', 'wishes'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   out.v = SCHEMA;
   return out;
 }
@@ -148,7 +182,7 @@ const PAGES = {};      // page → (params) => ({title, html})
 const FABS = {};       // tab|page → () => void
 const A = {};          // click actions: name → (dataset, el, event)
 const AFTER_RENDER = []; // hooks after every render
-const TAB_ALIASES = { plans: 'home', kitchen: 'shop' };
+const TAB_ALIASES = { plans: 'home', kitchen: 'shop' }; // tabs from older versions
 try { const t = localStorage.getItem('planer.tab'); if (t) U.tab = TAB_ALIASES[t] || t; } catch (e) { }
 
 function navigate(page, p = {}) { U.stack.push({ page, p }); window.scrollTo(0, 0); render(); }
@@ -217,9 +251,11 @@ window.__setInsets = (t, b) => {
   document.documentElement.style.setProperty('--sat', t + 'px');
   document.documentElement.style.setProperty('--sab', b + 'px');
 };
-function http(method, url, body = null) {
-  if (Bridge && Bridge.http) return new Promise(res => { const id = uid(); pendingCb[id] = res; Bridge.http(method, url, body || '', id); });
-  return fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body || undefined })
+function http(method, url, body = null, headers = null) {
+  if (Bridge && Bridge.http) return new Promise(res => { const id = uid(); pendingCb[id] = res; Bridge.http(method, url, body || '', headers ? JSON.stringify(headers) : '', id); });
+  const h = { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(headers || {}) };
+  delete h['User-Agent']; // browsers forbid overriding it
+  return fetch(url, { method, headers: h, body: body || undefined })
     .then(async r => ({ status: r.status, text: await r.text() }))
     .catch(e => ({ status: 0, text: String(e) }));
 }

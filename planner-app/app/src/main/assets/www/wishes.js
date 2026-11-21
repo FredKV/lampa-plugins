@@ -43,9 +43,10 @@ PAGES.wishes = () => {
   const list = flt === 'active' ? act : bought.sort((a, b) => (b.boughtAt || '') < (a.boughtAt || '') ? -1 : 1);
   return {
     title: 'Мої хотілки', html: `
-    ${act.length ? `<div class="mono" style="background:radial-gradient(120% 140% at 100% 0%, #e87ba4 0%, rgba(232,123,164,0) 55%), radial-gradient(120% 120% at 0% 100%, #6250d6 0%, rgba(98,80,214,0) 60%), #121214">
-      <div class="lbl">Накопичено на хотілки</div><div class="sum">${money(totalSaved)}</div>
-      <div class="row2"><div class="box"><div>Потрібно всього</div><div>${money(totalNeed)}</div></div><div class="box"><div>Ще відкласти</div><div>${money(Math.max(0, totalNeed - totalSaved))}</div></div></div></div>` : ''}
+    ${act.length ? `<div class="sumline three">
+      <div><span>Накопичено</span><b class="violet">${money(totalSaved)}</b></div>
+      <div><span>Потрібно всього</span><b>${money(totalNeed)}</b></div>
+      <div><span>Ще відкласти</span><b>${money(Math.max(0, totalNeed - totalSaved))}</b></div></div>` : ''}
     ${segUI('wishFlt', [['active', `Активні · ${act.length}`], ['bought', `Придбані · ${bought.length}`]])}
     ${list.length ? list.map(wishCard).join('') : emptyCard(flt === 'active' ? '🐷' : '🛍', flt === 'active' ? 'Додайте річ чи мрію, на яку хочете накопичити.' : 'Ще нічого не придбано', flt === 'active' ? { label: 'Додати хотілку', attrs: 'data-a="wishNew"' } : null)}`
   };

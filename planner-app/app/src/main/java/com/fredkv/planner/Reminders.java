@@ -16,13 +16,12 @@ final class Reminders {
     private Reminders() {}
 
     static final String CHANNEL = "reminders";
-    static final String CHANNEL_PRICE = "prices";
 
     static void ensureChannels(Context c) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         if (nm == null) return;
         nm.createNotificationChannel(new NotificationChannel(CHANNEL, "Нагадування", NotificationManager.IMPORTANCE_DEFAULT));
-        nm.createNotificationChannel(new NotificationChannel(CHANNEL_PRICE, "Зниження цін", NotificationManager.IMPORTANCE_DEFAULT));
+        nm.deleteNotificationChannel("prices");
     }
 
     private static PendingIntent pi(Context c, int code, String title, String text) {

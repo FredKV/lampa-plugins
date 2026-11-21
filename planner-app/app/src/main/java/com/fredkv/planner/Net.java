@@ -15,13 +15,19 @@ final class Net {
         Res(int c, String t) { code = c; text = t; }
     }
 
-    static Res request(String method, String url, String body) {
+    static Res request(String method, String url, String body) { return request(method, url, body, null); }
+
+    static Res request(String method, String url, String body, org.json.JSONObject headers) {
         try {
             HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
             c.setRequestMethod(method);
             c.setConnectTimeout(20000);
             c.setReadTimeout(120000);
             c.setRequestProperty("Accept", "application/json");
+            if (headers != null) {
+                java.util.Iterator<String> it = headers.keys();
+                while (it.hasNext()) { String k = it.next(); c.setRequestProperty(k, headers.optString(k)); }
+            }
             if (body != null && !"GET".equals(method)) {
                 c.setDoOutput(true);
                 c.setRequestProperty("Content-Type", "application/json; charset=utf-8");

@@ -145,7 +145,11 @@ public class MainActivity extends Activity {
             }
         });
         web.loadUrl("file:///android_asset/www/index.html");
-        PriceJobService.schedule(this);
+        // v2 had a background product-price job; it was replaced by dish-based price comparison
+        android.app.job.JobScheduler js = getSystemService(android.app.job.JobScheduler.class);
+        if (js != null) js.cancel(7001);
+        Store.put(this, "price_watch", null);
+        Store.put(this, "price_results", null);
     }
 
     @Override
@@ -276,11 +280,13 @@ public class MainActivity extends Activity {
 
     private class Bridge {
 
-        /** Generic HTTP for public APIs (weather etc). */
+        /** Generic HTTP for public APIs (weather, shop catalogues). headers: JSON object or "". */
         @JavascriptInterface
-        public void http(final String method, final String url, final String body, final String id) {
+        public void http(final String method, final String url, final String body, final String headers, final String id) {
             new Thread(() -> {
-                Net.Res r = Net.request(method, url, body);
+                JSONObject h = null;
+                try { if (headers != null && !headers.isEmpty()) h = new JSONObject(headers); } catch (Exception ignored) {}
+                Net.Res r = Net.request(method, url, body == null || body.isEmpty() ? null : body, h);
                 js("window.__httpCb(" + JSONObject.quote(id) + "," + r.code + "," + JSONObject.quote(r.text) + ")");
             }).start();
         }
@@ -344,36 +350,6 @@ public class MainActivity extends Activity {
                     requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, REQ_LOCATION);
                 }
             });
-        }
-
-        /** Price watch list: [{id,title,target,model,body,notified}] */
-        @JavascriptInterface
-        public void setPriceWatch(String json) {
-            try {
-                org.json.JSONArray incoming = new org.json.JSONArray(json);
-                org.json.JSONArray old = new org.json.JSONArray(Store.get(MainActivity.this, "price_watch", "[]"));
-                // keep "notified" markers from the background job
-                for (int i = 0; i < incoming.length(); i++) {
-                    JSONObject n = incoming.getJSONObject(i);
-                    for (int k = 0; k < old.length(); k++) {
-                        JSONObject o = old.getJSONObject(k);
-                        if (o.optString("id").equals(n.optString("id")) && o.has("notified") && !n.has("notified"))
-                            n.put("notified", o.get("notified"));
-                    }
-                }
-                Store.put(MainActivity.this, "price_watch", incoming.toString());
-            } catch (Exception e) {
-                Store.put(MainActivity.this, "price_watch", "[]");
-            }
-            PriceJobService.schedule(MainActivity.this);
-        }
-
-        /** Results gathered by the background job since the last call; cleared after reading. */
-        @JavascriptInterface
-        public String takePriceResults() {
-            String r = Store.get(MainActivity.this, "price_results", "{}");
-            Store.put(MainActivity.this, "price_results", null);
-            return r;
         }
 
         @JavascriptInterface
