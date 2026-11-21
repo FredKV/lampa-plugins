@@ -98,7 +98,7 @@ const Spell = {
   }
 };
 // Fields that get corrected when the user leaves them (people's names are never touched)
-const SPELL_FIELDS = ['sName', 'iName', 'tTitle', 'eTitle', 'wTitle', 'fvName', 'gTitle', 'dpDish', 'xNote', 'tNote', 'eNote'];
+const SPELL_FIELDS = ['sName', 'sfName', 'iName', 'tTitle', 'eTitle', 'wTitle', 'fvName', 'gTitle', 'dpDish', 'xNote', 'tNote', 'eNote'];
 document.addEventListener('focusout', e => {
   const el = e.target; if (!el || !SPELL_FIELDS.includes(el.id) || !el.value.trim()) return;
   const r = Spell.fix(el.value); if (!r.changes.length) return;

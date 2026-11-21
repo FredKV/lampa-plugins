@@ -43,11 +43,10 @@ final class Net {
         }
     }
 
-    static String geminiUrl(String model, String key) {
+    static String geminiUrl(String model) {
         try {
             return "https://generativelanguage.googleapis.com/v1beta/models/"
-                    + java.net.URLEncoder.encode(model, "UTF-8") + ":generateContent?key="
-                    + java.net.URLEncoder.encode(key, "UTF-8");
+                    + java.net.URLEncoder.encode(model, "UTF-8") + ":generateContent";
         } catch (Exception e) { return ""; }
     }
 

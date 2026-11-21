@@ -51,7 +51,7 @@ function settingsSheet() {
     </div>
     <div class="card st-card">
       <div class="row between"><b>✨ Gemini AI</b><span class="pill ${hint ? 'green' : ''}">${hint ? 'ключ: ' + esc(hint) : 'ключ не додано'}</span></div>
-      <div class="row" style="gap:8px;margin-top:10px"><input class="input grow" id="stKey" type="password" autocomplete="off" placeholder="${hint ? 'Новий ключ, щоб замінити' : 'Вставте ключ AIza…'}">
+      <div class="row" style="gap:8px;margin-top:10px"><input class="input grow" id="stKey" type="password" autocomplete="off" placeholder="${hint ? 'Новий ключ, щоб замінити' : 'Вставте ключ Gemini'}">
         <button class="btn sm" data-a="keySave">OK</button></div>
       <div class="row between" style="margin-top:8px"><b class="link small" data-a="openKey">Отримати безкоштовний ключ ↗</b>
         ${hint ? `<span class="row" style="gap:12px"><b class="link small" data-a="testKey">Перевірити</b><b class="small red" data-a="keyDel">Видалити</b></span>` : ''}</div>
@@ -138,9 +138,9 @@ Object.assign(A, {
     syncReminders();
   },
   keySave: () => {
-    const key = $('#stKey').value.trim();
+    const key = $('#stKey').value.replace(/\s+/g, '').replace(/^["'«“]+|["'»”]+$/g, '');
     if (!key) return invalid('stKey', 'Вставте ключ');
-    if (!/^[\w-]{20,}$/.test(key)) return invalid('stKey', 'Схоже, ключ некоректний');
+    if (key.length < 20 || key.length > 300 || /[<>"'\\]/.test(key)) return invalid('stKey', 'Схоже, це не ключ — скопіюйте його повністю');
     Keys.set(key); toast('Ключ збережено'); settingsSheet();
   },
   avatarMenu: () => {

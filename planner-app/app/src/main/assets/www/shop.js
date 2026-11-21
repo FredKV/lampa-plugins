@@ -104,7 +104,36 @@ PAGES.shopDish = p => {
 };
 FABS.shopDish = () => { const top = U.stack[U.stack.length - 1]; shopSheet(null, top.p.id); };
 
+/* ---------- new item: what + how much → search the stores → pick the cheapest ---------- */
+U.sf = null; // {dish, loading, done, total, offers, err}
+function shopAddSheet(presetDish) {
+  U.sf = { dish: presetDish && presetDish !== 'Інше' ? presetDish : '', loading: false, offers: null, err: '' };
+  openSheet(`<h2>Додати товар</h2>
+    <div class="row" style="gap:10px">
+      <div class="field grow"><input class="input" id="sfName" maxlength="80" placeholder="Що купити (напр. Молоко)"></div>
+      <div class="field" style="width:34%"><input class="input" id="sfQty" maxlength="30" placeholder="Скільки (1 л)"></div></div>
+    <button class="btn" data-a="shopFind">🔎 Знайти, де найдешевше</button>
+    <div id="sfRes"></div>
+    <button class="link small" style="display:block;margin:12px auto 2px" data-a="shopAddPlain">Додати без пошуку ціни</button>`,
+    r => setTimeout(() => $('#sfName', r).focus(), 300));
+}
+function sfResHtml() {
+  const f = U.sf; if (!f) return '';
+  if (f.loading) return `<div class="sf-load"><div class="spinner"></div><span>Шукаю в магазинах… ${f.total ? `${f.done} з ${f.total}` : ''}</span></div>`;
+  if (f.err) return `<div class="hint" style="margin-top:12px">${esc(f.err)}</div>`;
+  if (!f.offers) return '';
+  if (!f.offers.length) return `<div class="hint" style="margin-top:12px">Нічого не знайдено. Спробуйте іншу назву (напр. «молоко 2,5%»).</div>`;
+  return `<div class="small muted" style="margin:14px 4px 6px">Від найдешевшого — натисніть, щоб додати:</div>
+    <div class="list flat sf-list">${f.offers.map((o, k) => `<button class="item sf-offer ${k === 0 ? 'best' : ''}" data-a="shopPick" data-k="${k}">
+      ${o.img ? `<img class="sf-img" src="${esc(o.img)}" alt="" loading="lazy">` : '<div class="emoji sm">🛒</div>'}
+      <div class="grow" style="min-width:0;text-align:left"><div class="title ellipsis">${esc(o.title)}</div>
+        <div class="meta">${storeBadge(o.store)} · ${esc(o.buy)}${o.inStock === false ? ' · немає в наявності' : ''}</div></div>
+      <div class="right"><div class="amount">${money(o.cost)}</div>${k === 0 ? '<span class="pill green">найдешевше</span>' : ''}</div></button>`).join('')}</div>`;
+}
+const sfPaint = () => { const el = $('#sfRes'); if (el) el.innerHTML = sfResHtml(); };
+
 function shopSheet(id, presetDish) {
+  if (!id) return shopAddSheet(presetDish);
   const i = S.shop.find(x => x.id === id) || { name: '', qty: '', buy: '', price: '', dish: presetDish && presetDish !== 'Інше' ? presetDish : '', store: '', url: '' };
   openSheet(`
     <h2>${id ? 'Товар' : 'Додати товар'}</h2>
@@ -124,6 +153,36 @@ function shopSheet(id, presetDish) {
     r => { if (!id) setTimeout(() => $('#sName', r).focus(), 300); });
 }
 Object.assign(A, {
+  shopFind: async () => {
+    const f = U.sf; if (!f || f.loading) return;
+    const name = $('#sfName').value.trim(); if (!name) return invalid('sfName', 'Що купити?');
+    const qty = $('#sfQty').value.trim();
+    f.name = name; f.qty = qty; f.loading = true; f.err = ''; f.offers = null; f.done = 0; f.total = 0; sfPaint();
+    await Dir.load().catch(() => { });
+    const stores = enabledStores(), ing = normIngredient({ name, amount: qty || '1 шт' });
+    if (!qty) { ing.grams = 0; ing.count = 1; }
+    f.total = stores.length; const all = [];
+    await pool(stores.map(st => async () => {
+      try {
+        const list = await fetchOffers(st, searchSpec(ing).query);
+        bestOffers(list, ing).slice(0, 3).forEach(o => all.push({ ...o, store: st.name }));
+      } catch (e) { }
+    }), 6, () => { f.done++; sfPaint(); });
+    f.loading = false;
+    f.offers = all.sort((a, b) => (a.inStock === false) - (b.inStock === false) || a.cost - b.cost).slice(0, 12);
+    if (!all.length && !navigator.onLine) f.err = 'Немає інтернету — не вдалося отримати ціни.';
+    sfPaint();
+  },
+  shopPick: d => {
+    const f = U.sf, o = f && f.offers && f.offers[+d.k]; if (!o) return;
+    S.shop.push({ id: uid(), name: f.name, qty: o.buy || f.qty, buy: o.title, price: o.cost, dish: f.dish || 'Інше', store: o.store, url: o.url || '', bought: false });
+    save(); closeSheet(); render(); toast(`Додано: ${f.name} · ${o.store} · ${money(o.cost)}`);
+  },
+  shopAddPlain: () => {
+    const name = $('#sfName').value.trim(); if (!name) return invalid('sfName', 'Що купити?');
+    S.shop.push({ id: uid(), name, qty: $('#sfQty').value.trim(), buy: '', price: 0, dish: (U.sf && U.sf.dish) || 'Інше', store: '', url: '', bought: false });
+    save(); closeSheet(); render(); toast('Додано до покупок');
+  },
   shopMode: d => { U.shopMode = d.v; render(); },
   shopMerge: () => { U.shopMerge = !U.shopMerge; render(); },
   shopToggleMany: d => {

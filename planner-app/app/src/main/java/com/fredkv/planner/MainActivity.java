@@ -333,6 +333,12 @@ public class MainActivity extends Activity {
             }).start();
         }
 
+        private JSONObject geminiHeaders(String key) {
+            JSONObject h = new JSONObject();
+            try { h.put("x-goog-api-key", key); } catch (Exception ignored) {}
+            return h;
+        }
+
         /** Gemini request: the API key is added here and never exposed to web code. */
         @JavascriptInterface
         public void gemini(final String model, final String body, final String id) {
@@ -340,7 +346,7 @@ public class MainActivity extends Activity {
                 String key = Store.get(MainActivity.this, "gemini_key", "");
                 Net.Res r = key.isEmpty()
                         ? new Net.Res(401, "{\"error\":{\"message\":\"API key not set\"}}")
-                        : Net.request("POST", Net.geminiUrl(model, key), body);
+                        : Net.request("POST", Net.geminiUrl(model), body, geminiHeaders(key));
                 js("window.__httpCb(" + JSONObject.quote(id) + "," + r.code + "," + JSONObject.quote(r.text) + ")");
             }).start();
         }

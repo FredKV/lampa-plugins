@@ -378,6 +378,45 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8h. Ключ Gemini нового формату');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    let hdr = null, url = '';
+    await q.route('**/generativelanguage.googleapis.com/**', r => { hdr = r.request().headers()['x-goog-api-key']; url = r.request().url(); r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates: [{ content: { parts: [{ text: 'працює' }] } }] }) }); });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => settingsSheet()); await q.waitForTimeout(300);
+    const newKey = 'AQ.Ab8RN6KzT1x-9_qWeRtYuIoP.asdfGhjkL0987';
+    await q.fill('#stKey', ' ' + newKey + '\n'); await q.click('[data-a=keySave]'); await q.waitForTimeout(200);
+    ok(await q.evaluate(k => Keys.has() && localStorage.getItem(DEV_KEY) === k, newKey), 'ключ нового формату (AQ.…) прийнято');
+    await q.evaluate(() => gemini({ contents: [{ parts: [{ text: 'тест' }] }] })); await q.waitForTimeout(200);
+    ok(hdr === newKey && !/key=/.test(url), 'ключ передається в заголовку, не в адресі');
+    await q.close();
+  }
+
+  console.log('8i. Додати товар із пошуком ціни');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => {
+      enabledStores = () => [{ key: 'atb', name: 'АТБ', kind: 'atb' }, { key: 'silpo', name: 'Сільпо', kind: 'silpo' }];
+      fetchOffers = async st => st.key === 'atb'
+        ? [{ title: 'Молоко 2,5% 900 г Яготинське', price: 41.9, packG: 900, url: 'https://atb.ua/m' }, { title: 'Йогурт молочний', price: 20, packG: 300 }]
+        : [{ title: 'Молоко 2,6% 1 л Галичина', price: 46.5, packG: 1000, vol: true, url: 'https://silpo.ua/m' }];
+      go('shop'); A.fab();
+    });
+    await q.waitForTimeout(350);
+    await q.fill('#sfName', 'Молоко'); await q.fill('#sfQty', '1 л'); await q.click('[data-a=shopFind]');
+    await q.waitForSelector('.sf-offer', { timeout: 5000 });
+    const offers = await q.evaluate(() => $$('.sf-offer').map(o => o.textContent.replace(/\s+/g, ' ')));
+    ok(offers.length === 2 && /Сільпо/.test(offers[0]) && /46,5/.test(offers[0]) && /найдешевше/.test(offers[0]) && /АТБ/.test(offers[1]) && /2 ×/.test(offers[1]) && !offers.some(o => /Йогурт/.test(o)), 'пошук по магазинах: найдешевше з урахуванням кількості першим, зайве відкинуто');
+    await q.screenshot({ path: shots + '18-add-find.png' });
+    await q.click('.sf-offer >> nth=1'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => S.shop.length === 1 && S.shop[0].store === 'АТБ' && S.shop[0].price === 83.8 && S.shop[0].name === 'Молоко'), 'обраний варіант додано у список з магазином і ціною');
+    ok(e2.length === 0, 'без JS-помилок (пошук товару) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);
@@ -419,10 +458,10 @@ async function pickDate(p, id, v) {
 
   console.log('8d. Автовиправлення слів');
   await p.evaluate(() => { U.stack = []; go('shop'); shopSheet(); }); await p.waitForTimeout(400);
-  await p.fill('#sName', 'Маонез'); await p.click('#sQty'); await p.waitForTimeout(100);
-  ok(await p.evaluate(() => $('#sName').value === 'Майонез' && /Маонез → /.test($('.spell-hint').textContent)), 'описка виправлена: Маонез → Майонез');
+  await p.fill('#sfName', 'Маонез'); await p.click('#sfQty'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => $('#sfName').value === 'Майонез' && /Маонез → /.test($('.spell-hint').textContent)), 'описка виправлена: Маонез → Майонез');
   await p.click('[data-a=spellUndo]');
-  ok(await p.evaluate(() => $('#sName').value === 'Маонез'), '«Повернути» скасовує виправлення');
+  ok(await p.evaluate(() => $('#sfName').value === 'Маонез'), '«Повернути» скасовує виправлення');
   ok(await p.evaluate(() => Spell.fix('Записатися до стоматолга').text === 'Записатися до стоматолога' && Spell.fix('Подзвонити Олі').text === 'Подзвонити Олі'), 'відмінки враховуються, імена не чіпаються');
   await p.evaluate(() => closeSheet()); await p.waitForTimeout(300);
   await p.evaluate(() => { U.calView = 'week'; go('calendar'); });

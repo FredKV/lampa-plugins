@@ -310,7 +310,7 @@ function geminiRaw(body) {
   const model = (S.settings.model || 'gemini-2.5-flash').trim();
   if (Bridge && Bridge.gemini) return new Promise(res => { const id = uid(); pendingCb[id] = res; Bridge.gemini(model, JSON.stringify(body), id); });
   const k = localStorage.getItem(DEV_KEY) || '';
-  return http('POST', `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(k)}`, JSON.stringify(body));
+  return http('POST', `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, JSON.stringify(body), { 'x-goog-api-key': k });
 }
 /** Calls Gemini and returns {text, data}. Throws Error with a human message. */
 async function gemini(body) {

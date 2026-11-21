@@ -720,3 +720,16 @@ body.has-fab #app { padding-bottom: calc(var(--sab) + 170px); }
 .medal b { font-size: 12.5px; font-weight: 600; }
 .sum-tiles b.green { color: var(--green); }
 .sum-tiles > .card { flex: 1; }
+
+/* weather hero: plain theme card (no coloured background) */
+.mono.weather-hero, .mono.weather-hero.wh-day, .mono.weather-hero.wh-night { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+.mono.weather-hero .box { background: var(--chip); }
+.mono.weather-hero .lbl, .mono.weather-hero .wh-feel, .mono.weather-hero .box div:first-child { color: var(--muted); opacity: 1; }
+
+/* add product: search results */
+.sf-load { display: flex; align-items: center; gap: 10px; justify-content: center; padding: 18px 0 6px; color: var(--muted); font-size: 14px; }
+.sf-load .spinner { width: 22px; height: 22px; margin: 0; }
+.sf-list { max-height: 46vh; overflow-y: auto; }
+.sf-offer { width: 100%; text-align: left; }
+.sf-offer.best { background: rgba(24,160,88,.08); border-radius: 14px; }
+.sf-img { width: 40px; height: 40px; border-radius: 10px; object-fit: contain; background: #fff; flex: none; }
