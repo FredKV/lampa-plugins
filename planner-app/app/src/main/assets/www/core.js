@@ -69,6 +69,7 @@ const ICONS = {
   plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
   camera: `<svg viewBox="0 0 24 24" ${P}><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg>`,
   refresh: `<svg viewBox="0 0 24 24" ${P}><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>`,
+  finger: `<svg viewBox="0 0 24 24" ${P}><path d="M12 11v3.5c0 2-.6 3.8-1.6 5.3"/><path d="M8.6 9.5A3.5 3.5 0 0 1 15.5 11v2.5c0 1.6-.2 3.2-.7 4.6"/><path d="M5.6 8a7 7 0 0 1 12.8 3v1.5c0 1.6-.2 3.1-.6 4.6"/><path d="M8.5 14.5c0 1.8-.4 3.5-1.2 4.9M5.5 12.5c0 1.4-.2 2.7-.7 4"/><path d="M7.5 4.6a9 9 0 0 1 11.5 2.3"/></svg>`,
   pin: `<svg viewBox="0 0 24 24" ${P}><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`,
   search: `<svg viewBox="0 0 24 24" ${P}><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>`,
   lock: `<svg viewBox="0 0 24 24" ${P}><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>`,
@@ -89,7 +90,7 @@ const DEF = {
   people: [], wishes: [], favs: [],
   prices: { city: '', stores: null, lastRun: null },
   weather: { mode: 'auto', place: null },
-  settings: { model: 'gemini-2.5-flash', theme: 'auto', name: '', pin: '', notif: true, avatar: '' }
+  settings: { model: 'gemini-2.5-flash', theme: 'auto', name: '', pin: '', bio: false, notif: true, avatar: '' }
 };
 
 const MIGRATIONS = {
@@ -482,6 +483,18 @@ function ensureNotifPermission() {
 }
 window.__notifPerm = ok => { if (!ok) toast('Сповіщення вимкнені — нагадування не зʼявлятимуться'); };
 
+/* ---------------- Biometrics (fingerprint / face via system prompt) ---------------- */
+const Bio = {
+  available() { try { return !!(Bridge && Bridge.canBiometric && Bridge.canBiometric()); } catch (e) { return false; } },
+  ask(title) {
+    return new Promise(res => {
+      if (!this.available()) return res(false);
+      window.__bioCb = ok => { window.__bioCb = null; res(!!ok); };
+      Bridge.biometric(title || 'ЛАД');
+    });
+  }
+};
+
 /* ---------------- PIN lock ---------------- */
 async function hashPin(pin) {
   try {
@@ -498,6 +511,13 @@ const Lock = {
   show(mode = 'unlock', resolve = null) {
     this.mode = mode; this.entered = ''; this.first = ''; this.resolve = resolve; this.locked = mode === 'unlock';
     $('#lock').classList.add('show'); this.draw();
+    if (this.locked && this.bioOn()) setTimeout(() => this.bio(), 250);
+  },
+  bioOn() { return !!(S.settings.bio && Bio.available()); },
+  bio() {
+    if (!this.locked || this.bioBusy) return;
+    this.bioBusy = true;
+    Bio.ask('Розблокувати ЛАД').then(ok => { this.bioBusy = false; if (ok && this.locked) this.hide(); });
   },
   hide() { $('#lock').classList.remove('show'); this.locked = false; },
   title() { return this.mode === 'unlock' ? 'Введіть PIN-код' : this.first ? 'Повторіть PIN-код' : 'Новий PIN-код (4 цифри)'; },
@@ -506,7 +526,7 @@ const Lock = {
       <div class="pin-dots">${[0, 1, 2, 3].map(i => `<i class="${i < this.entered.length ? 'on' : ''}"></i>`).join('')}</div>
       <div class="lock-err">${err}</div>
       <div class="keypad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-a="pinKey" data-k="${n}">${n}</button>`).join('')}
-        ${this.mode === 'unlock' ? '<span></span>' : '<button data-a="pinCancel" class="kp-text">Скасувати</button>'}
+        ${this.mode === 'unlock' ? (this.bioOn() ? `<button data-a="pinBio" class="kp-text kp-bio" aria-label="Біометрія">${ICONS.finger}</button>` : '<span></span>') : '<button data-a="pinCancel" class="kp-text">Скасувати</button>'}
         <button data-a="pinKey" data-k="0">0</button><button data-a="pinKey" data-k="del" class="kp-text">⌫</button></div></div>`;
   },
   async key(k) {
@@ -524,6 +544,7 @@ const Lock = {
 };
 Object.assign(A, {
   pinKey: d => Lock.key(d.k),
+  pinBio: () => Lock.bio(),
   pinCancel: () => { Lock.hide(); Lock.resolve && Lock.resolve(false); }
 });
 window.__onPause = () => { Lock.pausedAt = Date.now(); };

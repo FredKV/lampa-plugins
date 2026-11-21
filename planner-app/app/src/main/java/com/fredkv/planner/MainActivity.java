@@ -12,7 +12,10 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricPrompt;
 import android.net.Uri;
+import android.os.CancellationSignal;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -345,6 +348,52 @@ public class MainActivity extends Activity {
             } else {
                 js("window.__notifPerm&&window.__notifPerm(true)");
             }
+        }
+
+        /** Fingerprint / face unlock is available and enrolled on this device. */
+        @JavascriptInterface
+        public boolean canBiometric() {
+            try {
+                if (Build.VERSION.SDK_INT >= 30) {
+                    BiometricManager bm = getSystemService(BiometricManager.class);
+                    return bm != null && bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS;
+                }
+                if (Build.VERSION.SDK_INT >= 29) {
+                    BiometricManager bm = getSystemService(BiometricManager.class);
+                    return bm != null && bm.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS;
+                }
+                return Build.VERSION.SDK_INT >= 28 && getPackageManager().hasSystemFeature(PackageManager.FEATURE_FINGERPRINT);
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        /** Shows the system biometric prompt; result goes to window.__bioCb(ok, cancelled). */
+        @JavascriptInterface
+        public void biometric(final String title) {
+            if (Build.VERSION.SDK_INT < 28) { js("window.__bioCb&&window.__bioCb(false,true)"); return; }
+            runOnUiThread(() -> {
+                try {
+                    BiometricPrompt.Builder b = new BiometricPrompt.Builder(MainActivity.this)
+                            .setTitle(title == null || title.isEmpty() ? "ЛАД" : title)
+                            .setSubtitle("Прикладіть палець або подивіться в камеру")
+                            .setNegativeButton("Ввести PIN-код", getMainExecutor(), (d, w) -> js("window.__bioCb&&window.__bioCb(false,true)"));
+                    if (Build.VERSION.SDK_INT >= 30) b.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK);
+                    b.build().authenticate(new CancellationSignal(), getMainExecutor(), new BiometricPrompt.AuthenticationCallback() {
+                        @Override
+                        public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                            js("window.__bioCb&&window.__bioCb(true,false)");
+                        }
+
+                        @Override
+                        public void onAuthenticationError(int code, CharSequence msg) {
+                            js("window.__bioCb&&window.__bioCb(false,true)");
+                        }
+                    });
+                } catch (Exception e) {
+                    js("window.__bioCb&&window.__bioCb(false,true)");
+                }
+            });
         }
 
         @JavascriptInterface

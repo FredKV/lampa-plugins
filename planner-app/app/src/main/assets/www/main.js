@@ -43,6 +43,7 @@ function settingsSheet() {
     <div class="card st-card" style="padding:2px 14px">
       <div class="switch"><b>🔔 Сповіщення</b>${toggleHtml('stNotif', s.notif).replace('data-a="toggle"', 'data-a="notifToggle"')}</div>
       <div class="switch" style="border-top:1px solid var(--line)"><b>🔒 PIN-код</b>${toggleHtml('stPin', !!s.pin).replace('data-a="toggle"', 'data-a="pinToggle"')}</div>
+      ${s.pin && Bio.available() ? `<div class="switch" style="border-top:1px solid var(--line)"><b>👆 Відбиток / обличчя</b>${toggleHtml('stBio', !!s.bio).replace('data-a="toggle"', 'data-a="bioToggle"')}</div>` : ''}
     </div>
     <div class="card st-card">
       <div class="row between"><b>✨ Gemini AI</b><span class="pill ${hint ? 'green' : ''}">${hint ? 'ключ: ' + esc(hint) : 'ключ не додано'}</span></div>
@@ -177,13 +178,19 @@ Object.assign(A, {
     try { await gemini({ contents: [{ parts: [{ text: 'Відповідай одним словом: працює' }] }] }); toast('✅ Ключ працює!'); }
     catch (e) { toast('❌ ' + e.message); }
   },
+  bioToggle: async () => {
+    if (S.settings.bio) { S.settings.bio = false; save(); toast('Біометрію вимкнено'); return settingsSheet(); }
+    if (!await Bio.ask('Увімкнути вхід за біометрією')) return toast('Не вдалося підтвердити');
+    S.settings.bio = true; save(); toast('Біометрію увімкнено'); settingsSheet();
+  },
   pinToggle: async (d, el) => {
     if (S.settings.pin) {
       if (!await ask({ title: 'Вимкнути PIN-код?', ok: 'Вимкнути' })) return;
-      S.settings.pin = ''; save(); toast('PIN-код вимкнено'); settingsSheet();
+      S.settings.pin = ''; S.settings.bio = false; save(); toast('PIN-код вимкнено'); settingsSheet();
     } else {
       closeSheet();
       const ok = await new Promise(res => Lock.show('set', res));
+      if (ok && Bio.available() && await ask({ title: 'Входити за відбитком?', text: 'Замість PIN-коду можна розблоковувати відбитком пальця або обличчям', ok: 'Увімкнути' }) && await Bio.ask('Увімкнути вхід за біометрією')) { S.settings.bio = true; save(); toast('Біометрію увімкнено'); }
       if (ok) settingsSheet();
     }
   },

@@ -354,6 +354,8 @@ details.steps li { margin-bottom: 6px; }
 .keypad { display: grid; grid-template-columns: repeat(3, 72px); gap: 14px; justify-content: center; }
 .keypad button { width: 72px; height: 72px; border-radius: 50%; background: var(--card); font-size: 26px; font-weight: 500; box-shadow: var(--shadow); }
 .keypad .kp-text { font-size: 15px; background: none; box-shadow: none; }
+.keypad .kp-bio { display: grid; place-items: center; color: var(--blue); }
+.keypad .kp-bio svg { width: 34px; height: 34px; }
 
 @media (max-width: 360px) {
   .mono .row4 { grid-template-columns: 1fr 1fr; }

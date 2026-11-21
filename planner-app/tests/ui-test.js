@@ -276,6 +276,31 @@ async function pickDate(p, id, v) {
   await p.screenshot({ path: shots + '14-dark-home.png', fullPage: true });
   await p.evaluate(() => go('finance')); await p.waitForTimeout(150); await p.screenshot({ path: shots + '15-dark-finance.png' });
 
+  console.log('8a. Біометрія');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    // emulate the native BiometricPrompt: fails while window.__bioFail is set
+    await q.addInitScript(() => { window.__bioCalls = 0; window.AndroidBridge = { canBiometric: () => true, biometric: () => { window.__bioCalls++; const okNow = !window.__bioFail; setTimeout(() => window.__bioCb && window.__bioCb(okNow, !okNow), 100); } }; });
+    await q.goto(URL);
+    await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => { U.stack = []; A.settings && A.settings(); }); await q.waitForTimeout(300);
+    ok(await q.locator('#stBio').count() === 0, 'без PIN перемикача біометрії немає');
+    await q.evaluate(async () => { S.settings.pin = await hashPin('1234'); save(); settingsSheet(); }); await q.waitForTimeout(200);
+    await q.evaluate(() => { window.__bioFail = true; });
+    await q.click('#stBio'); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => !S.settings.bio), 'скасована біометрія не вмикається');
+    await q.evaluate(() => { window.__bioFail = false; });
+    await q.click('#stBio'); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => S.settings.bio === true), 'біометрію увімкнено після підтвердження');
+    await q.reload(); await q.waitForTimeout(150);
+    ok(await q.locator('#lock.show .kp-bio').count() === 1, 'на екрані блокування є кнопка відбитка');
+    await q.waitForTimeout(700);
+    ok(await q.locator('#lock.show').count() === 0, 'розблоковано біометрією автоматично');
+    ok(e2.length === 0, 'без JS-помилок (біометрія) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);
