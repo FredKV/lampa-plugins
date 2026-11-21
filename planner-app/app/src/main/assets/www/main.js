@@ -55,8 +55,7 @@ function settingsSheet() {
         <button class="btn sm" data-a="keySave">OK</button></div>
       <div class="row between" style="margin-top:8px"><b class="link small" data-a="openKey">Отримати безкоштовний ключ ↗</b>
         ${hint ? `<span class="row" style="gap:12px"><b class="link small" data-a="testKey">Перевірити</b><b class="small red" data-a="keyDel">Видалити</b></span>` : ''}</div>
-      <details class="st-more"><summary>Модель: ${esc(s.model)}</summary>
-        <div class="chips" style="margin-top:8px">${['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest'].map(m => `<button class="chip ${s.model === m ? 'on' : ''}" data-a="pickModel" data-m="${m}">${m}</button>`).join('')}</div></details>
+
     </div>
     <div class="row" style="gap:8px">
       <button class="btn ghost card-btn grow" data-a="exportData">⬆️ Експорт</button>
@@ -131,7 +130,6 @@ Object.assign(A, {
   fab: () => { const top = U.stack[U.stack.length - 1]; const f = FABS[top ? top.page : U.tab]; if (f) f(); },
 
   openKey: () => openUrl('https://aistudio.google.com/apikey'),
-  pickModel: d => { S.settings.model = d.m; save(); settingsSheet(); toast('Модель: ' + d.m); },
   notifToggle: (d, el) => {
     S.settings.notif = !S.settings.notif; el.classList.toggle('on', S.settings.notif); save();
     if (S.settings.notif) ensureNotifPermission();

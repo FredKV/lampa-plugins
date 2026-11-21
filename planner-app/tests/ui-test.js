@@ -334,7 +334,7 @@ async function pickDate(p, id, v) {
     await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
     // repeating plan
     await q.evaluate(() => { go('home'); A.taskNew(); }); await q.waitForTimeout(350);
-    await q.fill('#tTitle', 'Оплатити інтернет'); await q.click('#repChips [data-v=month]'); await q.click('[data-a=taskSave]'); await q.waitForTimeout(150);
+    await q.fill('#tTitle', 'Оплатити інтернет'); await q.click('#repOn'); await q.click('#repSeg [data-val=month]'); await q.click('[data-a=taskSave]'); await q.waitForTimeout(150);
     const t1 = await q.evaluate(() => ({ ...S.tasks[0], isToday: S.tasks[0].due === today() }));
     ok(t1.repeat === 'month' && t1.isToday, 'план з повтором щомісяця (дата — сьогодні)');
     await q.click(`[data-a=taskToggle][data-id="${t1.id}"]`); await q.waitForTimeout(150);
@@ -390,6 +390,15 @@ async function pickDate(p, id, v) {
     ok(await q.evaluate(k => Keys.has() && localStorage.getItem(DEV_KEY) === k, newKey), 'ключ нового формату (AQ.…) прийнято');
     await q.evaluate(() => gemini({ contents: [{ parts: [{ text: 'тест' }] }] })); await q.waitForTimeout(200);
     ok(hdr === newKey && !/key=/.test(url), 'ключ передається в заголовку, не в адресі');
+    ok(await q.locator('#sheetBody [data-a=pickModel], #sheetBody .st-more').count() === 0, 'вибору моделі в налаштуваннях немає');
+    await q.unroute('**/generativelanguage.googleapis.com/**');
+    const asked = [];
+    await q.route('**/generativelanguage.googleapis.com/**', r => { const m = r.request().url().match(/models\/([^:]+)/)[1]; asked.push(m);
+      if (m === 'gemini-2.5-flash') return r.fulfill({ status: 429, contentType: 'application/json', body: '{"error":{"message":"quota"}}' });
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates: [{ content: { parts: [{ text: 'ok' }] } }] }) }); });
+    const txt = await q.evaluate(async () => { geminiOk = ''; return (await gemini({ contents: [{ parts: [{ text: 'x' }] }] })).text; });
+    await q.evaluate(() => gemini({ contents: [{ parts: [{ text: 'y' }] }] }));
+    ok(txt === 'ok' && asked[0] === 'gemini-2.5-flash' && asked[1] === 'gemini-2.5-flash-lite' && asked[2] === 'gemini-2.5-flash-lite', `модель обирається автоматично: ліміт → наступна (${asked.join(' → ')})`);
     await q.close();
   }
 

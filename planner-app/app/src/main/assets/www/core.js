@@ -306,8 +306,10 @@ const Keys = {
   hint: () => Bridge && Bridge.apiKeyHint ? Bridge.apiKeyHint() : (localStorage.getItem(DEV_KEY) ? '••••' : ''),
   set: k => { if (Bridge && Bridge.setApiKey) Bridge.setApiKey(k || ''); else if (k) localStorage.setItem(DEV_KEY, k); else localStorage.removeItem(DEV_KEY); }
 };
-function geminiRaw(body) {
-  const model = (S.settings.model || 'gemini-2.5-flash').trim();
+/* model is chosen automatically: the best free one first, the next on «not found / limit / overloaded» */
+const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-2.0-flash'];
+let geminiOk = '';   // model that answered last time in this session
+function geminiRaw(body, model) {
   if (Bridge && Bridge.gemini) return new Promise(res => { const id = uid(); pendingCb[id] = res; Bridge.gemini(model, JSON.stringify(body), id); });
   const k = localStorage.getItem(DEV_KEY) || '';
   return http('POST', `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, JSON.stringify(body), { 'x-goog-api-key': k });
@@ -315,16 +317,21 @@ function geminiRaw(body) {
 /** Calls Gemini and returns {text, data}. Throws Error with a human message. */
 async function gemini(body) {
   if (!Keys.has()) throw new Error('Додайте безкоштовний ключ Gemini у Налаштуваннях.');
-  const r = await geminiRaw(body);
-  let data = null; try { data = JSON.parse(r.text); } catch (e) { }
+  const order = geminiOk ? [geminiOk, ...GEMINI_MODELS.filter(m => m !== geminiOk)] : GEMINI_MODELS;
+  let r, data = null;
+  for (const model of order) {
+    r = await geminiRaw(body, model);
+    data = null; try { data = JSON.parse(r.text); } catch (e) { }
+    if (r.status === 200) { geminiOk = model; break; }
+    if (![404, 429, 500, 503].includes(r.status)) break; // key/network problems: another model won't help
+  }
   if (r.status !== 200) {
     const msg = data && data.error ? data.error.message : r.text;
-    const model = S.settings.model;
     let err;
     if (r.status === 0) err = 'Немає підключення до інтернету.';
     else if ((r.status === 400 && /api key/i.test(msg || '')) || r.status === 401) err = 'Ключ Gemini недійсний. Перевірте його в налаштуваннях.';
     else if (r.status === 403) err = 'Доступ заборонено (403). Перевірте ключ або чи доступний Gemini API у вашому регіоні.';
-    else if (r.status === 404) err = `Модель «${model}» не знайдена. Змініть модель у налаштуваннях.`;
+    else if (r.status === 404) err = 'Gemini зараз недоступний для цього ключа. Спробуйте пізніше.';
     else if (r.status === 429) err = 'Вичерпано безкоштовний ліміт запитів Gemini. Зачекайте й спробуйте пізніше.';
     else if (r.status >= 500) err = 'Сервіс Gemini тимчасово недоступний. Спробуйте пізніше.';
     else err = `Помилка ${r.status}: ${String(msg || '').slice(0, 200)}`;
@@ -528,10 +535,13 @@ function repeatsOn(start, rep, date) {
   if (months % step) return false;
   return addMonthsYmd(start, months) === date;
 }
-/** chips to choose how often something repeats */
-const repeatChips = (val = '') => `<div class="chips rep-chips" id="repChips">${REPEATS.map(([v, l]) => `<button class="chip ${v === (val || '') ? 'on' : ''}" data-a="repPick" data-v="${v}">${v ? '🔁 ' : ''}${l}</button>`).join('')}</div>`;
-const repVal = root => { const c = $('#repChips .chip.on', root); return c ? c.dataset.v : ''; };
-A.repPick = (d, el) => { $$('#repChips .chip').forEach(c => c.classList.toggle('on', c === el)); };
+/** «Повторювати» switch + how often (day / week / month / half a year / year) */
+const repeatChips = (val = '', kind = 'task') => `<div class="rep-box">
+    <div class="switch"><div><b>Повторювати</b><div class="small muted">${kind === 'event' ? 'Подія зʼявлятиметься в календарі регулярно' : 'Після виконання перенесеться на наступний раз'}</div></div>
+      <button class="toggle ${val ? 'on' : ''}" data-a="repToggle" id="repOn"></button></div>
+    <div id="repSeg" class="field" ${val ? '' : 'style="display:none"'}>${seg('rep', [['day', 'День'], ['week', 'Тиждень'], ['month', 'Місяць'], ['half', 'Пів року'], ['year', 'Рік']], val || 'week', 'flat seg-sm')}</div></div>`;
+const repVal = root => { const t = $('#repOn', root); return t && t.classList.contains('on') ? (segVal(root, 'rep') || 'week') : ''; };
+A.repToggle = (d, el) => { el.classList.toggle('on'); const s = $('#repSeg'); if (s) s.style.display = el.classList.contains('on') ? '' : 'none'; };
 
 /* ---------------- share any record ---------------- */
 function shareText(text) {

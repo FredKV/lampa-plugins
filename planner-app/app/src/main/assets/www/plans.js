@@ -59,7 +59,7 @@ function taskSheet(id, presetDue) {
     <div class="field"><label>Пріоритет</label>${seg('prio', [['1', 'Низький'], ['2', 'Середній'], ['3', 'Високий']], String(t.prio || 2))}</div>
     <div class="field"><label>Термін</label>
       <div class="due-chips"><button class="chip" data-a="setDue" data-d="0">Сьогодні</button><button class="chip" data-a="setDue" data-d="1">Завтра</button><button class="chip" data-a="setDue" data-d="">Без дати</button></div></div>
-    <div class="field"><label>Повторювати</label>${repeatChips(t.repeat)}</div>
+    ${repeatChips(t.repeat, 'task')}
     <div class="field"><textarea class="input" id="tNote" maxlength="1000" style="min-height:64px" placeholder="Нотатка (необовʼязково)">${esc(t.note)}</textarea></div>
     ${id ? `<button class="btn ghost" style="margin-bottom:10px" data-a="taskShare" data-id="${id}">${ICONS.share} Поділитися</button>` : ''}
     <div class="btns ${id ? 'two' : ''}">

@@ -308,7 +308,7 @@ function eventSheet(id, date) {
       <div class="field" style="width:42%"><label>Час</label><input type="time" class="input" id="eTime" value="${e.time || ''}"></div>
     </div>
     <div class="field"><textarea class="input" id="eNote" maxlength="1000" placeholder="Деталі (необовʼязково)">${esc(e.note)}</textarea></div>
-    <div class="field"><label>Повторювати</label>${repeatChips(e.repeat)}</div>
+    ${repeatChips(e.repeat, 'event')}
     <div class="field"><label>Нагадування</label>${seg('eRem', [['', 'Без'], ['day', 'У день'], ['prev', 'За день'], ['hour', 'За годину']], e.remind || '')}</div>
     <div class="switch"><div><b>Важливо</b><div class="small muted">Показувати серед найближчих важливих</div></div>${toggleHtml('eImp', e.important)}</div>
     ${id ? `<button class="btn ghost" style="margin:4px 0 10px" data-a="eventShare" data-id="${id}">${ICONS.share} Поділитися</button>` : ''}
