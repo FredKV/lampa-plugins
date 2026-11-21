@@ -200,7 +200,7 @@ Object.assign(A, {
     let parsed;
     try { parsed = JSON.parse($('#impText').value); } catch (e) { return invalid('impText', 'Невірний формат даних'); }
     const d = parsed && parsed.app === 'tanichka' ? parsed.data : parsed; // v1 exports were the bare state
-    if (!d || typeof d !== 'object' || !Array.isArray(d.tasks)) return invalid('impText', 'Це не схоже на експорт Танічки');
+    if (!d || typeof d !== 'object' || !Array.isArray(d.tasks)) return invalid('impText', 'Це не схоже на експорт ЛАД');
     if (!await ask({ title: 'Замінити всі дані?', text: 'Поточні записи буде замінено даними з експорту.', ok: 'Замінити', danger: true })) return;
     const keep = { pin: S.settings.pin };
     if (d.settings) delete d.settings.apiKey;

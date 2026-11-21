@@ -125,7 +125,7 @@ public class MainActivity extends Activity {
                         ContentValues cv = new ContentValues();
                         cv.put(MediaStore.Images.Media.DISPLAY_NAME, "tanichka_" + System.currentTimeMillis() + ".jpg");
                         cv.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-                        cv.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Tanichka");
+                        cv.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/LAD");
                         cameraUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
                         if (cameraUri != null) {
                             Intent cam = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);

@@ -76,7 +76,7 @@ PAGES.birthdays = () => {
         <div class="grow"><div class="title">${esc(x.p.name)}</div>
         <div class="meta">${shortDate(x.date)}${x.age ? ` · ${x.age} ${plural(x.age, 'рік', 'роки', 'років')}` : ''}${(x.p.gifts || []).length ? ` · 🎁 ${x.p.gifts.length}` : ''}</div></div>
         <span class="pill ${x.days <= 7 ? 'red' : ''}">${Birthdays.countdown(x.days)}</span></div>`).join('')}</div>`
-      : emptyCard('🎂', 'Додайте близьких — Танічка нагадає про свято та допоможе з подарунком.', { label: 'Додати людину', attrs: 'data-a="personNew"' })
+      : emptyCard('🎂', 'Додайте близьких — ЛАД нагадає про свято та допоможе з подарунком.', { label: 'Додати людину', attrs: 'data-a="personNew"' })
   };
 };
 FABS.birthdays = () => personSheet();

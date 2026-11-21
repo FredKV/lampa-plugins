@@ -1,6 +1,6 @@
 'use strict';
 /* =====================================================================
-   Танічка🦝 — core: helpers, storage + migrations, router, UI primitives
+   ЛАД — core: helpers, storage + migrations, router, UI primitives
    ===================================================================== */
 
 /* ---------------- helpers ---------------- */
@@ -93,7 +93,7 @@ const DEF = {
 };
 
 const MIGRATIONS = {
-  // v1 (Мій день) → v2 (Танічка): new modules, payment method, category set, key moved out of web storage
+  // v1 (Мій день) → v2 (Танічка, now ЛАД): new modules, payment method, category set, key moved out of web storage
   1: d => {
     const oldOnly = { home: ['🏠', 'Дім'], phone: ['📱', 'Звʼязок'], kids: ['🧸', 'Діти'] };
     d.customCats = d.customCats || [];

@@ -1,4 +1,4 @@
-name: Build "Танічка" APK
+name: Build "ЛАД" APK
 
 on:
   push:
@@ -28,21 +28,21 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
-          cp app/build/outputs/apk/release/app-release.apk Tanichka.apk
+          cp app/build/outputs/apk/release/app-release.apk LAD.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Tanichka-apk
-          path: planner-app/Tanichka.apk
+          name: LAD-apk
+          path: planner-app/LAD.apk
 
       - name: Publish to Releases
         if: ${{ !contains(github.event.head_commit.message, '[wip]') }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: planer-latest
-          name: "Танічка🦝 — остання збірка"
+          name: "ЛАД — остання збірка"
           body: |
-            Завантажте **Tanichka.apk** на телефон і встановіть (дозвольте встановлення з невідомих джерел).
+            Завантажте **LAD.apk** на телефон і встановіть (дозвольте встановлення з невідомих джерел).
             Збірка №${{ github.run_number }}, коміт ${{ github.sha }}.
-          files: planner-app/Tanichka.apk
+          files: planner-app/LAD.apk
           make_latest: true

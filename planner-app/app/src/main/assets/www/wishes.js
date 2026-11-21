@@ -80,7 +80,7 @@ PAGES.wish = p => {
         ${w.due ? `<div class="kv"><span>Купити до</span><b>${shortDate(w.due)}</b></div>` : ''}
       </div></div>
     ${i.left > 0 ? `<div class="hint ${i.overdue ? 'warn' : 'info'}">${i.monthly ? `Щоб встигнути до ${shortDate(w.due)}, відкладайте <b>${money(i.monthly)}</b> щомісяця (${i.months} ${plural(i.months, 'місяць', 'місяці', 'місяців')}).`
-      : i.overdue ? `Бажана дата минула. Залишилось відкласти ${money(i.left)} — оновіть дату, щоб перерахувати план.` : `Вкажіть бажану дату — Танічка порахує, скільки відкладати щомісяця.`}</div>`
+      : i.overdue ? `Бажана дата минула. Залишилось відкласти ${money(i.left)} — оновіть дату, щоб перерахувати план.` : `Вкажіть бажану дату — ЛАД порахує, скільки відкладати щомісяця.`}</div>`
       : `<div class="hint ok">🎉 Ціль досягнуто! Можна купувати.</div>`}
     <div class="btns two"><button class="btn" data-a="wishAdd" data-id="${w.id}">+ Відкласти</button>
       <button class="btn ghost card-btn" data-a="wishTake" data-id="${w.id}" ${i.saved > 0 ? '' : 'disabled'}>Забрати</button></div>

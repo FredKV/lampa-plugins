@@ -173,7 +173,7 @@ PAGES.favs = () => {
     title: 'Улюблені продукти', html: list.length ? `<div class="fav-grid">${list.map(f => `<button class="fav-card" data-a="go" data-page="fav" data-id="${f.id}">
       <div class="ph-box"><img data-photo="${esc(f.ad || f.photo)}" alt=""></div>
       <div class="fav-meta"><b class="ellipsis">${esc(f.name || 'Без назви')}</b><span class="ellipsis">${'★'.repeat(f.rating || 0)}<span class="muted">${'★'.repeat(5 - (f.rating || 0))}</span>${f.price ? ' · ' + money(f.price) : ''}</span></div></button>`).join('')}</div>`
-      : emptyCard('❤️', 'Купили щось і сподобалось? Сфотографуйте — Танічка виріже фон і зробить красиву картку.', { label: '📷 Додати товар', attrs: 'data-a="favAdd"' })
+      : emptyCard('❤️', 'Купили щось і сподобалось? Сфотографуйте — ЛАД виріже фон і зробить красиву картку.', { label: '📷 Додати товар', attrs: 'data-a="favAdd"' })
   };
 };
 FABS.favs = () => startFavorite();

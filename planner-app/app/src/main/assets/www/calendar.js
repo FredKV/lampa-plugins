@@ -91,7 +91,7 @@ REMINDER_PROVIDERS.push(() => {
   if (!S.cycle.remind || !S.cycle.periods.length) return [];
   const nx = Cycle.next(); if (!nx || nx.late > 0) return [];
   const days = S.cycle.remindDays || 0;
-  return [{ id: 'cycle-next', at: at9(addDays(nx.date, -days)), title: 'Танічка🦝 · цикл', text: days ? `Орієнтовно через ${days} ${plural(days, 'день', 'дні', 'днів')} почнеться менструація.` : 'Орієнтовно сьогодні почнеться менструація.' }];
+  return [{ id: 'cycle-next', at: at9(addDays(nx.date, -days)), title: 'ЛАД · цикл', text: days ? `Орієнтовно через ${days} ${plural(days, 'день', 'дні', 'днів')} почнеться менструація.` : 'Орієнтовно сьогодні почнеться менструація.' }];
 });
 
 /* ---------------- event reminders ---------------- */
@@ -350,7 +350,7 @@ PAGES.cycle = () => {
       <div class="kv"><span>Фертильне вікно</span><b>${st.ovu ? `${shortDate(addDays(st.ovu, -5))} – ${shortDate(addDays(st.ovu, 1))}` : '—'}</b></div>
       ${st.ongoing ? `<div class="btns"><button class="btn" data-a="cycEnd" data-d="${today()}">Сьогодні останній день</button></div>`
         : `<div class="btns"><button class="btn" data-a="cycStart" data-d="${today()}">🩸 Почалась сьогодні</button></div>`}
-    </div>` : `<div class="card empty"><div class="big">🌸</div>Позначте перший день останньої менструації — і Танічка порахує прогноз.
+    </div>` : `<div class="card empty"><div class="big">🌸</div>Позначте перший день останньої менструації — і ЛАД порахує прогноз.
       <div class="btns"><button class="btn sm" style="margin:0 auto" data-a="cycNew">Додати</button></div></div>`}
     ${st ? `<h2>Статистика</h2><div class="stats">
       <div class="stat"><b>${avgC}</b><span>сер. цикл, дн.</span></div>
