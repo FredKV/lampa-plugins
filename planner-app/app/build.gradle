@@ -38,3 +38,8 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 }
+
+dependencies {
+    // On-device subject segmentation (background removal) for «Улюблені продукти»; no API key, works offline once the model is downloaded
+    implementation 'com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1'
+}

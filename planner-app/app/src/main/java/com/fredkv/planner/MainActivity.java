@@ -303,6 +303,13 @@ public class MainActivity extends Activity {
             }).start();
         }
 
+        /** Background removal: JPEG/PNG data URL in, transparent PNG data URL out via window.__cutCb(id, png, err). */
+        @JavascriptInterface
+        public void cutout(final String dataUrl, final String id) {
+            Cutout.run(dataUrl, (png, err) -> js("window.__cutCb(" + JSONObject.quote(id) + ","
+                    + (png == null ? "null" : JSONObject.quote(png)) + "," + (err == null ? "null" : JSONObject.quote(err)) + ")"));
+        }
+
         @JavascriptInterface
         public void setApiKey(String key) {
             Store.put(MainActivity.this, "gemini_key", key == null || key.trim().isEmpty() ? null : key.trim());
