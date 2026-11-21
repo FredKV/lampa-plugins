@@ -407,7 +407,7 @@ PAGES.priceResults = () => {
       return `<div class="group-h"><span>${esc(ing.name)} · ${esc(amountLabel(ing))}</span><span>${rows.length ? 'від ' + money(rows[0].o.cost) : ''}</span></div>
       <div class="list">${rows.length ? rows.slice(0, 8).map(({ s, o, idx }) => `<div class="item ${cur && cur.o === o ? 'picked' : ''}" data-a="dpChoose" data-id="${ing.id}" data-s="${s.key}" data-i="${idx}">
         ${offerLine(o, '')}<div class="right"><div class="amount">${money(o.cost)}</div><div class="small muted">${esc(s.name)}</div>
-        <button class="small link" data-a="openLink" data-url="${esc(o.url)}">↗</button></div></div>`).join('') : `<div class="item muted small">Не знайдено в жодному магазині</div>`}</div>`;
+        ${goLink(o.url)}</div></div>`).join('') : `<div class="item muted small">Не знайдено в жодному магазині</div>`}</div>`;
     }).join('');
   }
   const plan = r.plan || {};
@@ -440,7 +440,7 @@ function pickSheet(ingId) {
     <div class="list flat">${rows.map(({ s, o, idx }) => `<div class="item" data-a="dpChoose" data-id="${ingId}" data-s="${s.key}" data-i="${idx}">
       <div class="grow" style="min-width:0"><div class="title">${esc(s.name)}</div><div class="meta ellipsis">${esc(o.title)}</div>
       <div class="meta">${esc(o.buy)}${o.perKg ? ` · ${money(o.perKg)}${o.unitLbl}` : ''}${o.inStock === false ? ' · <span class="red">немає в наявності</span>' : ''}</div></div>
-      <div class="right"><div class="amount">${money(o.cost)}</div><button class="small link" data-a="openLink" data-url="${esc(o.url)}">відкрити ↗</button></div></div>`).join('') || '<div class="item muted">Немає пропозицій</div>'}</div>`);
+      <div class="right"><div class="amount">${money(o.cost)}</div>${goLink(o.url)}</div></div>`).join('') || '<div class="item muted">Немає пропозицій</div>'}</div>`);
 }
 function ingSheet(n) {
   const r = U.dp.recipe, i = n === undefined ? { name: '', qty: '', unit: 'г', query: '' } : r.ingredients[n];

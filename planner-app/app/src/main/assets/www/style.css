@@ -347,7 +347,7 @@ details.steps li { margin-bottom: 6px; }
 .lk-glow { display: none; }
 .lock-in { position: relative; text-align: center; padding: 24px; width: 100%; max-width: 360px; }
 .lk-logo { width: 78px; height: 78px; margin: 0 auto; border-radius: 24px; display: grid; place-items: center; background: #0b0b0d; border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(0,0,0,.18); }
-.lk-logo svg { width: 50px; height: 50px; }
+.lk-logo svg { width: 42px; height: 42px; }
 .lk-ava { width: 84px; height: 84px; margin: 0 auto; border-radius: 50%; overflow: hidden; background: var(--card); box-shadow: var(--shadow); }
 .lk-ava img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .lock-title { font-size: 22px; font-weight: 700; letter-spacing: -.3px; margin: 18px 0 4px; }
@@ -636,3 +636,11 @@ input[type=range] { accent-color: var(--primary); }
 .pk-wheels.time { justify-content: center; }
 .pk-wheels.time .pk-wheel { flex: 0 0 96px; }
 .pk-colon { font-size: 28px; font-weight: 700; align-self: center; position: relative; z-index: 1; }
+
+/* product link pill */
+.go-link { display: inline-flex; align-items: center; gap: 3px; margin-top: 5px; padding: 4px 8px 4px 10px; border-radius: 99px; background: var(--chip); color: var(--text); font-size: 12.5px; font-weight: 600; line-height: 1; white-space: nowrap; }
+.go-link svg { width: 14px; height: 14px; stroke-width: 2.4; color: var(--blue); }
+.go-link:active { opacity: .6; }
+/* favourite photo */
+.fav-photo { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 12px; background: var(--card); aspect-ratio: 4 / 5; }
+.fav-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }

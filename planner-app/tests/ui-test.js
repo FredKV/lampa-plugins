@@ -311,10 +311,13 @@ async function pickDate(p, id, v) {
     await q.addInitScript(c => { window.AndroidBridge = { cutout: (data, id) => setTimeout(() => window.__cutCb(id, c, null), 200) }; }, cut);
     await q.goto(URL);
     await q.evaluate(() => { localStorage.clear(); }); await q.reload();
-    await q.evaluate(() => { S.shop.push({ id: 'b1', name: 'Йогурт грецький', qty: '', price: 54.9, dish: 'Інше', store: 'Сільпо', bought: true }); save(); U.shopMode = 'all'; go('shop'); });
-    const [fc] = await Promise.all([q.waitForEvent('filechooser'), q.click('[data-a=favFromShop]')]); await fc.setFiles(fx('product.jpg'));
+    await q.evaluate(() => { S.shop.push({ id: 'b1', name: 'Йогурт грецький', qty: '', price: 54.9, dish: 'Інше', store: 'Сільпо', bought: true, url: 'https://x.ua/p' }, { id: 'b2', name: 'Кефір', qty: '', price: 40, dish: 'Інше', store: 'АТБ', bought: false, url: 'https://x.ua/k' }); save(); U.shopMode = 'all'; go('shop'); });
+    ok(await q.locator('[data-a=favFromShop]').count() === 0 && await q.locator('.go-link').count() === 1, 'у покупках немає «в улюблені», посилання на товар — кнопкою');
+    await q.evaluate(() => { U.stack = []; go('more'); navigate('favs'); });
+    const [fc] = await Promise.all([q.waitForEvent('filechooser'), q.click('[data-a=favAdd]')]); await fc.setFiles(fx('product.jpg'));
     await q.waitForSelector('.ad-preview img', { timeout: 10000 }); await q.waitForTimeout(300);
-    ok(await q.evaluate(() => $('#fvName').value === 'Йогурт грецький' && $('#fvStore').value === 'Сільпо' && !!U.favNew.cut), 'куплений товар → фото → фон вирізано, поля заповнено');
+    await q.fill('#fvName', 'Йогурт грецький'); await q.fill('#fvStore', 'Сільпо');
+    ok(await q.evaluate(() => !!U.favNew.cut), 'Ще → Улюблені → фото → фон вирізано');
     await q.click('[data-a=favStyle][data-v=dark]'); await q.waitForTimeout(400);
     ok(await q.evaluate(() => U.favNew.style === 'dark' && U.favNew.ad.startsWith('data:image/jpeg')), 'рекламна картка в обраному стилі');
     await q.fill('#fvName', ''); await q.click('[data-a=favSave]'); await q.waitForTimeout(150);

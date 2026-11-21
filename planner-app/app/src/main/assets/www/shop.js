@@ -40,8 +40,7 @@ function itemRow(i, showDish) {
     <div class="grow" style="min-width:0" data-a="shopEdit" data-id="${i.id}"><div class="title">${esc(i.name)}</div>
       <div class="meta ellipsis">${esc([i.qty, i.store, i.buy, showDish && i.dish !== 'Інше' ? i.dish : ''].filter(Boolean).join(' · '))}</div></div>
     <div class="right"><div class="amount">${num(i.price) ? money(num(i.price)) : ''}</div>
-      ${i.url && !i.bought ? `<button class="small link" data-a="openLink" data-url="${esc(i.url)}">товар ↗</button>` : ''}
-      ${i.bought ? `<button class="small link" data-a="favFromShop" data-id="${i.id}" aria-label="В улюблені">❤️ в улюблені</button>` : ''}</div></div>`;
+      ${i.url && !i.bought ? goLink(i.url) : ''}</div></div>`;
 }
 function mergedRow(m) {
   if (m.items.length === 1) return itemRow(m.items[0], true);
@@ -122,7 +121,6 @@ function shopSheet(id, presetDish) {
       <div class="field grow"><label>Для чого</label><input class="input" id="sDish" maxlength="60" placeholder="Інше" value="${esc(i.dish)}"></div>
     </div>
     ${i.buy ? `<div class="small muted" style="margin:-4px 4px 10px">Товар: ${esc(i.buy)}${i.url ? ` · <b class="link" data-a="openLink" data-url="${esc(i.url)}">відкрити ↗</b>` : ''}</div>` : ''}
-    ${id ? `<button class="btn ghost" style="margin-bottom:10px" data-a="favFromShop" data-id="${id}">❤️ Сподобалось — сфотографувати в улюблені</button>` : ''}
     <div class="btns ${id ? 'two' : ''}">
       ${id ? `<button class="btn danger" data-a="shopDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn" data-a="shopSave" data-id="${id || ''}">Зберегти</button></div>`,

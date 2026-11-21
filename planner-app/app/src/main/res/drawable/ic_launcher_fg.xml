@@ -4,7 +4,7 @@
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <group android:pivotX="53.5" android:pivotY="56.75" android:scaleX="0.58" android:scaleY="0.58" android:translateX="0.5" android:translateY="-2.75">
+    <group android:pivotX="53.5" android:pivotY="56.75" android:scaleX="0.46" android:scaleY="0.46" android:translateX="0.5" android:translateY="-2.75">
         <path android:fillType="evenOdd" android:pathData="M24.5,10 H61 V24 H49 L29,72 H12 L33,24 H24.5 Z">
             <aapt:attr name="android:fillColor">
                 <gradient android:type="linear" android:startX="14" android:startY="20" android:endX="94" android:endY="90">
