@@ -1,0 +1,47 @@
+name: Build "Мій день" APK
+
+on:
+  push:
+    paths:
+      - 'planner-app/**'
+      - '.github/workflows/planer-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: planner-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk MyDen.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MyDen-apk
+          path: planner-app/MyDen.apk
+
+      - name: Publish to Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: planer-latest
+          name: "Мій день — остання збірка"
+          body: |
+            Завантажте **MyDen.apk** на телефон і встановіть (дозвольте встановлення з невідомих джерел).
+            Збірка №${{ github.run_number }}, коміт ${{ github.sha }}.
+          files: planner-app/MyDen.apk
+          make_latest: true

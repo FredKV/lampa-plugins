@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="uk" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Мій день</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div>
+      <div class="hello" id="hello">Привіт</div>
+      <div class="sub" id="today"></div>
+    </div>
+    <button class="icon-btn" data-a="settings" aria-label="Налаштування" id="btnSettings"></button>
+  </header>
+
+  <main id="view"></main>
+
+  <button class="fab" id="fab" data-a="fab" aria-label="Додати"></button>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-a="tab" data-tab="plans"><i data-ic="plans"></i><span>Плани</span></button>
+    <button data-a="tab" data-tab="calendar"><i data-ic="calendar"></i><span>Календар</span></button>
+    <button data-a="tab" data-tab="finance"><i data-ic="wallet"></i><span>Фінанси</span></button>
+    <button data-a="tab" data-tab="kitchen"><i data-ic="chef"></i><span>Кухня</span></button>
+    <button data-a="tab" data-tab="shop"><i data-ic="cart"></i><span>Покупки</span><b class="badge" id="shopBadge"></b></button>
+  </nav>
+</div>
+
+<div class="sheet-wrap" id="sheetWrap">
+  <div class="sheet-bg" data-a="closeSheet"></div>
+  <div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="recipes.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
