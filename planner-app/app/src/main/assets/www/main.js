@@ -53,11 +53,12 @@ function settingsSheet() {
       ${s.pin && Bio.available() ? `<div class="switch" style="border-top:1px solid var(--line)"><b>👆 Відбиток / обличчя</b>${toggleHtml('stBio', !!s.bio).replace('data-a="toggle"', 'data-a="bioToggle"')}</div>` : ''}
     </div>
     <div class="card st-card">
-      <div class="row between"><b>✨ Gemini AI</b><span class="pill ${hint ? 'green' : ''}">${hint ? 'ключ: ' + esc(hint) : 'ключ не додано'}</span></div>
-      <div class="row" style="gap:8px;margin-top:10px"><input class="input grow" id="stKey" type="password" autocomplete="off" placeholder="${hint ? 'Новий ключ, щоб замінити' : 'Вставте ключ Gemini'}">
+      ${hint ? `<div class="row between" style="align-items:center"><div><b>✨ Gemini AI</b><div class="small green" style="margin-top:2px">Ключ додано ✓ · <b class="link" data-a="testKey">перевірити</b></div></div>
+          <button class="del-btn" data-a="keyDel" aria-label="Видалити ключ">${ICONS.trash}</button></div>`
+      : `<div class="row between"><b>✨ Gemini AI</b><span class="pill">ключ не додано</span></div>
+      <div class="row" style="gap:8px;margin-top:10px"><input class="input grow" id="stKey" type="password" autocomplete="off" placeholder="Вставте ключ Gemini">
         <button class="btn btn-inline" data-a="keySave">OK</button></div>
-      <div class="row between" style="margin-top:8px"><b class="link small" data-a="openKey">Отримати безкоштовний ключ ↗</b>
-        ${hint ? `<span class="row" style="gap:12px"><b class="link small" data-a="testKey">Перевірити</b><b class="small red" data-a="keyDel">Видалити</b></span>` : ''}</div>
+      <div style="margin-top:8px"><b class="link small" data-a="openKey">Отримати безкоштовний ключ ↗</b></div>`}
 
     </div>
     <div class="row" style="gap:8px">
@@ -176,7 +177,7 @@ Object.assign(A, {
   cropCancel: () => closeSheet(),
   cropDone: () => { const r = $('#sheetBody'); const v = r.__cropRender && r.__cropRender(); const f = r.__cropFinish; r.__cropFinish = null; if (f) f(v); closeSheet(); },
   keyDel: async () => {
-    if (!await ask({ title: 'Видалити ключ Gemini?', text: 'Складання рецептів для «Вигідних продуктів» перестане працювати, доки не додасте новий.', ok: 'Видалити', danger: true })) return;
+    if (!await ask({ title: 'Видалити ключ Gemini?', text: 'Після цього можна буде вставити інший ключ. Без ключа складання рецептів не працюватиме.', ok: 'Видалити', danger: true })) return;
     Keys.set(''); toast('Ключ видалено'); render(); settingsSheet();
   },
   testKey: async () => {

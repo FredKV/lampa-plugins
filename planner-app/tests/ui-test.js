@@ -392,6 +392,10 @@ async function pickDate(p, id, v) {
     await q.evaluate(() => gemini({ contents: [{ parts: [{ text: 'тест' }] }] })); await q.waitForTimeout(200);
     ok(hdr === newKey && !/key=/.test(url), 'ключ передається в заголовку, не в адресі');
     ok(await q.locator('#sheetBody [data-a=pickModel], #sheetBody .st-more').count() === 0, 'вибору моделі в налаштуваннях немає');
+    ok(await q.locator('#stKey').count() === 0 && await q.locator('[data-a=openKey]').count() === 0 && /Ключ додано/.test(await q.textContent('#sheetBody')) && await q.locator('[data-a=keyDel]').count() === 1, 'ключ додано: поля й посилання немає, лише «Ключ додано» і кошик');
+    await q.click('[data-a=keyDel]'); await q.click('[data-a=askYes]'); await q.waitForTimeout(400);
+    ok(await q.locator('#stKey').count() === 1 && await q.locator('[data-a=openKey]').count() === 1, 'після видалення знову можна вставити інший ключ');
+    await q.evaluate(k => Keys.set(k), newKey);
     await q.unroute('**/generativelanguage.googleapis.com/**');
     const asked = [];
     await q.route('**/generativelanguage.googleapis.com/**', r => { const m = r.request().url().match(/models\/([^:]+)/)[1]; asked.push(m);
