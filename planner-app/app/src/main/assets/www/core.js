@@ -70,6 +70,7 @@ const ICONS = {
   camera: `<svg viewBox="0 0 24 24" ${P}><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg>`,
   refresh: `<svg viewBox="0 0 24 24" ${P}><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>`,
   finger: `<svg viewBox="0 0 24 24" ${P}><path d="M12 11v3.5c0 2-.6 3.8-1.6 5.3"/><path d="M8.6 9.5A3.5 3.5 0 0 1 15.5 11v2.5c0 1.6-.2 3.2-.7 4.6"/><path d="M5.6 8a7 7 0 0 1 12.8 3v1.5c0 1.6-.2 3.1-.6 4.6"/><path d="M8.5 14.5c0 1.8-.4 3.5-1.2 4.9M5.5 12.5c0 1.4-.2 2.7-.7 4"/><path d="M7.5 4.6a9 9 0 0 1 11.5 2.3"/></svg>`,
+  backspace: `<svg viewBox="0 0 24 24" ${P}><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/></svg>`,
   pin: `<svg viewBox="0 0 24 24" ${P}><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`,
   search: `<svg viewBox="0 0 24 24" ${P}><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>`,
   lock: `<svg viewBox="0 0 24 24" ${P}><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>`,
@@ -483,6 +484,9 @@ function ensureNotifPermission() {
 }
 window.__notifPerm = ok => { if (!ok) toast('Сповіщення вимкнені — нагадування не зʼявлятимуться'); };
 
+/* ЛАД sign (launcher icon): Л+А triangle, А bar, Д base */
+const LAD_SIGN = `<svg viewBox="16 18 76 72" aria-hidden="true"><defs><linearGradient id="ladg" gradientUnits="userSpaceOnUse" x1="22" y1="24" x2="86" y2="83"><stop offset="0" stop-color="#8ec5ff"/><stop offset=".5" stop-color="#7be3a6"/><stop offset="1" stop-color="#ff9ecb"/></linearGradient></defs><path d="M30 72 L54 24 L78 72 M43 55 L65 55 M22 83 L22 72 L86 72 L86 83" fill="none" stroke="url(#ladg)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
 /* ---------------- Biometrics (fingerprint / face via system prompt) ---------------- */
 const Bio = {
   available() { try { return !!(Bridge && Bridge.canBiometric && Bridge.canBiometric()); } catch (e) { return false; } },
@@ -522,12 +526,22 @@ const Lock = {
   hide() { $('#lock').classList.remove('show'); this.locked = false; },
   title() { return this.mode === 'unlock' ? 'Введіть PIN-код' : this.first ? 'Повторіть PIN-код' : 'Новий PIN-код (4 цифри)'; },
   draw(err = '') {
-    $('#lock').innerHTML = `<div class="lock-in"><div class="lock-raccoon">🦝</div><div class="lock-title">${this.title()}</div>
-      <div class="pin-dots">${[0, 1, 2, 3].map(i => `<i class="${i < this.entered.length ? 'on' : ''}"></i>`).join('')}</div>
+    const name = S.settings.name, unlock = this.mode === 'unlock';
+    const head = unlock && S.settings.avatar
+      ? `<div class="lk-ava ph-box"><img data-photo="${esc(S.settings.avatar)}" alt=""></div>`
+      : `<div class="lk-logo">${LAD_SIGN}</div>`;
+    const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-a="pinKey" data-k="${n}">${n}</button>`).join('');
+    const left = unlock ? (this.bioOn() ? `<button data-a="pinBio" class="kp-icon kp-bio" aria-label="Біометрія">${ICONS.finger}</button>` : '<span></span>')
+      : '<button data-a="pinCancel" class="kp-icon kp-text">Скасувати</button>';
+    $('#lock').innerHTML = `<div class="lk-glow"></div><div class="lock-in">
+      ${head}
+      <div class="lock-title">${unlock ? (name ? `Привіт, ${esc(name)}` : 'Привіт!') : this.title()}</div>
+      <div class="lock-sub">${unlock ? (this.bioOn() ? 'Введіть PIN-код або відбиток пальця' : 'Введіть PIN-код') : this.first ? 'Ще раз для підтвердження' : 'Його запитуватимемо при вході'}</div>
+      <div class="pin-dots ${err ? 'err' : ''}">${[0, 1, 2, 3].map(i => `<i class="${i < this.entered.length ? 'on' : ''}"></i>`).join('')}</div>
       <div class="lock-err">${err}</div>
-      <div class="keypad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-a="pinKey" data-k="${n}">${n}</button>`).join('')}
-        ${this.mode === 'unlock' ? (this.bioOn() ? `<button data-a="pinBio" class="kp-text kp-bio" aria-label="Біометрія">${ICONS.finger}</button>` : '<span></span>') : '<button data-a="pinCancel" class="kp-text">Скасувати</button>'}
-        <button data-a="pinKey" data-k="0">0</button><button data-a="pinKey" data-k="del" class="kp-text">⌫</button></div></div>`;
+      <div class="keypad">${keys}${left}
+        <button data-a="pinKey" data-k="0">0</button><button data-a="pinKey" data-k="del" class="kp-icon" aria-label="Стерти">${ICONS.backspace}</button></div></div>`;
+    if (unlock && S.settings.avatar) hydratePhotos($('#lock'));
   },
   async key(k) {
     if (k === 'del') { this.entered = this.entered.slice(0, -1); return this.draw(); }
