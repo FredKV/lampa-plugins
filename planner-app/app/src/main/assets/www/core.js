@@ -68,6 +68,8 @@ const ICONS = {
   back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>`,
   plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
   camera: `<svg viewBox="0 0 24 24" ${P}><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg>`,
+  refresh: `<svg viewBox="0 0 24 24" ${P}><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>`,
+  pin: `<svg viewBox="0 0 24 24" ${P}><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`,
   search: `<svg viewBox="0 0 24 24" ${P}><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>`,
   lock: `<svg viewBox="0 0 24 24" ${P}><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>`,
   spark: `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2c.6 5.2 4.8 9.4 10 10-5.2.6-9.4 4.8-10 10-.6-5.2-4.8-9.4-10-10 5.2-.6 9.4-4.8 10-10z"/></svg>`
@@ -193,11 +195,11 @@ function go(tab) {
   if (U.tab !== tab) { U.tab = tab; try { localStorage.setItem('planer.tab', tab); } catch (e) { } window.scrollTo(0, 0); }
   render();
 }
-function renderHeader(title) {
+function renderHeader(title, actions) {
   const head = $('#top');
   if (title !== undefined) {
     head.innerHTML = `<button class="icon-btn" data-a="back" aria-label="Назад">${ICONS.back}</button>
-      <div class="grow page-title ellipsis">${esc(title)}</div><span style="width:44px"></span>`;
+      <div class="grow page-title ellipsis">${esc(title)}</div>${actions ? `<div class="head-actions">${actions}</div>` : '<span style="width:44px"></span>'}`;
     return;
   }
   const h = new Date().getHours();
@@ -216,7 +218,7 @@ function render() {
     if (top) {
       const r = PAGES[top.page] ? PAGES[top.page](top.p) : null;
       if (!r) { U.stack.pop(); return render(); }
-      renderHeader(r.title);
+      renderHeader(r.title, r.actions);
       html = r.html;
     } else {
       renderHeader();

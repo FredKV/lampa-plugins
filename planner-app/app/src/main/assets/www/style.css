@@ -328,8 +328,8 @@ details.steps li { margin-bottom: 6px; }
 .hint.warn { background: rgba(229,72,77,.11); color: var(--red); margin: 0 0 12px; }
 
 /* weather */
-.weather-hero.day { background: radial-gradient(120% 140% at 100% 0%, #3987e5 0%, rgba(57,135,229,0) 60%), radial-gradient(120% 120% at 0% 100%, #1baf7a 0%, rgba(27,175,122,0) 60%), #121214; }
-.weather-hero.night { background: radial-gradient(120% 140% at 100% 0%, #6250d6 0%, rgba(98,80,214,0) 60%), #0d0d14; }
+.weather-hero.wh-day { background: radial-gradient(120% 140% at 100% 0%, #3987e5 0%, rgba(57,135,229,0) 60%), radial-gradient(120% 120% at 0% 100%, #1baf7a 0%, rgba(27,175,122,0) 60%), #121214; }
+.weather-hero.wh-night { background: radial-gradient(120% 140% at 100% 0%, #6250d6 0%, rgba(98,80,214,0) 60%), #0d0d14; }
 .w-temp { font-size: 72px; font-weight: 700; letter-spacing: -3px; line-height: 1; }
 .hours { display: flex; gap: 4px; overflow-x: auto; padding: 14px 10px; scrollbar-width: none; }
 .hours::-webkit-scrollbar { display: none; }
@@ -435,3 +435,15 @@ select.input { appearance: none; -webkit-appearance: none; background-image: lin
 .fin-sum .nav-btn.sm { width: 30px; height: 30px; }
 .fin-bal { margin: 6px 2px 4px; }
 .sumgrid.three { margin: 4px 0 4px; }
+
+/* ===================== v3.1: weather ===================== */
+.head-actions { display: flex; gap: 8px; flex: none; }
+.icon-btn.sm { width: 40px; height: 40px; padding: 10px; }
+.icon-btn.spin svg { animation: spin .9s linear infinite; }
+.weather-hero { padding: 16px 16px 14px; height: auto; min-height: 0; }
+.weather-hero .wh-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.weather-hero .w-temp { font-size: 52px; letter-spacing: -2px; }
+.weather-hero .wh-desc { font-weight: 600; font-size: 16px; }
+.weather-hero .wh-feel { font-size: 13px; opacity: .8; margin-top: 2px; }
+.weather-hero .wh-ic { font-size: 46px; line-height: 1; flex: none; }
+.weather-hero .lbl { margin-bottom: 2px; }

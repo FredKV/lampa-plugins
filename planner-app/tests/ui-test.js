@@ -134,6 +134,14 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
   await p.fill('#wCity', 'Львів'); await p.click('[data-a=wSearch]'); await p.waitForTimeout(300);
   await p.click('[data-a=wPick]'); await p.waitForTimeout(400);
   ok(await p.locator('.w-temp').count() === 1, 'поточна погода'); ok(await p.locator('.hour').count() === 24, '24 години'); ok(await p.locator('.trange').count() === 7, '7 днів');
+  ok(await p.locator('#top [data-a=wRefresh]').count() === 1 && await p.locator('#top [data-a=wCityOpen]').count() === 1, 'ярлики «Оновити» і «Змінити місто» в шапці');
+  ok(await p.locator('#view [data-a=wRefresh], #view #wCity, #view :text("Оновлено")').count() === 0, 'без рядка оновлення, кнопки й блоку зміни міста');
+  const heroH = await p.evaluate(() => $('.weather-hero').getBoundingClientRect().height); ok(heroH < 230, `компактна плашка погоди (${Math.round(heroH)}px)`);
+  await p.click('#top [data-a=wCityOpen]'); await p.waitForTimeout(350);
+  await p.fill('#wCity', 'Львів'); await p.click('[data-a=wSearch]'); await p.waitForTimeout(300);
+  ok(await p.locator('#sheetBody [data-a=wPick]').count() === 1, 'пошук міста у вікні з ярлика');
+  await p.click('#sheetBody [data-a=wPick]'); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => !$('#sheetWrap').classList.contains('open') && Weather.place().name === 'Львів'), 'місто змінено');
   await p.screenshot({ path: shots + '07-weather.png', fullPage: true });
   let calls = 0; await p.route('**/api.open-meteo.com/**', r => { calls++; r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(weather) }); });
   await p.evaluate(() => { U.stack = []; go('home'); }); await p.waitForTimeout(300);

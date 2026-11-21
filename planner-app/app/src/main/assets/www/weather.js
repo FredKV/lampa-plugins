@@ -89,30 +89,38 @@ const Weather = {
 };
 window.__resumeHooks.push(() => { if (Weather.place() && Weather.stale()) Weather.load(); });
 
+function cityChooser() {
+  const p = Weather.place();
+  return `
+    <div class="btns" style="margin-top:0"><button class="btn ${S.weather.mode === 'auto' && p ? '' : 'ghost'}" data-a="wAuto">📍 Визначити автоматично</button></div>
+    <div class="row" style="margin-top:12px;gap:8px"><input class="input grow" id="wCity" placeholder="Або знайдіть місто: Київ, Львів…" value="${esc(Weather.cityQ)}" enterkeyhint="search">
+      <button class="btn sm" style="padding:15px 16px" data-a="wSearch" aria-label="Шукати">${ICONS.search.replace('<svg', '<svg width="20" height="20"')}</button></div>
+    ${Weather.cityResults === 'loading' ? '<div class="small muted" style="margin-top:10px">Пошук…</div>'
+    : Weather.cityResults && Weather.cityResults.err ? `<div class="small red" style="margin-top:10px">${esc(Weather.cityResults.err)}</div>`
+    : Array.isArray(Weather.cityResults) ? (Weather.cityResults.length ? `<div class="list flat" style="margin-top:10px">${Weather.cityResults.map((x, i) => `<div class="item" data-a="wPick" data-i="${i}"><div class="grow"><div class="title">${esc(x.name)}</div><div class="meta">${esc(x.admin)}</div></div></div>`).join('')}</div>` : '<div class="small muted" style="margin-top:10px">Нічого не знайдено</div>') : ''}`;
+}
+function citySheetW() {
+  const open = $('#sheetWrap').classList.contains('open') && $('#wCitySheet');
+  if (open) { $('#wCitySheet').innerHTML = cityChooser(); return; }
+  openSheet(`<h2>Місто</h2><div id="wCitySheet">${cityChooser()}</div>`, null, () => { Weather.cityResults = null; Weather.cityQ = ''; });
+}
+
 PAGES.weather = () => {
   const p = Weather.place(), c = Weather.data();
-  const choose = `
-    <div class="card">
-      <b>Місцезнаходження</b>
-      <div class="btns" style="margin-top:12px"><button class="btn ${S.weather.mode === 'auto' && p ? '' : 'ghost'}" data-a="wAuto">📍 Визначити автоматично</button></div>
-      <div class="row" style="margin-top:14px;gap:8px"><input class="input grow" id="wCity" placeholder="Або знайдіть місто: Київ, Львів…" value="${esc(Weather.cityQ)}" enterkeyhint="search">
-        <button class="btn sm" style="padding:15px 16px" data-a="wSearch">${ICONS.search.replace('<svg', '<svg width="20" height="20"')}</button></div>
-      ${Weather.cityResults === 'loading' ? '<div class="small muted" style="margin-top:10px">Пошук…</div>'
-      : Weather.cityResults && Weather.cityResults.err ? `<div class="small red" style="margin-top:10px">${esc(Weather.cityResults.err)}</div>`
-      : Array.isArray(Weather.cityResults) ? (Weather.cityResults.length ? `<div class="list flat" style="margin-top:10px">${Weather.cityResults.map((x, i) => `<div class="item" data-a="wPick" data-i="${i}"><div class="grow"><div class="title">${esc(x.name)}</div><div class="meta">${esc(x.admin)}</div></div></div>`).join('')}</div>` : '<div class="small muted" style="margin-top:10px">Нічого не знайдено</div>') : ''}
-    </div>`;
-  if (!p) return { title: 'Погода', html: `${Weather.err ? `<div class="card"><b class="red">${esc(Weather.err)}</b></div>` : ''}${Weather.loading ? '<div class="card empty"><div class="spinner"></div>Визначаю місцезнаходження…</div>' : ''}${choose}` };
+  if (!p) return { title: 'Погода', html: `${Weather.err ? `<div class="card"><b class="red">${esc(Weather.err)}</b></div>` : ''}${Weather.loading ? '<div class="card empty"><div class="spinner"></div>Визначаю місцезнаходження…</div>' : ''}<div class="card">${cityChooser()}</div>` };
+  const actions = `<button class="icon-btn sm ${Weather.loading ? 'spin' : ''}" data-a="wRefresh" aria-label="Оновити" ${Weather.loading ? 'disabled' : ''}>${ICONS.refresh}</button>
+    <button class="icon-btn sm" data-a="wCityOpen" aria-label="Змінити місто">${ICONS.pin}</button>`;
   let body = '';
   if (c) {
     const d = c.data, cur = Weather.current(d), dl = d.daily, h = d.hourly;
     const hours = [];
     for (let i = cur.idx; i < Math.min(h.time.length, cur.idx + 24); i++) hours.push(i);
     body = `
-      <div class="mono weather-hero ${cur.is_day ? 'day' : 'night'}">
-        <div class="lbl">${esc(p.name)}</div>
-        <div class="row" style="align-items:flex-end;gap:12px"><div class="w-temp">${Math.round(cur.temperature_2m)}°</div>
-          <div style="padding-bottom:14px"><div style="font-size:34px;line-height:1">${wmo(cur.weather_code)[0]}</div><div>${esc(wmo(cur.weather_code)[1])}</div></div></div>
-        <div style="opacity:.8;margin-bottom:14px">Відчувається як ${Math.round(cur.apparent_temperature)}° · ${Math.round(dl.temperature_2m_min[0])}°…${Math.round(dl.temperature_2m_max[0])}°</div>
+      <div class="mono weather-hero ${cur.is_day ? 'wh-day' : 'wh-night'}">
+        <div class="wh-top"><div class="grow" style="min-width:0"><div class="lbl ellipsis">${esc(p.name)}</div>
+          <div class="row" style="gap:10px;align-items:center"><div class="w-temp">${Math.round(cur.temperature_2m)}°</div>
+            <div><div class="wh-desc">${esc(wmo(cur.weather_code)[1])}</div><div class="wh-feel">Відчувається як ${Math.round(cur.apparent_temperature)}° · ${Math.round(dl.temperature_2m_min[0])}°…${Math.round(dl.temperature_2m_max[0])}°</div></div></div></div>
+          <div class="wh-ic">${wmo(cur.weather_code)[0]}</div></div>
         <div class="row4">
           <div class="box"><div>Опади</div><div>${cur.precipitation} мм</div></div>
           <div class="box"><div>Дощ</div><div>${cur.prob != null ? cur.prob + '%' : '—'}</div></div>
@@ -133,20 +141,21 @@ PAGES.weather = () => {
           <div class="grow row" style="gap:8px"><span class="small muted">${Math.round(dl.temperature_2m_min[i])}°</span>
             <div class="trange"><div style="left:${(dl.temperature_2m_min[i] - lo) / span * 100}%;right:${(hi - dl.temperature_2m_max[i]) / span * 100}%"></div></div>
             <b class="small">${Math.round(dl.temperature_2m_max[i])}°</b></div></div>`;
-      }).join('')}</div>
-      <div class="small muted" style="margin:8px 6px">Оновлено ${fmtDateTime(c.ts)} · дані Open-Meteo.com${Weather.err ? ` · <span class="red">${esc(Weather.err)} — показано збережені дані</span>` : ''}</div>`;
+      }).join('')}</div>`;
   } else if (Weather.loading) body = '<div class="card empty"><div class="spinner"></div>Завантаження прогнозу…</div>';
   else body = `<div class="card"><b class="red">${esc(Weather.err || 'Немає даних')}</b><div class="btns"><button class="btn" data-a="wRefresh">Спробувати ще</button></div></div>`;
-  return { title: 'Погода', html: `${body}${c ? `<button class="btn ghost card-btn" data-a="wRefresh" ${Weather.loading ? 'disabled' : ''}>${Weather.loading ? 'Оновлення…' : '↻ Оновити'}</button>` : ''}<h2>Змінити місто</h2>${choose}` };
+  return { title: 'Погода', actions, html: body };
 };
 Object.assign(A, {
-  wAuto: () => Weather.useAuto(),
-  wRefresh: () => Weather.load(true),
+  wAuto: () => { closeSheet(); Weather.useAuto(); },
+  wRefresh: async () => { await Weather.load(true); if (Weather.err && Weather.data()) toast(`${Weather.err} — показано збережені дані`); else if (!Weather.err) toast('Прогноз оновлено'); },
+  wCityOpen: () => citySheetW(),
   wPick: d => {
     const x = Weather.cityResults[+d.i];
     S.weather.mode = 'city'; S.weather.place = x; Weather.cityResults = null; Weather.cityQ = ''; Weather.err = '';
-    save(); window.scrollTo(0, 0); Weather.load(true);
+    save(); closeSheet(); window.scrollTo(0, 0); Weather.load(true);
   }
 });
 A.wSearch = () => { const el = $('#wCity'); if (el) { el.blur(); Weather.searchCity(el.value); } };
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'wCity') { e.preventDefault(); A.wSearch(); } });
+AFTER_RENDER.push(() => { const el = $('#wCitySheet'); if (el && $('#sheetWrap').classList.contains('open')) el.innerHTML = cityChooser(); });
