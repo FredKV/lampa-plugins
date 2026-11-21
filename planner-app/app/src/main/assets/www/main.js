@@ -10,7 +10,7 @@ VIEWS.more = () => {
   const tiles = [
     ['birthdays', '🎂', 'Дні народження', bd ? `${bd.p.name} — ${Birthdays.countdown(bd.days)}` : `${S.people.length} ${plural(S.people.length, 'людина', 'людини', 'людей')}`],
     ['favs', '❤️', 'Улюблені продукти', S.favs.length ? `${S.favs.length} ${plural(S.favs.length, 'товар', 'товари', 'товарів')}` : 'Сфотографуй — і в улюблені'],
-    ['wishes', '💖', 'Мої хотілки', act.length ? `${act.length} ${plural(act.length, 'ціль', 'цілі', 'цілей')} · ${money(act.reduce((a, x) => a + Wishes.saved(x), 0))}` : 'Цілі накопичення'],
+    ['wishes', '🎯', 'Мої хотілки', act.length ? `${act.length} ${plural(act.length, 'ціль', 'цілі', 'цілей')} · ${money(act.reduce((a, x) => a + Wishes.saved(x), 0))}` : 'Цілі накопичення'],
     ['weather', '🌤', 'Погода', w ? `${Math.round(w.data.current.temperature_2m)}° · ${Weather.place().name}` : 'Прогноз на 7 днів'],
     ['prices', '🧺', 'Вигідні продукти', S.recipes.length ? `${S.recipes.length} ${plural(S.recipes.length, 'рецепт', 'рецепти', 'рецептів')} · ${cityName(priceCity())}` : 'Страва → де купити дешевше'],
     ['cycle', '🌸', 'Мій цикл', cyc && !S.cycle.hide ? cyc.line : 'Відстеження циклу']

@@ -175,7 +175,7 @@ function vFinOverview() {
         <div class="ft"><span>Баланс</span><b class="${st.bal < 0 ? 'red' : ''}">${money(st.bal)}</b><small>загальний ${money(total)}</small></div>
         <div class="ft g" data-a="finTile" data-v="inc"><span>↑ Доходи</span><b class="green">${money(st.inc)}</b></div>
         <div class="ft r" data-a="finTile" data-v="exp"><span>↓ Витрати</span><b>${money(st.exp)}</b></div>
-        <div class="ft v" data-a="go" data-page="wishes"><span>💖 Відкладено</span><b class="violet">${money(st.saved)}</b></div>
+        <div class="ft v" data-a="go" data-page="wishes"><span>🎯 Відкладено</span><b class="violet">${money(st.saved)}</b></div>
       </div>
     </div>
     <div class="row" style="gap:8px;margin-bottom:12px">

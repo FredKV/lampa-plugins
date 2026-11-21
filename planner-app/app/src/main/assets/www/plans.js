@@ -114,7 +114,7 @@ VIEWS.home = () => {
       <button data-a="txNew" data-type="exp"><span>💸</span>Витрата</button>
       <button data-a="taskNew"><span>📝</span>План</button>
       <button data-a="eventNew"><span>📅</span>Подія</button>
-      <button data-a="go" data-page="wishes"><span>💖</span>Хотілки</button>
+      <button data-a="go" data-page="wishes"><span>🎯</span>Хотілки</button>
     </div>
     ${todayItems.length || cyc ? `<h2>Сьогодні</h2><div class="list">${todayItems.join('')}${cyc}</div>` : ''}
     ${bdays.filter(b => b.days > 0).length ? `<div class="card row" data-a="go" data-page="birthdays" style="cursor:pointer">

@@ -48,7 +48,7 @@ PAGES.wishes = () => {
       <div><span>Потрібно всього</span><b>${money(totalNeed)}</b></div>
       <div><span>Ще відкласти</span><b>${money(Math.max(0, totalNeed - totalSaved))}</b></div></div>` : ''}
     ${segUI('wishFlt', [['active', `Активні · ${act.length}`], ['bought', `Придбані · ${bought.length}`]])}
-    ${list.length ? list.map(wishCard).join('') : emptyCard(flt === 'active' ? '💖' : '🛍', flt === 'active' ? 'Додайте річ чи мрію, на яку хочете накопичити.' : 'Ще нічого не придбано', flt === 'active' ? { label: 'Додати хотілку', attrs: 'data-a="wishNew"' } : null)}`
+    ${list.length ? list.map(wishCard).join('') : emptyCard(flt === 'active' ? '🎯' : '🛍', flt === 'active' ? 'Додайте річ чи мрію, на яку хочете накопичити.' : 'Ще нічого не придбано', flt === 'active' ? { label: 'Додати хотілку', attrs: 'data-a="wishNew"' } : null)}`
   };
 };
 FABS.wishes = () => wishSheet();
