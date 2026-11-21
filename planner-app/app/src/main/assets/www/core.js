@@ -515,7 +515,7 @@ function ensureNotifPermission() {
 window.__notifPerm = ok => { if (!ok) toast('Сповіщення вимкнені — нагадування не зʼявлятимуться'); };
 
 /* ЛАД sign (launcher icon): one continuous line */
-const LAD_SIGN = `<svg viewBox="190 340 640 340" aria-hidden="true"><path d="M222,632 L281,408 Q300,360 319,408 L388,620 Q405,660 422,620 L491,408 Q510,360 529,408 L598,620 Q615,660 632,620 L701,408 Q720,360 739,408 L800,636 L700,636 M507,527 L560,527" fill="none" stroke="#000" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const LAD_SIGN = `<svg viewBox="190 340 640 340" aria-hidden="true"><path d="M222,640 L264.7,419.2 A36,36 0 0,1 335.4,419.7 L369.6,610.3 A36,36 0 0,0 440.4,610.3 L474.6,419.7 A36,36 0 0,1 545.4,419.7 L579.6,610.3 A36,36 0 0,0 650.4,610.3 L684.6,419.7 A36,36 0 0,1 755.3,418.9 L800,640 L700,640 M505,527 L562,527" fill="none" stroke="#000" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 /* ---------------- Biometrics (fingerprint / face via system prompt) ---------------- */
 const Bio = {
