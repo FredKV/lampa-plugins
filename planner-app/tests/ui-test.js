@@ -454,7 +454,7 @@ async function pickDate(p, id, v) {
     ok(r.length === 3 && r.every(x => x.d === (q, addDaysN(bd, want[x.id]))), 'день народження: нагадування за 2 тижні, за тиждень і в день — ' + r.map(x => x.title).join(' / '));
     await q.evaluate(() => settingsSheet()); await q.waitForTimeout(300);
     await q.click('[data-a=notifTest]');
-    ok(await q.evaluate(() => window.__now.length === 1 && /працюють/.test(window.__now[0])), 'кнопка «надіслати тестове» показує сповіщення');
+    ok(await q.evaluate(() => window.__now.length === 1 && /^ Сповіщення працюють/.test(window.__now[0])), 'кнопка «надіслати тестове» показує сповіщення');
     await q.close();
   }
 

@@ -91,7 +91,7 @@ REMINDER_PROVIDERS.push(() => {
   if (!S.cycle.remind || !S.cycle.periods.length) return [];
   const nx = Cycle.next(); if (!nx || nx.late > 0) return [];
   const days = S.cycle.remindDays || 0;
-  return [{ id: 'cycle-next', at: at9(addDays(nx.date, -days)), title: 'ЛАД · цикл', text: days ? `Орієнтовно через ${days} ${plural(days, 'день', 'дні', 'днів')} почнеться менструація.` : 'Орієнтовно сьогодні почнеться менструація.' }];
+  return [{ id: 'cycle-next', at: at9(addDays(nx.date, -days)), title: '🌸 Цикл', text: days ? `Орієнтовно через ${days} ${plural(days, 'день', 'дні', 'днів')} почнеться менструація.` : 'Орієнтовно сьогодні почнеться менструація.' }];
 });
 
 /* ---------------- event reminders ---------------- */

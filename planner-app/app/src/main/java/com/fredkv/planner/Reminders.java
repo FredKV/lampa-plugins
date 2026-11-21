@@ -69,9 +69,10 @@ final class Reminders {
         Intent open = new Intent(c, MainActivity.class);
         open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent p = PendingIntent.getActivity(c, id, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        android.app.Notification n = new android.app.Notification.Builder(c, channel)
+        android.app.Notification.Builder nb = new android.app.Notification.Builder(c, channel);
+        if (title != null && !title.trim().isEmpty()) nb.setContentTitle(title);
+        android.app.Notification n = nb
                 .setSmallIcon(R.drawable.ic_notif)
-                .setContentTitle(title)
                 .setContentText(text)
                 .setStyle(new android.app.Notification.BigTextStyle().bigText(text))
                 .setContentIntent(p)

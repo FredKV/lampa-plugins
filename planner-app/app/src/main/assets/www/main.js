@@ -134,7 +134,7 @@ Object.assign(A, {
   fab: () => { const top = U.stack[U.stack.length - 1]; const f = FABS[top ? top.page : U.tab]; if (f) f(); },
 
   openKey: () => openUrl('https://aistudio.google.com/apikey'),
-  notifTest: () => { try { Bridge.notifyNow('🔔 ЛАД', 'Сповіщення працюють! Так виглядатимуть нагадування.'); toast('Надіслано — подивись у шторку'); } catch (e) { toast('Не вдалося'); } },
+  notifTest: () => { try { Bridge.notifyNow('', 'Сповіщення працюють! Так виглядатимуть нагадування.'); toast('Надіслано — подивись у шторку'); } catch (e) { toast('Не вдалося'); } },
   notifFix: () => { if (Bridge.requestNotifications) Bridge.requestNotifications(); setTimeout(() => { if (!Bridge.notificationsAllowed() && Bridge.openNotifSettings) Bridge.openNotifSettings(); }, 1500); },
   notifToggle: (d, el) => {
     S.settings.notif = !S.settings.notif; el.classList.toggle('on', S.settings.notif); save();
