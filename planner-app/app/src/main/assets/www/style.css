@@ -491,3 +491,4 @@ select.input { appearance: none; -webkit-appearance: none; background-image: lin
 .due-hidden { position: absolute; right: 0; bottom: 0; width: 56px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
 .due-chips { display: flex; gap: 8px; }
 .due-chips .chip { flex: 1; text-align: center; }
+.item .progress { margin-top: 6px; height: 6px; }
