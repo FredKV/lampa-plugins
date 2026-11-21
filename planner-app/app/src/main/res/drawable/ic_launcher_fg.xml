@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- ЛАД: one sign (Л+А triangle, А bar, Д base) in a black circle, iridescent stroke -->
+<!-- ЛАД: one sign (Л+А triangle, А bar, Д base) iridescent stroke -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#FF0B0B0D" android:pathData="M24,54 a30,30 0 1,0 60,0 a30,30 0 1,0 -60,0 Z" />
-    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.53" android:scaleY="0.53" android:translateY="1.4">
+    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.6" android:scaleY="0.6" android:translateY="1.4">
         <path android:fillColor="#00000000" android:strokeWidth="8.5"
             android:strokeLineCap="round" android:strokeLineJoin="round"
             android:pathData="M30,72 L54,24 L78,72 M43,55 L65,55 M22,83 L22,72 L86,72 L86,83">
