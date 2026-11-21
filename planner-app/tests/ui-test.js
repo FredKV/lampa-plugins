@@ -19,6 +19,15 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
   { store: 'Allo', title: 'AirPods Pro 2', url: 'https://allo.ua/ua/airpods-pro-2', price: 9199, delivery: 0, inStock: null } ] }) + '\n```' }] },
   groundingMetadata: { groundingChunks: [{ web: { uri: 'https://vertexaisearch.cloud.google.com/x1', title: 'rozetka.com.ua' } }, { web: { uri: 'https://v/x2', title: 'comfy.ua' } }, { web: { uri: 'https://v/x3', title: 'allo.ua' } }] } }] };
 
+
+// drives the custom wheel picker like a user: open → scroll the wheels → «Готово»
+async function pickDate(p, id, v) {
+  await p.click(`.pick-btn[data-for="${id}"]`); await p.waitForTimeout(350);
+  const [y, m, d] = v.split('-').map(Number);
+  const roll = async (wid, i) => { await p.evaluate(([w, k]) => { const el = document.getElementById(w); el.scrollTop = k * 44; el.dispatchEvent(new Event('scroll')); }, [wid, i]); await p.waitForTimeout(220); };
+  await roll('pkY', await p.evaluate(y => y - Picker.st.y0, y)); await roll('pkM', m - 1); await roll('pkD', d - 1);
+  await p.click('[data-a=pickDone]'); await p.waitForTimeout(300);
+}
 (async () => {
   const b = await chromium.launch();
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
@@ -124,7 +133,7 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
   console.log('4. Дні народження');
   await p.evaluate(() => { U.stack = []; navigate('birthdays'); }); await p.waitForTimeout(100);
   await p.click('#fab'); await p.waitForTimeout(350);
-  await p.fill('#pName', 'Мама'); await p.fill('#pDate', d(5).replace(/^\d{4}/, '1968')); await p.click('[data-a=seg][data-group=pRem][data-val="3"]');
+  await p.fill('#pName', 'Мама'); await pickDate(p, 'pDate', d(5).replace(/^\d{4}/, '1968')); await p.click('[data-a=seg][data-group=pRem][data-val="3"]');
   await p.click('[data-a=personSave]'); await p.waitForTimeout(200);
   const per = await p.evaluate(() => { const x = S.people[0]; return { age: Birthdays.currentAge(x), next: Birthdays.next(x), up: Birthdays.upcoming()[0].days }; });
   ok(per.up === 5, 'зворотний відлік 5 днів'); ok(per.age === new Date().getFullYear() - 1968 - 1 || per.age === new Date().getFullYear() - 1968, 'вік ' + per.age);
@@ -164,7 +173,7 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
   console.log('6. Хотілки');
   await p.evaluate(() => navigate('wishes')); await p.waitForTimeout(100);
   await p.click('#fab'); await p.waitForTimeout(350);
-  await p.fill('#wTitle', 'Телефон'); await p.fill('#wPrice', '30000'); await p.fill('#wStart', '8000'); await p.fill('#wDue', d(200));
+  await p.fill('#wTitle', 'Телефон'); await p.fill('#wPrice', '30000'); await p.fill('#wStart', '8000'); await pickDate(p, 'wDue', d(200));
   await p.click('[data-a=wishSave]'); await p.waitForTimeout(200);
   const wi = await p.evaluate(() => Wishes.info(S.wishes[0]));
   ok(wi.left === 22000 && wi.pct === 27, `залишок ${wi.left}, ${wi.pct}%`); ok(wi.monthly === Math.ceil(22000 / Math.ceil(200 / 30.44)), 'щомісячно ' + wi.monthly);
@@ -308,6 +317,23 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
   await p.evaluate(() => closeSheet()); await p.waitForTimeout(300);
   await p.evaluate(() => { U.calView = 'week'; go('calendar'); });
   ok(await p.evaluate(() => $$('[data-a=calView]')[0].dataset.v === 'week' && $('[data-a=calView].on').dataset.v === 'week'), 'календар відкривається на тижні, «Тиждень» перший');
+
+  console.log('8e. Вибір дати й часу (барабани)');
+  await p.evaluate(() => { U.stack = []; go('calendar'); eventSheet(null, today()); }); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => $('#eDate').type === 'hidden' && !!$('.pick-btn[data-for=eDate]') && !!$('.pick-btn[data-for=eTime]')), 'системні поля дати/часу замінено кнопками');
+  await p.click('.pick-btn[data-for=eTime]'); await p.waitForTimeout(350);
+  ok(await p.locator('#pickerWrap.open #pkH').count() === 1 && await p.locator('#sheetWrap.open').count() === 1, 'барабани часу відкриваються поверх форми');
+  await p.screenshot({ path: shots + '04c-timepicker.png' });
+  for (const [w, i] of [['pkH', 19], ['pkMi', 2]]) { await p.evaluate(([w, i]) => { const el = document.getElementById(w); el.scrollTop = i * 44; el.dispatchEvent(new Event('scroll')); }, [w, i]); await p.waitForTimeout(220); }
+  await p.click('[data-a=pickDone]'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => $('#eTime').value === '19:10' && /19:10/.test($('.pick-btn[data-for=eTime]').textContent)), 'час 19:10 обрано барабанами');
+  await p.click('.pick-btn[data-for=eDate]'); await p.waitForTimeout(350);
+  await p.screenshot({ path: shots + '04d-datepicker.png' });
+  await p.evaluate(() => { const el = $('#pkM'); el.scrollTop = 1 * 44; el.dispatchEvent(new Event('scroll')); }); await p.waitForTimeout(250);
+  await p.evaluate(() => { const el = $('#pkD'); el.scrollTop = 30 * 44; el.dispatchEvent(new Event('scroll')); }); await p.waitForTimeout(250);
+  ok(await p.evaluate(() => $$('#pkD .pk-it').length <= 29 && Picker.st.d <= 29), 'лютий: днів у барабані менше, день обмежено');
+  await p.click('.picker button[data-a=pickCancel]'); await p.waitForTimeout(300);
+  await p.evaluate(() => closeSheet()); await p.waitForTimeout(300);
 
   console.log('8c. Налаштування + фото профілю');
   {

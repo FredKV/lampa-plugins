@@ -72,11 +72,8 @@ Object.assign(A, {
   taskToggle: d => { const t = S.tasks.find(x => x.id === d.id); if (!t) return; t.done = !t.done; save(); render(); if (t.done) toast('Виконано ✓'); },
   taskEdit: d => taskSheet(d.id),
   setDue: d => { $('#tDue').value = d.d === '' ? '' : addDays(today(), +d.d); syncDue(); },
-  pickDue: () => {
-    const inp = $('#tDue'); if (!inp) return;
-    try { if (inp.showPicker) { inp.showPicker(); return; } } catch (e) { }
-    inp.focus(); inp.click();
-  },
+  pickDue: () => { const inp = $('#tDue'); if (inp) Picker.open(inp); },
+
   taskSave: d => {
     const r = $('#sheetBody'); const title = $('#tTitle', r).value.trim();
     if (!title) return invalid('tTitle', 'Введіть назву');

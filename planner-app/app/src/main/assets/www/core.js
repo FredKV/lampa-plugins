@@ -409,6 +409,7 @@ function openSheet(html, onMount, onClose) {
   $('#sheet').scrollTop = 0;
   $('#sheetWrap').classList.add('open');
   sheetOnClose = onClose || null;
+  if (typeof enhancePickers === 'function') enhancePickers($('#sheetBody'));
   if (onMount) onMount($('#sheetBody'));
 }
 function closeSheet() {

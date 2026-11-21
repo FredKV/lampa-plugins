@@ -228,6 +228,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => { if (e.target.id === 'finSearch') { U.finFilter.q = e.target.value; clearTimeout(window.__fs); window.__fs = setTimeout(() => { render(); const el = $('#finSearch'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 400); } });
 window.onAndroidBack = () => {
+  if (typeof Picker !== 'undefined' && Picker.close()) return true;
   if (typeof closeDayPop === 'function' && closeDayPop()) return true;
   if (Lock.locked) return false;
   if ($('#lock').classList.contains('show')) { A.pinCancel(); return true; }
