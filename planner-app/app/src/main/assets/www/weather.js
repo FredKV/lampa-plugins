@@ -13,6 +13,7 @@ const WMO = {
 };
 const WMO_NIGHT = { 0: '🌙', 1: '🌙', 2: '☁️', 51: '🌧', 61: '🌧', 80: '🌧' };
 /** icon + text; at night sun icons become moon / clouds */
+const WD_SHORT_OF = s => ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'][parseYmd(s).getDay()];
 const wmo = (c, day = true) => { const w = WMO[c] || ['🌡', '—']; return day || !WMO_NIGHT[c] ? w : [WMO_NIGHT[c], w[1]]; };
 const pad2 = n => String(n).padStart(2, '0');
 const localStamp = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
@@ -94,9 +95,14 @@ const Weather = {
     const c = this.data();
     if (!c) return `<div class="card w-mini" data-a="go" data-page="weather"><div class="w-ic">${this.loading ? '⏳' : '⚠️'}</div><div class="grow"><b>${esc(p.name)}</b><div class="small muted">${this.loading ? 'Завантаження…' : esc(this.err || 'Немає даних')}</div></div></div>`;
     const cur = this.current(c.data), dl = c.data.daily;
-    return `<div class="card w-mini" data-a="go" data-page="weather"><div class="w-ic">${wmo(cur.weather_code, cur.day)[0]}</div>
-      <div class="grow"><b style="font-size:22px">${Math.round(cur.temperature_2m)}°</b> <span class="muted small">${esc(wmo(cur.weather_code)[1])}</span>
-      <div class="small muted">${esc(p.name)} · ${Math.round(dl.temperature_2m_min[0])}°…${Math.round(dl.temperature_2m_max[0])}°${cur.prob != null ? ` · 💧${cur.prob}%` : ''}</div></div><span class="muted">›</span></div>`;
+    const deg = v => `${Math.round(v)}°`.replace('-', '−');
+    const next = [1, 2, 3].filter(i => dl.time[i]).map(i => `<span class="muted">${WD_SHORT_OF(dl.time[i])}</span><span class="wd-ic">${wmo(dl.weather_code[i])[0]}</span>
+      <span class="wd-t"><b>${deg(dl.temperature_2m_max[i])}</b><span class="muted"> / ${deg(dl.temperature_2m_min[i])}</span></span>`).join('');
+    return `<div class="card w-day" data-a="go" data-page="weather">
+      <div class="wd-now"><div class="small muted">Сьогодні</div>
+        <div class="wd-cur"><span class="wd-big-ic">${wmo(cur.weather_code, cur.day)[0]}</span><b>${deg(cur.temperature_2m)}</b></div>
+        <div class="small muted ellipsis">${deg(dl.temperature_2m_min[0])}…${deg(dl.temperature_2m_max[0])} · ${esc(p.name)}</div></div>
+      <div class="wd-next">${next}</div></div>`;
   }
 };
 window.__resumeHooks.push(() => { if (Weather.place() && Weather.stale()) Weather.load(); });

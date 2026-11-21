@@ -763,3 +763,13 @@ h2 { font-size: 20px; }
 /* narrow phones: 5-option switchers still fit */
 .seg.seg-sm button { padding: 8px 0; }
 @media (max-width: 380px) { .seg.seg-sm button { font-size: 12px; } .seg button { font-size: 13px; } }
+
+/* home weather: today on the left, next 3 days in aligned columns on the right */
+.w-day { display: flex; padding: 0; overflow: hidden; cursor: pointer; }
+.w-day .wd-now { flex: 1.1; padding: 14px 16px; min-width: 0; }
+.w-day .wd-cur { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
+.w-day .wd-big-ic { font-size: 32px; line-height: 1; }
+.w-day .wd-cur b { font-size: 32px; letter-spacing: -1px; line-height: 1.1; }
+.w-day .wd-next { flex: 1; border-left: 1px solid var(--line); padding: 12px 14px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; align-content: center; row-gap: 8px; column-gap: 10px; font-size: 14px; }
+.w-day .wd-ic { text-align: center; font-size: 17px; }
+.w-day .wd-t { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }

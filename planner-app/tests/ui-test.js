@@ -179,6 +179,10 @@ async function pickDate(p, id, v) {
   await p.click('#sheetBody [data-a=wPick]'); await p.waitForTimeout(400);
   ok(await p.evaluate(() => !$('#sheetWrap').classList.contains('open') && Weather.place().name === 'Львів'), 'місто змінено');
   await p.screenshot({ path: shots + '07-weather.png', fullPage: true });
+  await p.evaluate(() => { U.stack = []; go('home'); }); await p.waitForTimeout(150);
+  const wd = await p.evaluate(() => { const rows = $$('.w-day .wd-ic'), ts = $$('.w-day .wd-t');
+    return { n: rows.length, icX: new Set(rows.map(r => Math.round(r.getBoundingClientRect().left + r.getBoundingClientRect().width / 2))).size, tR: new Set(ts.map(t => Math.round(t.getBoundingClientRect().right))).size, txt: $('.w-day').textContent.replace(/\s+/g, ' ') }; });
+  ok(wd.n === 3 && wd.icX === 1 && wd.tR === 1 && /Сьогодні/.test(wd.txt) && /6° \/ 1°/.test(wd.txt), 'погода на головній: сьогодні + 3 дні, значки й температури рівно в колонках');
   let calls = 0; await p.route('**/api.open-meteo.com/**', r => { calls++; r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(weather) }); });
   await p.evaluate(() => { U.stack = []; go('home'); }); await p.waitForTimeout(300);
   ok(calls === 0, 'кеш: повторний запит не робиться');
