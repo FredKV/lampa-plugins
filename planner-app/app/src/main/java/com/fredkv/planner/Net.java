@@ -22,7 +22,7 @@ final class Net {
             HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
             c.setRequestMethod(method);
             c.setConnectTimeout(20000);
-            c.setReadTimeout(120000);
+            c.setReadTimeout(45000);
             c.setRequestProperty("Accept", "application/json");
             if (headers != null) {
                 java.util.Iterator<String> it = headers.keys();

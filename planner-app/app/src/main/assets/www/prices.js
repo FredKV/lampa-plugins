@@ -224,19 +224,29 @@ function recipePrompt(dish, servings) {
 {"dish":"Назва","servings":${servings},"time":"~1 год","ingredients":[{"name":"Буряк","qty":2,"unit":"шт","grams":500,"count":2,"query":"буряк","must":["буряк"],"exclude":["варен"],"pantry":false}],"steps":["..."]}
 Якщо це не страва — {"error":"коротке пояснення"}.`;
 }
+function builtinRecipe(dish, servings) {
+  const q = dish.toLowerCase().replace(/[ʼ'’]/g, '');
+  const b = (window.BUILTIN_RECIPES || []).find(r => r.keys.some(k => q.includes(k.replace(/[ʼ'’]/g, ''))));
+  if (!b) return null;
+  return scaleRecipe({ id: '', dish: b.dish, servings: b.servings, base: b.servings, time: b.time, steps: b.steps, ingredients: b.ingredients.map(normIngredient), source: 'builtin' }, servings);
+}
 async function buildRecipe(dish, servings) {
   if (Keys.has()) {
+    try { return await buildRecipeAI(dish, servings); }
+    catch (e) { const r = builtinRecipe(dish, servings); if (r) { toast('Gemini не відповів — взяв вбудований рецепт'); return r; } throw e; }
+  }
+  const r = builtinRecipe(dish, servings);
+  if (!r) throw new Error('Без ключа Gemini доступні лише вбудовані рецепти: борщ, вареники, олівʼє, сирники, карбонара, млинці. Додайте безкоштовний ключ у Налаштуваннях, щоб складати рецепт будь-якої страви.');
+  return r;
+}
+async function buildRecipeAI(dish, servings) {
+  {
     const { text } = await gemini({ contents: [{ role: 'user', parts: [{ text: recipePrompt(dish, servings) }] }], generationConfig: { temperature: 0.2, responseMimeType: 'application/json' } });
     const j = extractJson(text);
     if (j.error) throw new Error(j.error);
     if (!Array.isArray(j.ingredients) || !j.ingredients.length) throw new Error('Не вдалося скласти список інгредієнтів');
     return { id: '', dish: String(j.dish || dish).slice(0, 80), servings, base: servings, time: String(j.time || ''), steps: (j.steps || []).map(String).slice(0, 12), ingredients: j.ingredients.map(normIngredient), source: 'ai' };
   }
-  const q = dish.toLowerCase().replace(/[ʼ'’]/g, '');
-  const b = (window.BUILTIN_RECIPES || []).find(r => r.keys.some(k => q.includes(k.replace(/[ʼ'’]/g, ''))));
-  if (!b) throw new Error('Без ключа Gemini доступні лише вбудовані рецепти: борщ, вареники, олівʼє, сирники, карбонара, млинці. Додайте безкоштовний ключ у Налаштуваннях, щоб складати рецепт будь-якої страви.');
-  const r = { id: '', dish: b.dish, servings: b.servings, base: b.servings, time: b.time, steps: b.steps, ingredients: b.ingredients.map(normIngredient), source: 'builtin' };
-  return scaleRecipe(r, servings);
 }
 function scaleRecipe(r, servings) {
   const k = servings / (r.servings || 1);
@@ -332,7 +342,7 @@ PAGES.prices = () => {
         <button class="btn btn-inline" data-a="dpBuild" ${DP.loading ? 'disabled' : ''}>Скласти список</button>
       </div>
     </div>
-    ${DP.loading ? `<div class="card empty"><div class="spinner"></div>Складаю рецепт і список інгредієнтів…</div>` : ''}
+    ${DP.loading ? `<div class="card empty"><div class="spinner"></div>Складаю рецепт і список інгредієнтів…<div class="small muted" id="dpSec" style="margin-top:6px"></div></div>` : ''}
     ${DP.err && !DP.loading ? `<div class="card"><b class="red">Не вдалося</b><div class="small muted" style="margin-top:6px">${esc(DP.err)}</div></div>` : ''}
     ${S.recipes.length ? `<h2>Збережені рецепти</h2><div class="list">${S.recipes.map(r => `<div class="item" data-a="dpOpen" data-id="${r.id}"><div class="emoji sm">🍽</div>
       <div class="grow"><div class="title">${esc(r.dish)}</div><div class="meta">${r.servings} порц. · ${r.ingredients.length} інгр.${r.results ? ` · ціни від ${fmtDateTime(r.results.ts)}` : ''}</div></div><button class="del-btn" data-a="recipeDel" data-id="${r.id}" aria-label="Видалити рецепт">${ICONS.trash}</button></div>`).join('')}</div>` : ''}
@@ -496,8 +506,10 @@ Object.assign(A, {
     const ex = S.recipes.find(r => r.dish.toLowerCase() === U.dp.dish.toLowerCase());
     if (ex && await ask({ title: 'Рецепт уже збережено', text: `«${esc(ex.dish)}» є серед збережених. Відкрити його чи скласти новий?`, ok: 'Відкрити збережений', cancel: 'Скласти новий' })) { A.dpOpen({ id: ex.id }); return; }
     DP.loading = true; DP.err = ''; render();
+    const t0 = Date.now(), tick = setInterval(() => { const el = $('#dpSec'); if (el) el.textContent = `${Math.round((Date.now() - t0) / 1000)} с`; }, 1000);
     try { U.dp.recipe = await buildRecipe(U.dp.dish, U.dp.servings); DP.loading = false; navigate('recipe'); }
     catch (e) { DP.loading = false; DP.err = e.message || String(e); render(); }
+    finally { clearInterval(tick); }
   },
   recipeDel: async d => {
     const r = S.recipes.find(x => x.id === d.id); if (!r) return;

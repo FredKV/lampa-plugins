@@ -309,6 +309,7 @@ const Keys = {
 /* model is chosen automatically: the best free one first, the next on «not found / limit / overloaded» */
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-2.0-flash'];
 let geminiOk = '';   // model that answered last time in this session
+let GEMINI_TIMEOUT = 30000; // per model; then the next one is tried
 function geminiRaw(body, model) {
   if (Bridge && Bridge.gemini) return new Promise(res => { const id = uid(); pendingCb[id] = res; Bridge.gemini(model, JSON.stringify(body), id); });
   const k = localStorage.getItem(DEV_KEY) || '';
@@ -320,18 +321,27 @@ async function gemini(body) {
   const order = geminiOk ? [geminiOk, ...GEMINI_MODELS.filter(m => m !== geminiOk)] : GEMINI_MODELS;
   let r, data = null;
   for (const model of order) {
-    r = await geminiRaw(body, model);
+    // 2.5 models «think» before answering — for recipes it only slows things down
+    const b = model.startsWith('gemini-2.5') ? { ...body, generationConfig: { ...(body.generationConfig || {}), thinkingConfig: { thinkingBudget: 0 } } } : body;
+    r = await Promise.race([geminiRaw(b, model), new Promise(res => setTimeout(() => res({ status: 408, text: '' }), GEMINI_TIMEOUT))]);
     data = null; try { data = JSON.parse(r.text); } catch (e) { }
     if (r.status === 200) { geminiOk = model; break; }
-    if (![404, 429, 500, 503].includes(r.status)) break; // key/network problems: another model won't help
+    if (![0, 404, 408, 429, 500, 503].includes(r.status) || (r.status === 0 && /UnknownHost|ENOTFOUND/i.test(r.text || ''))) break; // key/network problems: another model won't help
   }
   if (r.status !== 200) {
     const msg = data && data.error ? data.error.message : r.text;
     let err;
-    if (r.status === 0) err = 'Немає підключення до інтернету.';
+    if (r.status === 0) {
+      const t = String(r.text || '');
+      err = /UnknownHost|ENOTFOUND|Unable to resolve/i.test(t) ? 'Немає підключення до інтернету.'
+        : /Timeout|timed out/i.test(t) ? 'Gemini занадто довго не відповідає. Спробуйте ще раз.'
+        : /SSL|Certificate|handshake/i.test(t) ? 'Помилка захищеного зʼєднання з Gemini. Перевірте дату й час на телефоні.'
+        : `Не вдалося зʼєднатися з Gemini (${t.replace(/^.*?(\w+Exception)/, '$1').slice(0, 80)}).`;
+    }
     else if ((r.status === 400 && /api key/i.test(msg || '')) || r.status === 401) err = 'Ключ Gemini недійсний. Перевірте його в налаштуваннях.';
     else if (r.status === 403) err = 'Доступ заборонено (403). Перевірте ключ або чи доступний Gemini API у вашому регіоні.';
     else if (r.status === 404) err = 'Gemini зараз недоступний для цього ключа. Спробуйте пізніше.';
+    else if (r.status === 408) err = 'Gemini занадто довго не відповідає. Спробуйте ще раз трохи пізніше.';
     else if (r.status === 429) err = 'Вичерпано безкоштовний ліміт запитів Gemini. Зачекайте й спробуйте пізніше.';
     else if (r.status >= 500) err = 'Сервіс Gemini тимчасово недоступний. Спробуйте пізніше.';
     else err = `Помилка ${r.status}: ${String(msg || '').slice(0, 200)}`;

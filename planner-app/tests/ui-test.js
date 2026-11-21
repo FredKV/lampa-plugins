@@ -458,6 +458,25 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8k. Gemini: швидкість і зависання');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const bodies = [];
+    await q.route('**/generativelanguage.googleapis.com/**', r => { const m = r.request().url().match(/models\/([^:]+)/)[1]; bodies.push({ m, b: JSON.parse(r.request().postData() || '{}') });
+      if (m === 'gemini-2.5-flash') return; // hangs — never answers
+      r.fulfill({ status: 503, contentType: 'application/json', body: '{"error":{"message":"overloaded"}}' }); });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const res = await q.evaluate(async () => {
+      Keys.set('AQ.testkey1234567890abcdef'); geminiOk = ''; GEMINI_TIMEOUT = 1500;
+      const t0 = Date.now(); let err = '', r = null;
+      try { r = await buildRecipe('Карбонара', 2); } catch (e) { err = e.message; }
+      return { ms: Date.now() - t0, src: r && r.source, n: r && r.ingredients.length, err };
+    });
+    ok(bodies[0] && bodies[0].b.generationConfig.thinkingConfig && bodies[0].b.generationConfig.thinkingConfig.thinkingBudget === 0, 'gemini-2.5: «думання» вимкнено — відповідає швидше');
+    ok(res.src === 'builtin' && res.n > 3, `Gemini завис/перевантажений → вбудований рецепт карбонари за ${Math.round(res.ms / 1000)} с`);
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);
