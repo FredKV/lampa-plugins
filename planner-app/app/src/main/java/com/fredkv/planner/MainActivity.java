@@ -48,6 +48,10 @@ public class MainActivity extends Activity {
     private FrameLayout root;
     private int insetTop = 0, insetBottom = 0;
     private boolean pageReady = false;
+    /** Solid cover shown over the WebView until the JS lock screen is drawn. */
+    private View cover;
+    private long stoppedAt = 0;
+    private static final long LOCK_AFTER_MS = 60000;
 
     private ValueCallback<Uri[]> fileCallback;
     private Uri cameraUri;
@@ -65,7 +69,15 @@ public class MainActivity extends Activity {
         web.setBackgroundColor(Color.TRANSPARENT);
         root.addView(web, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        cover = new View(this);
+        cover.setBackgroundColor(prefs().getInt("bg_color", 0xFFE6F0FB));
+        cover.setClickable(true);
+        cover.setVisibility(prefs().getBoolean("lock_on", false) ? View.VISIBLE : View.GONE);
+        root.addView(cover, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        root.setBackgroundColor(prefs().getInt("bg_color", 0xFFE6F0FB));
         setContentView(root);
+        if (cover.getVisibility() == View.VISIBLE) cover.postDelayed(this::hideCover, 5000);
 
         Window w = getWindow();
         if (Build.VERSION.SDK_INT >= 30) {
@@ -172,6 +184,31 @@ public class MainActivity extends Activity {
         fileCallback.onReceiveValue(result);
         fileCallback = null;
         cameraUri = null;
+    }
+
+    private android.content.SharedPreferences prefs() {
+        return getSharedPreferences("lad_ui", MODE_PRIVATE);
+    }
+
+    private void hideCover() {
+        if (cover != null) cover.setVisibility(View.GONE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        stoppedAt = System.currentTimeMillis();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (stoppedAt > 0 && prefs().getBoolean("lock_on", false)
+                && System.currentTimeMillis() - stoppedAt > LOCK_AFTER_MS && cover != null) {
+            cover.setBackgroundColor(prefs().getInt("bg_color", 0xFFE6F0FB));
+            cover.setVisibility(View.VISIBLE);
+            cover.postDelayed(this::hideCover, 5000);
+        }
     }
 
     @Override
@@ -350,6 +387,18 @@ public class MainActivity extends Activity {
             }
         }
 
+        /** JS tells whether a PIN lock is on, so the next start can cover the content natively. */
+        @JavascriptInterface
+        public void setLock(boolean on) {
+            prefs().edit().putBoolean("lock_on", on).apply();
+        }
+
+        /** The JS lock screen (or the app itself, when no lock is needed) has been drawn. */
+        @JavascriptInterface
+        public void lockReady() {
+            runOnUiThread(() -> { if (cover != null) cover.postDelayed(MainActivity.this::hideCover, 60); });
+        }
+
         /** Fingerprint / face unlock is available and enrolled on this device. */
         @JavascriptInterface
         public boolean canBiometric() {
@@ -434,6 +483,8 @@ public class MainActivity extends Activity {
                 int color;
                 try { color = Color.parseColor(bg); } catch (Exception e) { color = dark ? Color.BLACK : Color.WHITE; }
                 root.setBackgroundColor(color);
+                prefs().edit().putInt("bg_color", color).apply();
+                if (cover != null) cover.setBackgroundColor(color);
                 Window w = getWindow();
                 if (Build.VERSION.SDK_INT >= 30) {
                     WindowInsetsController ic = w.getInsetsController();

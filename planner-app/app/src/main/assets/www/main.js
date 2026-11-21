@@ -186,7 +186,7 @@ Object.assign(A, {
   pinToggle: async (d, el) => {
     if (S.settings.pin) {
       if (!await ask({ title: 'Вимкнути PIN-код?', ok: 'Вимкнути' })) return;
-      S.settings.pin = ''; S.settings.bio = false; save(); toast('PIN-код вимкнено'); settingsSheet();
+      S.settings.pin = ''; S.settings.bio = false; save(); LockNative.sync(); toast('PIN-код вимкнено'); settingsSheet();
     } else {
       closeSheet();
       const ok = await new Promise(res => Lock.show('set', res));
@@ -254,6 +254,7 @@ window.addEventListener('error', e => console.error(e.message));
   applyTheme();
   if (S.settings.pin) Lock.show('unlock');
   render();
+  LockNative.sync(); LockNative.ready();
   Dir.load().catch(() => { });
   syncReminders();
   setInterval(() => { if (!U.stack.length && U.tab === 'home' && !$('#sheetWrap').classList.contains('open')) renderHeader(); }, 60000);

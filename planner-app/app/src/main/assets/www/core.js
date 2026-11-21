@@ -485,7 +485,7 @@ function ensureNotifPermission() {
 window.__notifPerm = ok => { if (!ok) toast('Сповіщення вимкнені — нагадування не зʼявлятимуться'); };
 
 /* ЛАД sign (launcher icon): Л+А triangle, А bar, Д base */
-const LAD_SIGN = `<svg viewBox="16 18 76 72" aria-hidden="true"><defs><linearGradient id="ladg" gradientUnits="userSpaceOnUse" x1="22" y1="24" x2="86" y2="83"><stop offset="0" stop-color="#8ec5ff"/><stop offset=".5" stop-color="#7be3a6"/><stop offset="1" stop-color="#ff9ecb"/></linearGradient></defs><path d="M30 72 L54 24 L78 72 M43 55 L65 55 M22 83 L22 72 L86 72 L86 83" fill="none" stroke="url(#ladg)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const LAD_SIGN = `<svg viewBox="3 7 101 100" aria-hidden="true"><defs><linearGradient id="ladg" gradientUnits="userSpaceOnUse" x1="14" y1="20" x2="94" y2="90"><stop offset="0" stop-color="#8ec5ff"/><stop offset=".5" stop-color="#7be3a6"/><stop offset="1" stop-color="#ff9ecb"/></linearGradient></defs><path d="M24.5,10 H61 V24 H49 L29,72 H12 L33,24 H24.5 Z" fill="url(#ladg)" fill-rule="evenodd"/><path d="M50.5,27 H61.5 L80,71.5 H34 Z M57.5,56 L65,71.5 H52.5 Z" fill="none" stroke="#0b0b0d" stroke-width="3.2" stroke-linejoin="round"/><path d="M50.5,27 H61.5 L80,71.5 H34 Z M57.5,56 L65,71.5 H52.5 Z" fill="url(#ladg)" fill-rule="evenodd"/><path d="M24,80 H44 L43,90 H47 V103.5 H17 V90 H25 Z M71.5,80 H87 L87.5,90 H96 V103.5 H68.5 V90 H72 Z" fill="none" stroke="#0b0b0d" stroke-width="3.2" stroke-linejoin="round"/><path d="M24,80 H44 L43,90 H47 V103.5 H17 V90 H25 Z M71.5,80 H87 L87.5,90 H96 V103.5 H68.5 V90 H72 Z" fill="url(#ladg)" fill-rule="evenodd"/><path d="M6.5,71.5 H80 Q86,69 87.5,57 H100.5 L96.5,85.5 H6.5 Z" fill="none" stroke="#0b0b0d" stroke-width="3.2" stroke-linejoin="round"/><path d="M6.5,71.5 H80 Q86,69 87.5,57 H100.5 L96.5,85.5 H6.5 Z" fill="url(#ladg)" fill-rule="evenodd"/></svg>`;
 
 /* ---------------- Biometrics (fingerprint / face via system prompt) ---------------- */
 const Bio = {
@@ -533,7 +533,7 @@ const Lock = {
     const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-a="pinKey" data-k="${n}">${n}</button>`).join('');
     const left = unlock ? (this.bioOn() ? `<button data-a="pinBio" class="kp-icon kp-bio" aria-label="Біометрія">${ICONS.finger}</button>` : '<span></span>')
       : '<button data-a="pinCancel" class="kp-icon kp-text">Скасувати</button>';
-    $('#lock').innerHTML = `<div class="lk-glow"></div><div class="lock-in">
+    $('#lock').innerHTML = `<div class="lock-in">
       ${head}
       <div class="lock-title">${unlock ? (name ? `Привіт, ${esc(name)}` : 'Привіт!') : this.title()}</div>
       <div class="lock-sub">${unlock ? (this.bioOn() ? 'Введіть PIN-код або відбиток пальця' : 'Введіть PIN-код') : this.first ? 'Ще раз для підтвердження' : 'Його запитуватимемо при вході'}</div>
@@ -552,7 +552,7 @@ const Lock = {
       if (await hashPin(this.entered) === S.settings.pin) this.hide();
       else { this.entered = ''; setTimeout(() => this.draw('Невірний PIN'), 120); }
     } else if (!this.first) { this.first = this.entered; this.entered = ''; setTimeout(() => this.draw(), 120); }
-    else if (this.first === this.entered) { S.settings.pin = await hashPin(this.entered); save(); this.hide(); toast('PIN-код встановлено'); this.resolve && this.resolve(true); }
+    else if (this.first === this.entered) { S.settings.pin = await hashPin(this.entered); save(); LockNative.sync(); this.hide(); toast('PIN-код встановлено'); this.resolve && this.resolve(true); }
     else { this.first = ''; this.entered = ''; setTimeout(() => this.draw('Коди не збігаються'), 120); }
   }
 };
@@ -562,8 +562,14 @@ Object.assign(A, {
   pinCancel: () => { Lock.hide(); Lock.resolve && Lock.resolve(false); }
 });
 window.__onPause = () => { Lock.pausedAt = Date.now(); };
+/* native side keeps a solid cover over the app until the lock is drawn */
+const LockNative = {
+  sync() { try { Bridge && Bridge.setLock && Bridge.setLock(!!S.settings.pin); } catch (e) { } },
+  ready() { requestAnimationFrame(() => requestAnimationFrame(() => { try { Bridge && Bridge.lockReady && Bridge.lockReady(); } catch (e) { } })); }
+};
 window.__onResume = () => {
   if (S.settings.pin && !Lock.locked && Lock.pausedAt && Date.now() - Lock.pausedAt > 60000) Lock.show('unlock');
+  LockNative.ready();
   if (window.__resumeHooks) window.__resumeHooks.forEach(f => f());
 };
 window.__resumeHooks = [];
