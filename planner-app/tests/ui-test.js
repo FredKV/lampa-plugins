@@ -311,6 +311,21 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8f. Вибір ярлика');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.addInitScript(() => { window.__icon = 'olive'; window.AndroidBridge = { getIcon: () => window.__icon, setIcon: v => { window.__icon = v; } }; });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => settingsSheet()); await q.waitForTimeout(300);
+    ok(await q.locator('.icon-pick button').count() === 5 && await q.locator('.icon-pick button.on[data-v=olive]').count() === 1, 'у налаштуваннях 5 ярликів, вибраний поточний');
+    await q.click('.icon-pick [data-v=yellow]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => window.__icon === 'yellow' && !!$('.icon-pick button.on[data-v=yellow]')), 'вибір жовтого ярлика передано в Android');
+    await q.screenshot({ path: shots + '16-icon-pick.png' });
+    ok(e2.length === 0, 'без JS-помилок (ярлик) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);

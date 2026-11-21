@@ -517,6 +517,10 @@ window.__notifPerm = ok => { if (!ok) toast('Сповіщення вимкнен
 /* ЛАД sign (launcher icon): one continuous line */
 const LAD_SIGN = `<svg viewBox="190 340 640 340" aria-hidden="true"><path d="M222,640 L264.7,419.2 A36,36 0 0,1 335.4,419.7 L369.6,610.3 A36,36 0 0,0 440.4,610.3 L474.6,419.7 A36,36 0 0,1 545.4,419.7 L579.6,610.3 A36,36 0 0,0 650.4,610.3 L684.6,419.7 A36,36 0 0,1 755.3,418.9 L800,640 L700,640 M505,527 L562,527" fill="none" stroke="#000" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
+/* launcher icons (activity-alias in the manifest): id, name, background, line */
+const APP_ICONS = [['olive', 'Оливковий', '#C4C17C', '#000'], ['terra', 'Теракотовий', '#D0694A', '#000'], ['yellow', 'Жовтий', '#FDD935', '#1B0A3F'], ['white', 'Білий', '#FFFFFF', '#000'], ['black', 'Чорний', '#000000', '#FFF']];
+const curIcon = () => { try { return (Bridge && Bridge.getIcon && Bridge.getIcon()) || 'olive'; } catch (e) { return 'olive'; } };
+
 /* ---------------- Biometrics (fingerprint / face via system prompt) ---------------- */
 const Bio = {
   available() { try { return !!(Bridge && Bridge.canBiometric && Bridge.canBiometric()); } catch (e) { return false; } },

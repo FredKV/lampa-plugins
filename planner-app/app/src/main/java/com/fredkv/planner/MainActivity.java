@@ -52,6 +52,8 @@ public class MainActivity extends Activity {
     private View cover;
     private long stoppedAt = 0;
     private static final long LOCK_AFTER_MS = 60000;
+    private static final String ICON_PKG = "com.fredkv.planner"; // manifest namespace of the aliases
+    private static final String[] ICONS = {"olive", "terra", "yellow", "white", "black"};
 
     private ValueCallback<Uri[]> fileCallback;
     private Uri cameraUri;
@@ -385,6 +387,30 @@ public class MainActivity extends Activity {
             } else {
                 js("window.__notifPerm&&window.__notifPerm(true)");
             }
+        }
+
+        /** Launcher icon chosen in Settings (activity-alias .Icon_<id>). */
+        @JavascriptInterface
+        public String getIcon() {
+            PackageManager pm = getPackageManager();
+            for (String id : ICONS) {
+                int st = pm.getComponentEnabledSetting(new android.content.ComponentName(MainActivity.this, ICON_PKG + ".Icon_" + id));
+                if (st == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) return id;
+            }
+            return "olive";
+        }
+
+        @JavascriptInterface
+        public void setIcon(final String id) {
+            boolean known = false;
+            for (String x : ICONS) if (x.equals(id)) known = true;
+            if (!known) return;
+            PackageManager pm = getPackageManager();
+            // enable the new one first so the app never has zero launcher entries
+            pm.setComponentEnabledSetting(new android.content.ComponentName(MainActivity.this, ICON_PKG + ".Icon_" + id),
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+            for (String x : ICONS) if (!x.equals(id)) pm.setComponentEnabledSetting(new android.content.ComponentName(MainActivity.this, ICON_PKG + ".Icon_" + x),
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
         }
 
         /** JS tells whether a PIN lock is on, so the next start can cover the content natively. */

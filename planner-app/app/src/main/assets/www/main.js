@@ -40,6 +40,9 @@ function settingsSheet() {
     <div class="card st-card">
       <div class="seg flat" style="margin:0">${[['light', '☀️ Світла'], ['dark', '🌙 Темна'], ['auto', '📱 Авто']].map(([v, l]) => `<button data-a="seg" data-group="theme" data-val="${v}" class="${s.theme === v ? 'on' : ''}">${l}</button>`).join('')}</div>
     </div>
+    ${Bridge && Bridge.setIcon ? `<div class="card st-card"><b>Ярлик додатка</b>
+      <div class="icon-pick">${APP_ICONS.map(([id, label, bg, line]) => `<button data-a="iconPick" data-v="${id}" class="${curIcon() === id ? 'on' : ''}" aria-label="${label}">
+        <span style="background:${bg}">${LAD_SIGN.replace('stroke="#000"', `stroke="${line}"`)}</span></button>`).join('')}</div></div>` : ''}
     <div class="card st-card" style="padding:2px 14px">
       <div class="switch"><b>🔔 Сповіщення</b>${toggleHtml('stNotif', s.notif).replace('data-a="toggle"', 'data-a="notifToggle"')}</div>
       <div class="switch" style="border-top:1px solid var(--line)"><b>🔒 PIN-код</b>${toggleHtml('stPin', !!s.pin).replace('data-a="toggle"', 'data-a="pinToggle"')}</div>
@@ -182,6 +185,12 @@ Object.assign(A, {
     if (S.settings.bio) { S.settings.bio = false; save(); toast('Біометрію вимкнено'); return settingsSheet(); }
     if (!await Bio.ask('Увімкнути вхід за біометрією')) return toast('Не вдалося підтвердити');
     S.settings.bio = true; save(); toast('Біометрію увімкнено'); settingsSheet();
+  },
+  iconPick: d => {
+    if (curIcon() === d.v) return;
+    try { Bridge.setIcon(d.v); } catch (e) { toast('Не вдалося змінити ярлик'); return; }
+    $$('.icon-pick button').forEach(b => b.classList.toggle('on', b.dataset.v === d.v));
+    toast('Ярлик змінено — на робочому столі він оновиться за кілька секунд');
   },
   pinToggle: async (d, el) => {
     if (S.settings.pin) {
