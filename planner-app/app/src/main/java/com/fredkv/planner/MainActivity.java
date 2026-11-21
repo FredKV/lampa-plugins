@@ -381,9 +381,29 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public boolean notificationsAllowed() {
-            if (Build.VERSION.SDK_INT >= 33)
-                return checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
-            return true;
+            if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
+            android.app.NotificationManager nm = getSystemService(android.app.NotificationManager.class);
+            return nm == null || nm.areNotificationsEnabled();
+        }
+
+        /** Shows a notification right now (Settings → «Перевірити сповіщення»). */
+        @JavascriptInterface
+        public void notifyNow(String title, String text) {
+            Reminders.show(MainActivity.this, 999, Reminders.CHANNEL, title, text);
+        }
+
+        /** Opens the system notification settings of the app. */
+        @JavascriptInterface
+        public void openNotifSettings() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+                    i.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName());
+                    startActivity(i);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "Відкрийте налаштування телефона → Програми → ЛАД → Сповіщення", Toast.LENGTH_LONG).show();
+                }
+            });
         }
 
         @JavascriptInterface

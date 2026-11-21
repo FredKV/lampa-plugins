@@ -562,7 +562,7 @@ function syncReminders() {
   if (S.settings.notif) {
     REMINDER_PROVIDERS.forEach(f => { try { list = list.concat(f()); } catch (e) { console.error(e); } });
     const now = Date.now(), horizon = now + 120 * 86400000;
-    list = list.filter(r => r.at > now && r.at < horizon).sort((a, b) => a.at - b.at).slice(0, 100);
+    list = list.filter(r => r.at > now && r.at < horizon).sort((a, b) => a.at - b.at).slice(0, 300);
   }
   Bridge.setReminders(JSON.stringify(list));
 }

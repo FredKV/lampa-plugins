@@ -46,6 +46,9 @@ function settingsSheet() {
         <span style="background:${bg}">${LAD_SIGN.replace('stroke="#000"', `stroke="${line}"`)}</span></button>`).join('')}</div></div>` : ''}
     <div class="card st-card" style="padding:2px 14px">
       <div class="switch"><b>🔔 Сповіщення</b>${toggleHtml('stNotif', s.notif).replace('data-a="toggle"', 'data-a="notifToggle"')}</div>
+      ${s.notif && Bridge && Bridge.notificationsAllowed ? (Bridge.notificationsAllowed()
+        ? `<div class="small muted" style="margin:-6px 0 10px">Працюють ✓ · <b class="link" data-a="notifTest">надіслати тестове</b></div>`
+        : `<div class="small red" style="margin:-6px 0 10px">Сповіщення заборонені на телефоні · <b class="link" data-a="notifFix">дозволити</b></div>`) : ''}
       <div class="switch" style="border-top:1px solid var(--line)"><b>🔒 PIN-код</b>${toggleHtml('stPin', !!s.pin).replace('data-a="toggle"', 'data-a="pinToggle"')}</div>
       ${s.pin && Bio.available() ? `<div class="switch" style="border-top:1px solid var(--line)"><b>👆 Відбиток / обличчя</b>${toggleHtml('stBio', !!s.bio).replace('data-a="toggle"', 'data-a="bioToggle"')}</div>` : ''}
     </div>
@@ -130,6 +133,8 @@ Object.assign(A, {
   fab: () => { const top = U.stack[U.stack.length - 1]; const f = FABS[top ? top.page : U.tab]; if (f) f(); },
 
   openKey: () => openUrl('https://aistudio.google.com/apikey'),
+  notifTest: () => { try { Bridge.notifyNow('🔔 ЛАД', 'Сповіщення працюють! Так виглядатимуть нагадування.'); toast('Надіслано — подивись у шторку'); } catch (e) { toast('Не вдалося'); } },
+  notifFix: () => { if (Bridge.requestNotifications) Bridge.requestNotifications(); setTimeout(() => { if (!Bridge.notificationsAllowed() && Bridge.openNotifSettings) Bridge.openNotifSettings(); }, 1500); },
   notifToggle: (d, el) => {
     S.settings.notif = !S.settings.notif; el.classList.toggle('on', S.settings.notif); save();
     if (S.settings.notif) ensureNotifPermission();
@@ -265,6 +270,7 @@ window.addEventListener('error', e => console.error(e.message));
   LockNative.sync(); LockNative.ready();
   Dir.load().catch(() => { });
   syncReminders();
+  if (S.settings.notif && Bridge && Bridge.notificationsAllowed && !Bridge.notificationsAllowed() && !S.settings.notifAsked) { S.settings.notifAsked = true; save(); ensureNotifPermission(); }
   setInterval(() => { if (!U.stack.length && U.tab === 'home' && !$('#sheetWrap').classList.contains('open')) renderHeader(); }, 60000);
 })();
 

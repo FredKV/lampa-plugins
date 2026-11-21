@@ -47,7 +47,7 @@ final class Reminders {
         try {
             JSONArray arr = new JSONArray(json == null ? "[]" : json);
             long now = System.currentTimeMillis();
-            for (int k = 0; k < arr.length() && k < 120; k++) {
+            for (int k = 0; k < arr.length() && k < 300; k++) {
                 JSONObject o = arr.getJSONObject(k);
                 long at = o.optLong("at");
                 if (at <= now) continue;

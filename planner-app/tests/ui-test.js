@@ -10,6 +10,7 @@ const swipe = (page, dx) => page.evaluate(dx => {
   el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [t(x)], changedTouches: [t(x)] }));
   el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [t(x + dx)] }));
 }, dx);
+const addDaysN = (s, n) => { const x = new Date(s + 'T12:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
 const d = n => { const x = new Date(); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
 
 const weather = { current: { time: new Date().toISOString().slice(0, 13) + ':00', temperature_2m: 3.4, apparent_temperature: -1.2, relative_humidity_2m: 81, precipitation: 0.2, weather_code: 61, wind_speed_10m: 5.3, is_day: 1 },
@@ -148,7 +149,7 @@ async function pickDate(p, id, v) {
   console.log('4. Дні народження');
   await p.evaluate(() => { U.stack = []; navigate('birthdays'); }); await p.waitForTimeout(100);
   await p.click('#fab'); await p.waitForTimeout(350);
-  await p.fill('#pName', 'Мама'); await pickDate(p, 'pDate', d(5).replace(/^\d{4}/, '1968')); await p.click('[data-a=seg][data-group=pRem][data-val="3"]');
+  await p.fill('#pName', 'Мама'); await pickDate(p, 'pDate', d(5).replace(/^\d{4}/, '1968'));
   await p.click('[data-a=personSave]'); await p.waitForTimeout(200);
   const per = await p.evaluate(() => { const x = S.people[0]; return { age: Birthdays.currentAge(x), next: Birthdays.next(x), up: Birthdays.upcoming()[0].days }; });
   ok(per.up === 5, 'зворотний відлік 5 днів'); ok(per.age === new Date().getFullYear() - 1968 - 1 || per.age === new Date().getFullYear() - 1968, 'вік ' + per.age);
@@ -423,6 +424,26 @@ async function pickDate(p, id, v) {
     await q.click('.sf-offer >> nth=1'); await q.waitForTimeout(150);
     ok(await q.evaluate(() => S.shop.length === 1 && S.shop[0].store === 'АТБ' && S.shop[0].price === 83.8 && S.shop[0].name === 'Молоко'), 'обраний варіант додано у список з магазином і ціною');
     ok(e2.length === 0, 'без JS-помилок (пошук товару) ' + e2.join('; '));
+    await q.close();
+  }
+
+  console.log('8j. Сповіщення про дні народження');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    await q.addInitScript(() => { window.__sent = null; window.__now = []; window.AndroidBridge = { setReminders: j => { window.__sent = JSON.parse(j); }, notificationsAllowed: () => true, notifyNow: (t, x) => window.__now.push(t + ' ' + x) }; });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const r = await q.evaluate(() => {
+      const bd = addDays(today(), 20); S.people.push({ id: 'p9', name: 'Оля', bday: '1990' + bd.slice(4), gifts: [], budget: 0 });
+      for (let i = 0; i < 6; i++) S.goals.push({ id: 'g' + i, type: 'habit', title: 'Звичка ' + i, time: '08:00', log: {}, attempts: [] });
+      save(); syncReminders();
+      return window.__sent.filter(x => /^bd/.test(x.id)).map(x => ({ id: x.id.split('-')[0], d: ymd(new Date(x.at)), title: x.title })).concat([{ bd }]);
+    });
+    const bd = r.pop().bd;
+    const want = { bd14: -14, bd7: -7, bd0: 0 };
+    ok(r.length === 3 && r.every(x => x.d === (q, addDaysN(bd, want[x.id]))), 'день народження: нагадування за 2 тижні, за тиждень і в день — ' + r.map(x => x.title).join(' / '));
+    await q.evaluate(() => settingsSheet()); await q.waitForTimeout(300);
+    await q.click('[data-a=notifTest]');
+    ok(await q.evaluate(() => window.__now.length === 1 && /працюють/.test(window.__now[0])), 'кнопка «надіслати тестове» показує сповіщення');
     await q.close();
   }
 

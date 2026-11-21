@@ -48,11 +48,10 @@ REMINDER_PROVIDERS.push(() => {
   S.people.forEach(p => {
     const date = Birthdays.next(p), age = Birthdays.ageAt(p, date);
     const who = `${p.name}${age ? ` (${age})` : ''}`;
-    out.push({ id: 'bd0-' + p.id, at: at9(date), title: '🎂 День народження', text: `Сьогодні день народження: ${who}` });
-    if (p.remind > 0) {
-      const g = (p.gifts || []).some(x => x.status === 'bought') ? '' : ' Подарунок ще не придбано.';
-      out.push({ id: 'bdN-' + p.id, at: at9(addDays(date, -p.remind)), title: '🎂 Скоро день народження', text: `${who} — ${Birthdays.countdown(p.remind)}.${g}` });
-    }
+    const g = (p.gifts || []).some(x => x.status === 'bought') ? '' : ' Подарунок ще не придбано 🎁';
+    out.push({ id: 'bd14-' + p.id, at: at9(addDays(date, -14)), title: '🎂 Через 2 тижні день народження', text: `${who} — ${shortDate(date)}.${g}` });
+    out.push({ id: 'bd7-' + p.id, at: at9(addDays(date, -7)), title: '🎂 Через тиждень день народження', text: `${who} — ${shortDate(date)}.${g}` });
+    out.push({ id: 'bd0-' + p.id, at: at9(date), title: '🎂 Сьогодні день народження!', text: `${who} — не забудь привітати 🎉` });
   });
   return out;
 });
@@ -120,7 +119,7 @@ function personSheet(id) {
     <div class="field"><input class="input" id="pName" maxlength="60" placeholder="Імʼя" value="${esc(p.name)}"></div>
     <div class="field"><label>Дата народження</label><input type="date" class="input" id="pDate" max="${today()}" value="${p.noYear ? '2000' + p.bday.slice(4) : p.bday}"></div>
     <div class="switch" style="padding-top:0"><div><b>Рік невідомий</b><div class="small muted">Вік не показуватиметься</div></div>${toggleHtml('pNoYear', p.noYear)}</div>
-    <div class="field"><label>Нагадати за</label>${seg('pRem', [['0', 'У день'], ['1', '1 день'], ['3', '3 дні'], ['7', 'Тиждень'], ['14', '2 тижні']], String(p.remind || 0), 'flat seg-sm')}</div>
+    <div class="small muted" style="margin:-2px 4px 12px">🔔 Нагадаю за 2 тижні, за тиждень і в сам день народження</div>
     <div class="field"><input class="input" id="pNote" maxlength="300" placeholder="Нотатка (розмір, вподобання)" value="${esc(p.note || '')}"></div>
     <div class="field"><label>Фото (за бажанням)</label>${photoField(p.photo)}</div>
     <div class="btns ${id ? 'two' : ''}">${id ? `<button class="btn danger" data-a="personDel" data-id="${id}">Видалити</button>` : ''}
@@ -156,7 +155,7 @@ Object.assign(A, {
     if (!isDate(date)) return invalid('pDate', 'Вкажіть дату народження');
     const noYear = $('#pNoYear', r).classList.contains('on');
     if (!noYear && date > today()) return invalid('pDate', 'Дата народження не може бути в майбутньому');
-    const data = { name: name.slice(0, 60), bday: noYear ? '0000' + date.slice(4) : date, noYear, remind: +segVal(r, 'pRem') || 0, note: $('#pNote', r).value.trim().slice(0, 300), photo: photoVal(r) };
+    const data = { name: name.slice(0, 60), bday: noYear ? '0000' + date.slice(4) : date, noYear, note: $('#pNote', r).value.trim().slice(0, 300), photo: photoVal(r) };
     let p;
     if (d.id) { p = S.people.find(x => x.id === d.id); if (p.photo && p.photo !== data.photo) Photos.del(p.photo); Object.assign(p, data); }
     else { p = { id: uid(), budget: 0, gifts: [], ...data }; S.people.push(p); }
