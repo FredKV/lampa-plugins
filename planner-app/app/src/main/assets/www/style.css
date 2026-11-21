@@ -584,3 +584,18 @@ input[type=range] { accent-color: var(--primary); }
 
 .spell-hint { font-size: 12.5px; color: var(--muted); margin: 6px 4px 0; }
 .spell-hint .link { font-size: 12.5px; }
+
+/* month view: day popover (variant C) */
+.daypop-bg { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.18); }
+.daypop { position: fixed; z-index: 61; background: var(--card); border-radius: 18px; box-shadow: 0 14px 44px rgba(0,0,0,.28); padding: 12px; overflow: visible; display: flex; flex-direction: column; animation: popIn .16s ease-out; }
+.daypop-list { overflow-y: auto; min-height: 0; flex: 1; }
+.daypop::after { content: ""; position: absolute; left: var(--ax); width: 16px; height: 16px; background: var(--card); transform: rotate(45deg); }
+.daypop.above::after { bottom: -7px; } .daypop.below::after { top: -7px; }
+@keyframes popIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+.dc-ent { display: block; width: 100%; text-align: left; border-radius: 12px; padding: 8px 10px; margin-bottom: 6px; border-left: 4px solid; }
+.dc-ent b { display: block; font-size: 14.5px; line-height: 1.3; }
+.dc-ent span { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+.dc-ent.done b { text-decoration: line-through; opacity: .6; }
+.dc-ent.ev { background: rgba(59,108,255,.08); border-color: var(--blue); } .dc-ent.imp { background: rgba(229,72,77,.08); border-color: var(--red); }
+.dc-ent.pl { background: rgba(24,160,88,.08); border-color: var(--green); } .dc-ent.bd { background: rgba(224,86,154,.08); border-color: var(--pink); }
+.dc-ent.cy { background: rgba(229,72,77,.05); border-color: #f3a0a3; }

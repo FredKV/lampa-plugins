@@ -218,6 +218,7 @@ function renderHeader(title, actions) {
     ${S.settings.avatar ? `<button class="head-ava ph-box" data-a="settings" aria-label="Налаштування"><img data-photo="${esc(S.settings.avatar)}" alt=""></button>` : `<button class="icon-btn" data-a="settings" aria-label="Налаштування">${ICONS.gear}</button>`}`;
 }
 function render() {
+  if (typeof closeDayPop === 'function') closeDayPop();
   const top = U.stack[U.stack.length - 1];
   let html;
   try {

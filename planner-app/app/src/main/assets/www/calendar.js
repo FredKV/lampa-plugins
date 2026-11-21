@@ -210,6 +210,52 @@ TAB_HEADERS.calendar = () => {
     <button class="icon-btn sm nav-arrow" data-a="calNav" data-d="-1" aria-label="Назад">‹</button><button class="icon-btn sm nav-arrow" data-a="calNav" data-d="1" aria-label="Вперед">›</button>` };
 };
 
+/* ---------------- day popover (month view) ---------------- */
+const PRIO_TXT = { 3: 'високий пріоритет', 2: 'середній пріоритет', 1: 'низький пріоритет' };
+const REM_TXT = { day: 'нагадування в день', prev: 'нагадування за день', hour: 'нагадування за годину' };
+function dayDetails(date, cmap) {
+  const dd = dayData(date, cmap), out = [];
+  dd.bds.forEach(b => {
+    const g = b.p.gifts || [], bought = g.filter(x => x.status === 'bought');
+    out.push({ cls: 'bd', title: `🎂 ${b.p.name}${b.age ? ' — ' + b.age + ' ' + plural(b.age, 'рік', 'роки', 'років') : ''}`,
+      sub: bought.length ? 'Подарунок: ' + bought.map(x => x.title).join(', ') + ' (придбано)' : g.length ? `Ідей подарунків: ${g.length}` : 'День народження', attrs: `data-a="popGo" data-page="person" data-id="${b.p.id}"` });
+  });
+  dd.evs.forEach(e => out.push({ cls: e.important ? 'imp' : 'ev', title: `${e.time ? e.time + ' ' : ''}${e.important ? '⭐ ' : ''}${e.title}`,
+    sub: [e.note, e.remind ? '🔔 ' + REM_TXT[e.remind] : ''].filter(Boolean).join(' · ') || 'Подія', attrs: `data-a="popEdit" data-k="event" data-id="${e.id}"` }));
+  dd.tasks.forEach(t => out.push({ cls: 'pl', title: t.title, done: t.done,
+    sub: ['План', PRIO_TXT[t.prio || 2], t.done ? 'виконано ✓' : '', t.note].filter(Boolean).join(' · '), attrs: `data-a="popEdit" data-k="task" data-id="${t.id}"` }));
+  if (dd.cyc) out.push({ cls: 'cy', title: CYC_LABEL[dd.cyc], sub: Cycle.cycleDay(date) ? `${Cycle.cycleDay(date)}-й день циклу · прогноз орієнтовний` : 'прогноз орієнтовний', attrs: 'data-a="popGo" data-page="cycle"' });
+  return out;
+}
+function closeDayPop() {
+  const p = $('#dayPop'); if (!p) return false;
+  p.remove(); const bg = $('#dayPopBg'); if (bg) bg.remove(); return true;
+}
+function dayPopover(date, cell) {
+  closeDayPop();
+  const showCycle = !S.cycle.hide && S.cycle.periods.length > 0;
+  const list = dayDetails(date, showCycle ? Cycle.map() : {});
+  const bg = document.createElement('div'); bg.id = 'dayPopBg'; bg.className = 'daypop-bg'; bg.dataset.a = 'popClose';
+  const pop = document.createElement('div'); pop.id = 'dayPop'; pop.className = 'daypop'; pop.setAttribute('role', 'dialog');
+  const d = parseYmd(date);
+  pop.innerHTML = `<div class="row between" style="margin-bottom:8px;gap:8px"><b>${date === today() ? 'Сьогодні, ' : ''}${d.getDate()} ${MONTHS_GEN[d.getMonth()]}</b>
+      <button class="link small" data-a="popOpen" data-d="${date}">Відкрити ›</button></div>
+    <div class="daypop-list">${list.length ? list.map(e => `<button class="dc-ent ${e.cls} ${e.done ? 'done' : ''}" ${e.attrs}><b>${esc(e.title)}</b><span>${esc(e.sub)}</span></button>`).join('')
+      : '<div class="muted small" style="padding:6px 2px 10px">Записів немає</div>'}</div>
+    <div class="row" style="gap:8px;margin-top:4px"><button class="chip grow" data-a="popAdd" data-k="task" data-d="${date}">+ План</button><button class="chip on grow" data-a="popAdd" data-k="event" data-d="${date}">+ Подія</button></div>`;
+  document.body.appendChild(bg); document.body.appendChild(pop);
+  // position: above the day if there is room, otherwise below; arrow points at the cell
+  const r = cell.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+  const w = Math.min(300, vw - 24); pop.style.width = w + 'px';
+  const left = clamp(r.left + r.width / 2 - w / 2, 12, vw - w - 12); pop.style.left = left + 'px';
+  pop.style.setProperty('--ax', clamp(r.left + r.width / 2 - left - 8, 14, w - 30) + 'px');
+  const h = pop.offsetHeight, roomAbove = r.top - 12, roomBelow = vh - r.bottom - 90;
+  if (h <= roomAbove || roomAbove > roomBelow) { pop.style.top = Math.max(12, r.top - h - 10) + 'px'; pop.classList.add('above'); }
+  else { pop.style.top = (r.bottom + 10) + 'px'; pop.classList.add('below'); }
+  pop.style.maxHeight = Math.max(200, (pop.classList.contains('above') ? roomAbove : roomBelow) - 10) + 'px';
+}
+window.addEventListener('scroll', () => closeDayPop(), { passive: true });
+
 function daySheet(date) {
   const showCycle = !S.cycle.hide && S.cycle.periods.length > 0;
   const cmap = showCycle ? Cycle.map() : {};
@@ -333,11 +379,20 @@ Object.assign(A, {
   calView: d => { U.calView = d.v; if (d.v === 'week') U.calWeek = mondayOf(U.calSel || today()); else { const dt = parseYmd(U.calSel || today()); U.cal = { y: dt.getFullYear(), m: dt.getMonth() }; } render(); },
   calWeekPick: d => { U.calSel = d.d; render(); const el = document.getElementById('wd-' + d.d); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
   calAddOn: d => { U.calSel = d.d; daySheet(d.d); },
-  calPick: d => {
+  calPick: (d, el) => {
     U.calSel = d.d; const dt = parseYmd(d.d);
+    if (U.calView === 'month' && el && el.classList.contains('mcell') && dt.getMonth() === U.cal.m) {
+      $$('.mcell.sel').forEach(c => c.classList.remove('sel')); el.classList.add('sel');
+      dayPopover(d.d, el); return;
+    }
     if (dt.getMonth() !== U.cal.m) U.cal = { y: dt.getFullYear(), m: dt.getMonth() };
     render(); daySheet(d.d);
   },
+  popClose: () => closeDayPop(),
+  popOpen: d => { closeDayPop(); daySheet(d.d); },
+  popGo: d => { closeDayPop(); navigate(d.page, { id: d.id }); },
+  popEdit: d => { closeDayPop(); if (d.k === 'event') eventSheet(d.id); else taskSheet(d.id); },
+  popAdd: d => { closeDayPop(); if (d.k === 'event') eventSheet(null, d.d); else taskSheet(null, d.d); },
   dayGo: d => { closeSheet(); navigate(d.page, { id: d.id }); },
   dayAddEvent: d => eventSheet(null, d.d),
   dayAddTask: d => taskSheet(null, d.d),
