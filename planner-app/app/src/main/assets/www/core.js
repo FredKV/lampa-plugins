@@ -206,7 +206,7 @@ function renderHeader(title, actions) {
   const g = h < 5 ? 'Доброї ночі' : h < 12 ? 'Доброго ранку' : h < 18 ? 'Доброго дня' : 'Доброго вечора';
   const d = new Date();
   const wd = WD_FULL[d.getDay()];
-  head.innerHTML = `<div class="grow"><div class="brand">Танічка🦝</div>
+  head.innerHTML = `<div class="grow">
       <div class="hello">${esc(S.settings.name ? `${g}, ${S.settings.name}` : g)}</div>
       <div class="sub">${wd[0].toUpperCase() + wd.slice(1)}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}</div></div>
     <button class="icon-btn" data-a="settings" aria-label="Налаштування">${ICONS.gear}</button>`;
