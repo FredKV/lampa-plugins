@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- ЛАД: one sign (Л+А triangle, А bar, Д base) in a black circle, iridescent stroke -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <!-- calendar body -->
-    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="4.5"
-        android:strokeLineJoin="round"
-        android:pathData="M38,36 L70,36 Q76,36 76,42 L76,70 Q76,76 70,76 L38,76 Q32,76 32,70 L32,42 Q32,36 38,36 Z" />
-    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="4.5"
-        android:strokeLineCap="round" android:pathData="M43,31 L43,40 M65,31 L65,40" />
-    <!-- check -->
-    <path android:fillColor="#00000000" android:strokeColor="#FF7CF0B0" android:strokeWidth="5"
-        android:strokeLineCap="round" android:strokeLineJoin="round"
-        android:pathData="M43,57 L51,65 L66,49" />
+    <path android:fillColor="#FF0B0B0D" android:pathData="M24,54 a30,30 0 1,0 60,0 a30,30 0 1,0 -60,0 Z" />
+    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.53" android:scaleY="0.53" android:translateY="1.4">
+        <path android:fillColor="#00000000" android:strokeWidth="8.5"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M30,72 L54,24 L78,72 M43,55 L65,55 M22,83 L22,72 L86,72 L86,83">
+            <aapt:attr name="android:strokeColor">
+                <gradient android:type="linear" android:startX="22" android:startY="24" android:endX="86" android:endY="83">
+                    <item android:offset="0" android:color="#FF8EC5FF" />
+                    <item android:offset="0.5" android:color="#FF7BE3A6" />
+                    <item android:offset="1" android:color="#FFFF9ECB" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
 </vector>
