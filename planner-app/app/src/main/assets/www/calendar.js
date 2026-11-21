@@ -123,8 +123,7 @@ function dayData(date, cmap) {
 }
 const CYC_LABEL = { period: '🩸 Менструація', predicted: '🩸 Очікувана менструація (прогноз)', ovulation: '🌱 Орієнтовна овуляція', fertile: '🌿 Фертильне вікно (прогноз)' };
 
-U.calView = 'month'; // 'month' | 'week'
-try { const v = localStorage.getItem('tanichka.calView'); if (v) U.calView = v; } catch (e) { }
+U.calView = 'week'; // opens on the week view; 'month' | 'week'
 const mondayOf = ds => { const d = parseYmd(ds); return addDays(ds, -((d.getDay() + 6) % 7)); };
 
 /** Entries of one date for display: [{cls, text, attrs, done}] */
@@ -189,7 +188,7 @@ VIEWS.calendar = () => {
       : `<div class="card empty" style="padding:20px">Найближчим часом нічого не заплановано</div>`}`;
   }
   return `
-    <div class="seg" style="margin-bottom:10px"><button data-a="calView" data-v="month" class="${!week ? 'on' : ''}">🗓 Місяць</button><button data-a="calView" data-v="week" class="${week ? 'on' : ''}">📋 Тиждень</button></div>
+    <div class="seg" style="margin-bottom:10px"><button data-a="calView" data-v="week" class="${week ? 'on' : ''}">📋 Тиждень</button><button data-a="calView" data-v="month" class="${!week ? 'on' : ''}">🗓 Місяць</button></div>
     ${week ? calWeekView(cmap, showCycle) : `<div class="card mgrid-card">${calMonthView(cmap, showCycle)}</div>`}
     <div class="legend-row" style="margin:8px 0 4px">
       <span><i class="tdot imp"></i>Важливо</span><span><i class="tdot ev"></i>Подія</span><span><i class="tdot pl"></i>План</span><span><i class="tdot bd"></i>ДН</span>${showCycle ? '<span><i class="tdot cy"></i>Цикл</span>' : ''}
@@ -331,7 +330,7 @@ Object.assign(A, {
     if (U.calView === 'week') { U.calWeek = addDays(U.calWeek || mondayOf(today()), 7 * +d.d); render(); return; }
     let { y, m } = U.cal; m += +d.d; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } U.cal = { y, m }; render();
   },
-  calView: d => { U.calView = d.v; try { localStorage.setItem('tanichka.calView', d.v); } catch (e) { } if (d.v === 'week') U.calWeek = mondayOf(U.calSel || today()); else { const dt = parseYmd(U.calSel || today()); U.cal = { y: dt.getFullYear(), m: dt.getMonth() }; } render(); },
+  calView: d => { U.calView = d.v; if (d.v === 'week') U.calWeek = mondayOf(U.calSel || today()); else { const dt = parseYmd(U.calSel || today()); U.cal = { y: dt.getFullYear(), m: dt.getMonth() }; } render(); },
   calWeekPick: d => { U.calSel = d.d; render(); const el = document.getElementById('wd-' + d.d); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
   calAddOn: d => { U.calSel = d.d; daySheet(d.d); },
   calPick: d => {

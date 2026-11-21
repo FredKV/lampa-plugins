@@ -294,6 +294,17 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
     await p.evaluate(() => { U.favNew = null; U.stack = []; go('home'); });
   }
 
+  console.log('8d. Автовиправлення слів');
+  await p.evaluate(() => { U.stack = []; go('shop'); shopSheet(); }); await p.waitForTimeout(400);
+  await p.fill('#sName', 'Маонез'); await p.click('#sQty'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => $('#sName').value === 'Майонез' && /Маонез → /.test($('.spell-hint').textContent)), 'описка виправлена: Маонез → Майонез');
+  await p.click('[data-a=spellUndo]');
+  ok(await p.evaluate(() => $('#sName').value === 'Маонез'), '«Повернути» скасовує виправлення');
+  ok(await p.evaluate(() => Spell.fix('Записатися до стоматолга').text === 'Записатися до стоматолога' && Spell.fix('Подзвонити Олі').text === 'Подзвонити Олі'), 'відмінки враховуються, імена не чіпаються');
+  await p.evaluate(() => closeSheet()); await p.waitForTimeout(300);
+  await p.evaluate(() => { U.calView = 'week'; go('calendar'); });
+  ok(await p.evaluate(() => $$('[data-a=calView]')[0].dataset.v === 'week' && $('[data-a=calView].on').dataset.v === 'week'), 'календар відкривається на тижні, «Тиждень» перший');
+
   console.log('8c. Налаштування + фото профілю');
   {
     await p.evaluate(() => { S.settings.pin = ''; save(); U.stack = []; go('home'); });

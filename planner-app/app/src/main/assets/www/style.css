@@ -581,3 +581,6 @@ input[type=range] { accent-color: var(--primary); }
 [data-theme="dark"] .mline.bd { color: #f39ac6; } [data-theme="dark"] .mline.cy { color: #f3a0a3; }
 .mcell.c-period { background: var(--period-bg); }
 .mcell.c-fertile, .mcell.c-ovulation { background: var(--fertile-bg); }
+
+.spell-hint { font-size: 12.5px; color: var(--muted); margin: 6px 4px 0; }
+.spell-hint .link { font-size: 12.5px; }
