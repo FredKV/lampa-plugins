@@ -87,7 +87,7 @@ PAGES.person = p => {
   const t = Birthdays.giftTotals(pr);
   const gifts = (pr.gifts || []).slice().sort((a, b) => ['planned', 'idea', 'bought'].indexOf(a.status) - ['planned', 'idea', 'bought'].indexOf(b.status));
   return {
-    title: pr.name, html: `
+    actions: shareBtn('personShare', pr.id), title: pr.name, html: `
     <div class="card" style="text-align:center">
       <div style="display:flex;justify-content:center">${avatar(pr, 84)}</div>
       <div style="font-size:22px;font-weight:700;margin-top:10px">${esc(pr.name)}</div>
@@ -146,6 +146,8 @@ function giftSheet(pid, id) {
 }
 
 Object.assign(A, {
+  personShare: d => { const pr = S.people.find(x => x.id === d.id); if (!pr) return; const date = Birthdays.next(pr), age = Birthdays.ageAt(pr, date);
+    shareText(`🎂 ${pr.name} — день народження ${dateLabel(date)}${age ? ` (${age} ${plural(age, 'рік', 'роки', 'років')})` : ''}`); },
   personNew: () => personSheet(),
   personEdit: d => personSheet(d.id),
   personSave: d => {

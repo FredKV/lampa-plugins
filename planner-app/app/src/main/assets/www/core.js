@@ -72,6 +72,7 @@ const ICONS = {
   finger: `<svg viewBox="0 0 24 24" ${P}><path d="M12 11v3.5c0 2-.6 3.8-1.6 5.3"/><path d="M8.6 9.5A3.5 3.5 0 0 1 15.5 11v2.5c0 1.6-.2 3.2-.7 4.6"/><path d="M5.6 8a7 7 0 0 1 12.8 3v1.5c0 1.6-.2 3.1-.6 4.6"/><path d="M8.5 14.5c0 1.8-.4 3.5-1.2 4.9M5.5 12.5c0 1.4-.2 2.7-.7 4"/><path d="M7.5 4.6a9 9 0 0 1 11.5 2.3"/></svg>`,
   backspace: `<svg viewBox="0 0 24 24" ${P}><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/></svg>`,
   trash: `<svg viewBox="0 0 24 24" ${P}><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg>`,
+  share: `<svg viewBox="0 0 24 24" ${P}><path d="M12 15V3"/><path d="M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>`,
   ext: `<svg viewBox="0 0 24 24" ${P}><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>`,
   pin: `<svg viewBox="0 0 24 24" ${P}><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`,
   search: `<svg viewBox="0 0 24 24" ${P}><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>`,
@@ -90,10 +91,10 @@ const DEF = {
   tasks: [], events: [], tx: [], shop: [], recipes: [],
   customCats: [], budget: { total: 0, cats: {} },
   cycle: { periods: [], remind: true, remindDays: 2, hide: false },
-  people: [], wishes: [], favs: [],
+  people: [], wishes: [], favs: [], debts: [], goals: [],
   prices: { city: '', stores: null, lastRun: null },
   weather: { mode: 'auto', place: null },
-  settings: { model: 'gemini-2.5-flash', theme: 'auto', name: '', pin: '', bio: false, notif: true, avatar: '' }
+  settings: { model: 'gemini-2.5-flash', theme: 'auto', name: '', pin: '', bio: false, notif: true, avatar: '', tone: 'spicy' }
 };
 
 const MIGRATIONS = {
@@ -157,7 +158,7 @@ function migrate(d) {
   out.cycle = { ...DEF.cycle, ...(d.cycle || {}) };
   out.prices = { ...DEF.prices, ...(d.prices || {}) };
   out.weather = { ...DEF.weather, ...(d.weather || {}) };
-  ['tasks', 'events', 'tx', 'shop', 'recipes', 'customCats', 'people', 'wishes', 'favs'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+  ['tasks', 'events', 'tx', 'shop', 'recipes', 'customCats', 'people', 'wishes', 'favs', 'debts', 'goals'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   out.v = SCHEMA;
   return out;
 }
@@ -497,6 +498,51 @@ const emptyCard = (emoji, text, btn) => `<div class="card empty"><div class="big
 /** Validates a sheet field; shows a toast and focuses the field on error. */
 function invalid(id, msg) { toast(msg); const el = document.getElementById(id); if (el) { el.classList.add('err'); el.focus(); setTimeout(() => el.classList.remove('err'), 1500); } return true; }
 
+/* ---------------- repeating plans/events ---------------- */
+const REPEATS = [['', 'Ні'], ['day', 'Щодня'], ['week', 'Щотижня'], ['month', 'Щомісяця'], ['half', 'Раз на пів року'], ['year', 'Щороку']];
+const REPEAT_SHORT = { day: 'щодня', week: 'щотижня', month: 'щомісяця', half: 'раз на пів року', year: 'щороку' };
+function addMonthsYmd(s, n) {
+  const d = parseYmd(s), day = d.getDate();
+  const t = new Date(d.getFullYear(), d.getMonth() + n, 1);
+  const last = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
+  t.setDate(Math.min(day, last)); return ymd(t);
+}
+/** next date of a repeating item after `s` */
+function nextRepeat(s, rep) {
+  if (rep === 'day') return addDays(s, 1);
+  if (rep === 'week') return addDays(s, 7);
+  if (rep === 'month') return addMonthsYmd(s, 1);
+  if (rep === 'half') return addMonthsYmd(s, 6);
+  if (rep === 'year') return addMonthsYmd(s, 12);
+  return s;
+}
+/** does an item starting on `start` and repeating `rep` fall on `date`? */
+function repeatsOn(start, rep, date) {
+  if (!start || date < start) return false;
+  if (!rep) return date === start;
+  if (rep === 'day') return true;
+  if (rep === 'week') return diffDays(start, date) % 7 === 0;
+  const a = parseYmd(start), b = parseYmd(date);
+  const months = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth();
+  const step = rep === 'month' ? 1 : rep === 'half' ? 6 : 12;
+  if (months % step) return false;
+  return addMonthsYmd(start, months) === date;
+}
+/** chips to choose how often something repeats */
+const repeatChips = (val = '') => `<div class="chips rep-chips" id="repChips">${REPEATS.map(([v, l]) => `<button class="chip ${v === (val || '') ? 'on' : ''}" data-a="repPick" data-v="${v}">${v ? '🔁 ' : ''}${l}</button>`).join('')}</div>`;
+const repVal = root => { const c = $('#repChips .chip.on', root); return c ? c.dataset.v : ''; };
+A.repPick = (d, el) => { $$('#repChips .chip').forEach(c => c.classList.toggle('on', c === el)); };
+
+/* ---------------- share any record ---------------- */
+function shareText(text) {
+  text = String(text || '').trim(); if (!text) return;
+  try { if (Bridge && Bridge.share) { Bridge.share(text); return; } } catch (e) { }
+  if (navigator.share) { navigator.share({ text }).catch(() => { }); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('Скопійовано — вставте в месенджер'), () => toast(text));
+  else toast(text);
+}
+const shareBtn = (action, id, extra = '') => `<button class="icon-btn" data-a="${action}" data-id="${id}" ${extra} aria-label="Поділитися">${ICONS.share}</button>`;
+
 /* ---------------- reminders (local notifications) ---------------- */
 const REMINDER_PROVIDERS = []; // () => [{id, at(ms), title, text}]
 function at9(dateStr, hour = 9) { const d = parseYmd(dateStr); d.setHours(hour, 0, 0, 0); return d.getTime(); }
@@ -564,7 +610,7 @@ const Lock = {
     const name = S.settings.name, unlock = this.mode === 'unlock';
     const head = unlock && S.settings.avatar
       ? `<div class="lk-ava ph-box"><img data-photo="${esc(S.settings.avatar)}" alt=""></div>`
-      : `<div class="lk-logo">${LAD_SIGN}</div>`;
+      : '';
     const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-a="pinKey" data-k="${n}">${n}</button>`).join('');
     const left = unlock ? (this.bioOn() ? `<button data-a="pinBio" class="kp-icon kp-bio" aria-label="Біометрія">${ICONS.finger}</button>` : '<span></span>')
       : '<button data-a="pinCancel" class="kp-icon kp-text">Скасувати</button>';

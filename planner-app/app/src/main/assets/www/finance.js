@@ -256,9 +256,9 @@ function vFinBudget() {
 }
 
 VIEWS.finance = () => `
-  ${segUI('fin', [['overview', 'Огляд'], ['ops', 'Історія'], ['budget', 'Бюджет']])}
-  ${({ overview: vFinOverview, ops: vFinOps, budget: vFinBudget })[segOf('fin', 'overview')]()}`;
-FABS.finance = () => txSheet(null, 'exp');
+  ${segUI('fin', [['overview', 'Огляд'], ['ops', 'Історія'], ['budget', 'Бюджет'], ['debts', 'Борги']])}
+  ${({ overview: vFinOverview, ops: vFinOps, budget: vFinBudget, debts: vFinDebts })[segOf('fin', 'overview')]()}`;
+FABS.finance = () => segOf('fin', 'overview') === 'debts' ? debtSheet() : txSheet(null, 'exp');
 
 /* ---------------- sheets ---------------- */
 function txSheet(id, type) {

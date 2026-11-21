@@ -326,6 +326,58 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8g. Повтори, борги, цілі, поділитися');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.addInitScript(() => { window.__shared = []; window.AndroidBridge = { share: t => window.__shared.push(t) }; });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    // repeating plan
+    await q.evaluate(() => { go('home'); A.taskNew(); }); await q.waitForTimeout(350);
+    await q.fill('#tTitle', 'Оплатити інтернет'); await q.click('#repChips [data-v=month]'); await q.click('[data-a=taskSave]'); await q.waitForTimeout(150);
+    const t1 = await q.evaluate(() => ({ ...S.tasks[0], isToday: S.tasks[0].due === today() }));
+    ok(t1.repeat === 'month' && t1.isToday, 'план з повтором щомісяця (дата — сьогодні)');
+    await q.click(`[data-a=taskToggle][data-id="${t1.id}"]`); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => !S.tasks[0].done && S.tasks[0].due === addMonthsYmd(today(), 1) && S.tasks[0].count === 1), 'виконаний повторюваний план переходить на наступний місяць');
+    // repeating event
+    await q.evaluate(() => { S.events.push({ id: 'ev1', title: 'Басейн', date: today(), time: '19:00', note: '', important: false, remind: 'day', repeat: 'week' }); save(); });
+    ok(await q.evaluate(() => dayData(addDays(today(), 14), null).evs.length === 1 && dayData(addDays(today(), 15), null).evs.length === 0), 'подія щотижня зʼявляється кожні 7 днів');
+    ok(await q.evaluate(() => REMINDER_PROVIDERS.flatMap(f => f()).filter(r => /^ev-ev1-/.test(r.id)).length >= 5), 'нагадування для повторюваної події на кілька разів уперед');
+    // share
+    await q.evaluate(() => A.eventShare({ id: 'ev1' })); await q.evaluate(() => A.dayShare({ d: today() }));
+    ok(await q.evaluate(() => /Басейн/.test(window.__shared[0]) && /щотижня/.test(window.__shared[0]) && /Басейн/.test(window.__shared[1])), 'поділитися подією і цілим днем');
+    // debts
+    await q.evaluate(() => { U.seg.fin = 'debts'; go('finance'); }); await q.waitForTimeout(150);
+    ok(await q.locator('#view .seg button:has-text("Борги").on').count() === 1, 'вкладка «Борги» у фінансах');
+    await q.evaluate(() => A.fab()); await q.waitForTimeout(350);
+    await q.fill('#dAmount', '1000'); await q.fill('#dWho', 'Оля'); await q.click('[data-a=debtSave]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => S.debts.length === 1 && S.debts[0].dir === 'in' && Debts.total('in') === 1000), 'борг «мені винні» 1000 ₴');
+    await q.evaluate(() => { const d = S.debts[0]; d.pays.push({ id: 'p', amount: 400, date: today() }); save(); A.debtShare({ id: d.id }); });
+    ok(await q.evaluate(() => Debts.left(S.debts[0]) === 600 && /Оля/.test(window.__shared.at(-1)) && /600/.test(window.__shared.at(-1))), 'часткове повернення і поділитися боргом');
+    await q.evaluate(() => navigate('debt', { id: S.debts[0].id })); await q.waitForTimeout(150);
+    await q.click('[data-a=debtClose]'); await q.click('.dlg [data-a=dlgOk], #dlg .btn:not(.ghost)').catch(() => {}); await q.waitForTimeout(250);
+    // goals
+    await q.evaluate(() => { U.stack = []; go('more'); navigate('goals'); }); await q.waitForTimeout(150);
+    await q.evaluate(() => A.fab()); await q.waitForTimeout(350);
+    await q.fill('#gTitle', 'Читати книжку'); await q.fill('#gMin', '30 хв'); await q.click('[data-a=goalSave]'); await q.waitForTimeout(200);
+    ok(await q.locator('.goal-row .nag-dot').count() === 1 && await q.locator('#tabbar [data-tab=more].nag').count() === 1, 'не відмічена звичка — пульсує бубочка і крапка на «Ще»');
+    const nags = await q.evaluate(() => REMINDER_PROVIDERS.flatMap(f => f()).filter(r => /^goal-/.test(r.id)));
+    ok(nags.length >= 7 && nags.some(n => /долбойоб|ледащо|Диван|совість|понеділка|здуваєшся/.test(n.text)), `жорсткі нагадування, поки не відмічено (${nags.length})`);
+    await q.click('[data-a=goalCheck]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => Goals.streak(S.goals[0]) === 1) && await q.locator('#tabbar [data-tab=more].nag').count() === 0, 'відмічено — серія 1, бубочка зникла');
+    await q.evaluate(() => { S.goals.push({ id: 'q1', type: 'quit', title: 'Кинути курити', start: addDays(today(), -7), time: '21:00', log: {}, attempts: [], created: Date.now() }); save(); navigate('goal', { id: 'q1' }); });
+    await q.waitForTimeout(150);
+    ok(await q.evaluate(() => $('.goal-big').textContent.trim() === '7' && $$('.medal.got').length === 3), 'кинути курити: 7 днів, 3 медалі');
+    await q.click('.goal-hero [data-a=goalCheck]'); await q.waitForTimeout(100);
+    ok(await q.evaluate(() => /днів|Тиждень/.test($('#toast') ? $('#toast').textContent : '') || Goals.doneToday(S.goals[1])), 'відмітка «тримаюсь» з похвалою');
+    await q.screenshot({ path: shots + '17-goal.png' });
+    // lock screen: no logo
+    await q.evaluate(async () => { S.settings.pin = await hashPin('1234'); save(); Lock.show('unlock'); }); await q.waitForTimeout(100);
+    ok(await q.locator('#lock .lk-logo').count() === 0, 'на екрані PIN-коду немає логотипу');
+    ok(e2.length === 0, 'без JS-помилок (повтори/борги/цілі) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);

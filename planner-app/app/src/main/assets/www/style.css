@@ -695,3 +695,28 @@ body.has-fab #app { padding-bottom: calc(var(--sab) + 170px); }
 .sum-tiles small { font-size: 12.5px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sum-acts { display: flex; gap: 8px; margin-bottom: 12px; }
 .sum-acts .chip { justify-content: center; white-space: nowrap; }
+
+.rep-chips { flex-wrap: wrap; }
+.btn.ghost svg, .btn svg.ic { width: 18px; height: 18px; vertical-align: -3px; margin-right: 4px; }
+
+/* goals & habits */
+.goal-num { font-size: 22px; font-weight: 800; min-width: 34px; text-align: right; letter-spacing: -.5px; }
+.goal-row.checked .title { color: var(--muted); }
+.nag-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--red); margin-left: 7px; vertical-align: 2px; animation: nagPulse 1.4s ease-in-out infinite; }
+@keyframes nagPulse { 0% { box-shadow: 0 0 0 0 rgba(229,72,77,.55); transform: scale(1); } 70% { box-shadow: 0 0 0 9px rgba(229,72,77,0); transform: scale(1.15); } 100% { box-shadow: 0 0 0 0 rgba(229,72,77,0); transform: scale(1); } }
+#tabbar button.nag { position: relative; }
+#tabbar button.nag::after { content: ''; position: absolute; top: 6px; left: calc(50% + 8px); width: 9px; height: 9px; border-radius: 50%; background: var(--red); animation: nagPulse 1.4s ease-in-out infinite; }
+.goal-hero { text-align: center; padding: 24px 16px 18px; }
+.goal-hero.pending { box-shadow: var(--shadow), inset 0 0 0 2px rgba(229,72,77,.35); }
+.goal-big { font-size: 64px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+.goal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 14px; }
+.goal-days i { aspect-ratio: 1; border-radius: 8px; background: var(--chip); }
+.goal-days i.on { background: var(--green); }
+.goal-days i.today { box-shadow: inset 0 0 0 2px var(--text); }
+.medals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.medal { background: var(--card); border-radius: 16px; padding: 12px 6px; text-align: center; box-shadow: var(--shadow); opacity: .38; filter: grayscale(1); }
+.medal.got { opacity: 1; filter: none; }
+.medal span { font-size: 28px; display: block; }
+.medal b { font-size: 12.5px; font-weight: 600; }
+.sum-tiles b.green { color: var(--green); }
+.sum-tiles > .card { flex: 1; }

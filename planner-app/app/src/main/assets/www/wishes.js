@@ -59,7 +59,7 @@ PAGES.wish = p => {
   const hist = S.tx.filter(t => t.type === 'save' && t.wishId === w.id).sort((a, b) => a.date < b.date ? 1 : -1);
   const R = 52, C = 2 * Math.PI * R;
   return {
-    title: w.title, html: `
+    actions: shareBtn('wishShare', w.id), title: w.title, html: `
     ${w.photo ? `<div class="hero-photo ph-box"><img data-photo="${esc(w.photo)}" alt=""></div>` : ''}
     <div class="card">
       <div class="row between"><span class="pill ${w.status === 'bought' ? 'green' : w.status === 'saving' ? 'blue' : ''}">${WISH_STATUS[w.status].join(' ')}</span>
@@ -121,6 +121,8 @@ function buySheet(w) {
 }
 
 Object.assign(A, {
+  wishShare: d => { const w = S.wishes.find(x => x.id === d.id); if (!w) return; const i = Wishes.info(w);
+    shareText(`🎯 Хочу: ${w.title}${w.price ? `\n💰 ${money(w.price)}` : ''}${Wishes.saved(w) ? `\nВідкладено: ${money(Wishes.saved(w))}` : ''}${w.url ? '\n' + w.url : ''}`); },
   wishNew: () => wishSheet(),
   wishEdit: d => wishSheet(d.id),
   wishSave: d => {

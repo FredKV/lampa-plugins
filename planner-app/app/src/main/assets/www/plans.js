@@ -22,7 +22,7 @@ function taskRow(t) {
     <button class="check round ${t.done ? 'on' : ''}" data-a="taskToggle" data-id="${t.id}" aria-label="Виконано"></button>
     <div class="grow" data-a="taskEdit" data-id="${t.id}">
       <div class="title">${esc(t.title)}</div>
-      <div class="meta"><span class="dot" style="background:${pr[1]}"></span>${pr[0]}${due ? ' ' + due : ''}${t.note ? `<span class="ellipsis" style="max-width:100%">${esc(t.note)}</span>` : ''}</div>
+      <div class="meta"><span class="dot" style="background:${pr[1]}"></span>${pr[0]}${due ? ' ' + due : ''}${t.repeat ? ` <span class="pill">🔁 ${REPEAT_SHORT[t.repeat]}</span>` : ''}${t.note ? `<span class="ellipsis" style="max-width:100%">${esc(t.note)}</span>` : ''}</div>
     </div></div>`;
 }
 function plansBlock() {
@@ -59,7 +59,9 @@ function taskSheet(id, presetDue) {
     <div class="field"><label>Пріоритет</label>${seg('prio', [['1', 'Низький'], ['2', 'Середній'], ['3', 'Високий']], String(t.prio || 2))}</div>
     <div class="field"><label>Термін</label>
       <div class="due-chips"><button class="chip" data-a="setDue" data-d="0">Сьогодні</button><button class="chip" data-a="setDue" data-d="1">Завтра</button><button class="chip" data-a="setDue" data-d="">Без дати</button></div></div>
+    <div class="field"><label>Повторювати</label>${repeatChips(t.repeat)}</div>
     <div class="field"><textarea class="input" id="tNote" maxlength="1000" style="min-height:64px" placeholder="Нотатка (необовʼязково)">${esc(t.note)}</textarea></div>
+    ${id ? `<button class="btn ghost" style="margin-bottom:10px" data-a="taskShare" data-id="${id}">${ICONS.share} Поділитися</button>` : ''}
     <div class="btns ${id ? 'two' : ''}">
       ${id ? `<button class="btn danger" data-a="taskDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn" data-a="taskSave" data-id="${id || ''}">Зберегти</button>
@@ -69,7 +71,17 @@ document.addEventListener('change', e => { if (e.target.id === 'tDue') syncDue()
 Object.assign(A, {
   planFilter: d => { U.planFilter = d.v; render(); },
   taskNew: () => taskSheet(),
-  taskToggle: d => { const t = S.tasks.find(x => x.id === d.id); if (!t) return; t.done = !t.done; save(); render(); if (t.done) toast('Виконано ✓'); },
+  taskToggle: d => {
+    const t = S.tasks.find(x => x.id === d.id); if (!t) return;
+    if (t.repeat && !t.done) { // repeating: mark this time as done and move to the next date
+      const tdy = today(); let nx = nextRepeat(t.due || tdy, t.repeat);
+      while (nx <= tdy) nx = nextRepeat(nx, t.repeat);
+      t.lastDone = tdy; t.count = (t.count || 0) + 1; t.due = nx;
+      save(); render(); toast(`Виконано ✓ Наступного разу — ${dateLabel(nx)}`); return;
+    }
+    t.done = !t.done; save(); render(); if (t.done) toast('Виконано ✓');
+  },
+  taskShare: d => { const t = S.tasks.find(x => x.id === d.id); if (t) shareText(recordText('task', t)); },
   taskEdit: d => taskSheet(d.id),
   setDue: d => { $('#tDue').value = d.d === '' ? '' : addDays(today(), +d.d); syncDue(); },
   pickDue: () => { const inp = $('#tDue'); if (inp) Picker.open(inp); },
@@ -79,7 +91,8 @@ Object.assign(A, {
     if (!title) return invalid('tTitle', 'Введіть назву');
     const due = $('#tDue', r).value;
     if (due && !isDate(due)) return invalid('tDue', 'Некоректна дата');
-    const data = { title: title.slice(0, 200), note: $('#tNote', r).value.trim().slice(0, 1000), prio: +segVal(r, 'prio') || 2, due };
+    const repeat = repVal(r);
+    const data = { title: title.slice(0, 200), note: $('#tNote', r).value.trim().slice(0, 1000), prio: +segVal(r, 'prio') || 2, due: repeat && !due ? today() : due, repeat };
     if (d.id) Object.assign(S.tasks.find(x => x.id === d.id), data);
     else S.tasks.unshift({ id: uid(), done: false, created: Date.now(), ...data });
     save(); closeSheet(); render();
@@ -97,7 +110,7 @@ Object.assign(A, {
    ===================================================================== */
 VIEWS.home = () => {
   const tdy = today();
-  const ev = S.events.filter(e => e.date === tdy).sort((a, b) => (a.time || '99') < (b.time || '99') ? -1 : 1);
+  const ev = S.events.filter(e => repeatsOn(e.date, e.repeat, tdy)).sort((a, b) => (a.time || '99') < (b.time || '99') ? -1 : 1);
   const bdays = typeof Birthdays !== 'undefined' ? Birthdays.upcoming(7) : [];
   const cyc = typeof Cycle !== 'undefined' ? Cycle.todayLine() : '';
   const n = new Date();
@@ -122,6 +135,7 @@ VIEWS.home = () => {
     ${lim ? `<div class="card" data-a="tabSeg" data-tab="finance" data-key="fin" data-val="budget" style="cursor:pointer">
       <div class="row between"><b>Бюджет на ${MONTHS[n.getMonth()].toLowerCase()}</b><span class="small muted">${money(spent)} з ${money(lim)}</span></div>
       ${progressBar(spent / lim * 100, spent > lim ? 'var(--red)' : spent > lim * .8 ? 'var(--amber)' : '')}</div>` : ''}
+    ${typeof goalsHome === 'function' ? goalsHome() : ''}
     ${plansBlock()}`;
 };
 FABS.home = () => taskSheet();

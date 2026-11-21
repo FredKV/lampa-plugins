@@ -95,13 +95,22 @@ REMINDER_PROVIDERS.push(() => {
 });
 
 /* ---------------- event reminders ---------------- */
-REMINDER_PROVIDERS.push(() => S.events.filter(e => e.remind && e.date >= addDays(today(), -1)).map(e => {
+function eventReminder(e, date) {
   let at;
-  if (e.remind === 'hour' && e.time) { const [h, mi] = e.time.split(':').map(Number); const d = parseYmd(e.date); d.setHours(h, mi - 60, 0, 0); at = d.getTime(); }
-  else if (e.remind === 'prev') at = at9(addDays(e.date, -1), 18);
-  else at = at9(e.date, 8);
-  return { id: 'ev-' + e.id, at, title: e.important ? '⭐ ' + e.title : e.title, text: `${dateLabel(e.date)}${e.time ? ' о ' + e.time : ''}${e.note ? ' · ' + e.note : ''}` };
-}));
+  if (e.remind === 'hour' && e.time) { const [h, mi] = e.time.split(':').map(Number); const d = parseYmd(date); d.setHours(h, mi - 60, 0, 0); at = d.getTime(); }
+  else if (e.remind === 'prev') at = at9(addDays(date, -1), 18);
+  else at = at9(date, 8);
+  return { id: 'ev-' + e.id + (e.repeat ? '-' + date : ''), at, title: e.important ? '⭐ ' + e.title : e.title, text: `${dateLabel(date)}${e.time ? ' о ' + e.time : ''}${e.note ? ' · ' + e.note : ''}` };
+}
+REMINDER_PROVIDERS.push(() => {
+  const out = [], from = addDays(today(), -1);
+  S.events.filter(e => e.remind).forEach(e => {
+    if (!e.repeat) { if (e.date >= from) out.push(eventReminder(e, e.date)); return; }
+    let d = e.date; for (let k = 0; k < 400 && d < from; k++) d = nextRepeat(d, e.repeat);
+    for (let k = 0; k < 6; k++) { out.push(eventReminder(e, d)); d = nextRepeat(d, e.repeat); }
+  });
+  return out;
+});
 
 /* ---------------- Calendar view ---------------- */
 const now0 = new Date();
@@ -111,12 +120,12 @@ function eventRow(e) {
   return `<div class="item" data-a="eventEdit" data-id="${e.id}">
     <div class="emoji sm" style="font-size:13px;font-weight:600">${e.time ? esc(e.time) : (e.important ? '⭐' : '📌')}</div>
     <div class="grow"><div class="title">${e.important ? '⭐ ' : ''}${esc(e.title)}</div>
-    <div class="meta">${e.remind ? '🔔 ' : ''}${e.note ? `<span class="ellipsis">${esc(e.note)}</span>` : ''}</div></div></div>`;
+    <div class="meta">${e.remind ? '🔔 ' : ''}${e.repeat ? `🔁 ${REPEAT_SHORT[e.repeat]} ` : ''}${e.note ? `<span class="ellipsis">${esc(e.note)}</span>` : ''}</div></div></div>`;
 }
 /** Everything recorded for one date (used by the grid and the day sheet). */
 function dayData(date, cmap) {
-  const evs = S.events.filter(e => e.date === date).sort((a, b) => (a.time || '99') < (b.time || '99') ? -1 : 1);
-  const tasks = S.tasks.filter(t => t.due === date);
+  const evs = S.events.filter(e => repeatsOn(e.date, e.repeat, date)).sort((a, b) => (a.time || '99') < (b.time || '99') ? -1 : 1);
+  const tasks = S.tasks.filter(t => t.due === date || (t.repeat && !t.done && t.due && date > t.due && repeatsOn(t.due, t.repeat, date)));
   const bds = Birthdays.onDate(date);
   const cyc = !S.cycle.hide && cmap ? cmap[date] : '';
   return { evs, tasks, bds, cyc };
@@ -274,6 +283,7 @@ function daySheet(date) {
     ${dd.cyc ? `<div class="day-cyc"><b>${CYC_DROP[dd.cyc] || ''} ${CYC_LABEL[dd.cyc]}</b>${Cycle.cycleDay(date) ? ` <span class="small muted">· ${Cycle.cycleDay(date)}-й день циклу</span>` : ''}</div>` : ''}
     ${spent || inc ? `<div class="day-fin" data-a="dayFin" data-d="${date}">💳 ${spent ? `Витрати: <b>${money(spent)}</b>` : ''}${spent && inc ? ' · ' : ''}${inc ? `Доходи: <b class="green">${money(inc)}</b>` : ''}</div>` : ''}
     ${empty ? '<div class="muted" style="padding:6px 2px 4px">Записів на цей день немає.</div>' : ''}
+    ${!empty ? `<button class="btn ghost" style="margin-bottom:10px" data-a="dayShare" data-d="${date}">${ICONS.share} Поділитися днем</button>` : ''}
     <div class="btns two"><button class="btn ghost" data-a="dayAddTask" data-d="${date}">+ План</button><button class="btn" data-a="dayAddEvent" data-d="${date}">+ Подія</button></div>`);
 }
 
@@ -298,8 +308,10 @@ function eventSheet(id, date) {
       <div class="field" style="width:42%"><label>Час</label><input type="time" class="input" id="eTime" value="${e.time || ''}"></div>
     </div>
     <div class="field"><textarea class="input" id="eNote" maxlength="1000" placeholder="Деталі (необовʼязково)">${esc(e.note)}</textarea></div>
+    <div class="field"><label>Повторювати</label>${repeatChips(e.repeat)}</div>
     <div class="field"><label>Нагадування</label>${seg('eRem', [['', 'Без'], ['day', 'У день'], ['prev', 'За день'], ['hour', 'За годину']], e.remind || '')}</div>
     <div class="switch"><div><b>Важливо</b><div class="small muted">Показувати серед найближчих важливих</div></div>${toggleHtml('eImp', e.important)}</div>
+    ${id ? `<button class="btn ghost" style="margin:4px 0 10px" data-a="eventShare" data-id="${id}">${ICONS.share} Поділитися</button>` : ''}
     <div class="btns ${id ? 'two' : ''}">
       ${id ? `<button class="btn danger" data-a="eventDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn" data-a="eventSave" data-id="${id || ''}">Зберегти</button></div>`,
@@ -398,13 +410,15 @@ Object.assign(A, {
     const time = $('#eTime', r).value;
     let remind = segVal(r, 'eRem') || '';
     if (remind === 'hour' && !time) return invalid('eTime', 'Вкажіть час, щоб нагадати за годину');
-    const data = { title: title.slice(0, 200), date, time, note: $('#eNote', r).value.trim().slice(0, 1000), important: $('#eImp', r).classList.contains('on'), remind };
+    const data = { title: title.slice(0, 200), date, time, note: $('#eNote', r).value.trim().slice(0, 1000), important: $('#eImp', r).classList.contains('on'), remind, repeat: repVal(r) };
     if (d.id) Object.assign(S.events.find(x => x.id === d.id), data);
     else S.events.push({ id: uid(), ...data });
     if (remind) ensureNotifPermission();
     U.calSel = date; const dt = parseYmd(date); U.cal = { y: dt.getFullYear(), m: dt.getMonth() };
     save(); closeSheet(); render(); toast('Збережено');
   },
+  eventShare: d => { const e = S.events.find(x => x.id === d.id); if (e) shareText(recordText('event', e)); },
+  dayShare: d => shareText(dayText(d.d)),
   eventDel: d => { S.events = S.events.filter(x => x.id !== d.id); save(); closeSheet(); render(); toast('Видалено'); },
 
   cycNew: () => cycleSheet(null),
@@ -467,3 +481,25 @@ function calSlide(cls) {
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.6 && Date.now() - st < 800) A.calNav({ d: dx < 0 ? 1 : -1 });
   }, { passive: true });
 })();
+
+/* ---------------- text for sharing ---------------- */
+function recordText(kind, x) {
+  const L = [];
+  if (kind === 'event') {
+    L.push(`${x.important ? '⭐' : '📅'} ${x.title}`);
+    L.push(`🗓 ${dateLabel(x.date)}${x.time ? ' о ' + x.time : ''}${x.repeat ? ` (🔁 ${REPEAT_SHORT[x.repeat]})` : ''}`);
+  } else if (kind === 'task') {
+    L.push(`📝 ${x.title}`);
+    if (x.due) L.push(`🗓 до ${dateLabel(x.due)}${x.repeat ? ` (🔁 ${REPEAT_SHORT[x.repeat]})` : ''}`);
+    else if (x.repeat) L.push(`🔁 ${REPEAT_SHORT[x.repeat]}`);
+  }
+  if (x.note) L.push(x.note);
+  return L.join('\n');
+}
+function dayText(date) {
+  const dd = dayData(date, null), L = [`📆 ${dateLabel(date)}, ${shortDate(date)}`];
+  dd.bds.forEach(b => L.push(`🎂 День народження: ${b.p.name}`));
+  dd.evs.forEach(e => L.push(`${e.time ? e.time + ' ' : '• '}${e.title}`));
+  dd.tasks.forEach(t => L.push(`📝 ${t.title}${t.done ? ' ✓' : ''}`));
+  return L.join('\n');
+}
