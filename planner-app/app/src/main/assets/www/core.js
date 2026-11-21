@@ -514,8 +514,8 @@ function ensureNotifPermission() {
 }
 window.__notifPerm = ok => { if (!ok) toast('Сповіщення вимкнені — нагадування не зʼявлятимуться'); };
 
-/* ЛАД sign (launcher icon): Л+А triangle, А bar, Д base */
-const LAD_SIGN = `<svg viewBox="3 7 101 100" aria-hidden="true"><defs><linearGradient id="ladg" gradientUnits="userSpaceOnUse" x1="14" y1="20" x2="94" y2="90"><stop offset="0" stop-color="#8ec5ff"/><stop offset=".5" stop-color="#7be3a6"/><stop offset="1" stop-color="#ff9ecb"/></linearGradient></defs><path d="M24.5,10 H61 V24 H49 L29,72 H12 L33,24 H24.5 Z" fill="url(#ladg)" fill-rule="evenodd"/><path d="M50.5,27 H61.5 L80,71.5 H34 Z M57.5,56 L65,71.5 H52.5 Z" fill="none" stroke="#0b0b0d" stroke-width="3.2" stroke-linejoin="round"/><path d="M50.5,27 H61.5 L80,71.5 H34 Z M57.5,56 L65,71.5 H52.5 Z" fill="url(#ladg)" fill-rule="evenodd"/><path d="M24,80 H44 L43,90 H47 V103.5 H17 V90 H25 Z M71.5,80 H87 L87.5,90 H96 V103.5 H68.5 V90 H72 Z" fill="none" stroke="#0b0b0d" stroke-width="3.2" stroke-linejoin="round"/><path d="M24,80 H44 L43,90 H47 V103.5 H17 V90 H25 Z M71.5,80 H87 L87.5,90 H96 V103.5 H68.5 V90 H72 Z" fill="url(#ladg)" fill-rule="evenodd"/><path d="M6.5,71.5 H80 Q86,69 87.5,57 H100.5 L96.5,85.5 H6.5 Z" fill="none" stroke="#0b0b0d" stroke-width="3.2" stroke-linejoin="round"/><path d="M6.5,71.5 H80 Q86,69 87.5,57 H100.5 L96.5,85.5 H6.5 Z" fill="url(#ladg)" fill-rule="evenodd"/></svg>`;
+/* ЛАД sign (launcher icon): one continuous line */
+const LAD_SIGN = `<svg viewBox="190 340 640 340" aria-hidden="true"><path d="M222,632 L281,408 Q300,360 319,408 L388,620 Q405,660 422,620 L491,408 Q510,360 529,408 L598,620 Q615,660 632,620 L701,408 Q720,360 739,408 L800,636 L700,636 M507,527 L560,527" fill="none" stroke="#000" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 /* ---------------- Biometrics (fingerprint / face via system prompt) ---------------- */
 const Bio = {

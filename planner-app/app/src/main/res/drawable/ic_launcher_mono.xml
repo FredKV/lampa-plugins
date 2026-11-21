@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- ЛАД: one continuous line (user's logo) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
-    android:viewportWidth="108" android:viewportHeight="108">
-    <group android:pivotX="53.5" android:pivotY="56.75" android:scaleX="0.46" android:scaleY="0.46" android:translateX="0.5" android:translateY="-2.75">
-        <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M24.5,10 H61 V24 H49 L29,72 H12 L33,24 H24.5 Z" />
-        <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M50.5,27 H61.5 L80,71.5 H34 Z M57.5,56 L65,71.5 H52.5 Z" />
-        <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M24,80 H44 L43,90 H47 V103.5 H17 V90 H25 Z M71.5,80 H87 L87.5,90 H96 V103.5 H68.5 V90 H72 Z" />
-        <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M6.5,71.5 H80 Q86,69 87.5,57 H100.5 L96.5,85.5 H6.5 Z" />
+    android:viewportWidth="1024" android:viewportHeight="1024">
+    <group android:pivotX="511" android:pivotY="510" android:scaleX="0.66" android:scaleY="0.66" android:translateX="1" android:translateY="2">
+        <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="40"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M222,632 L281,408 Q300,360 319,408 L388,620 Q405,660 422,620 L491,408 Q510,360 529,408 L598,620 Q615,660 632,620 L701,408 Q720,360 739,408 L800,636 L700,636 M507,527 L560,527" />
     </group>
 </vector>
