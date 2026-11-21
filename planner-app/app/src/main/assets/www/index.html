@@ -4,29 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Мій день</title>
+<title>Танічка🦝</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
-  <header class="top">
-    <div>
-      <div class="hello" id="hello">Привіт</div>
-      <div class="sub" id="today"></div>
-    </div>
-    <button class="icon-btn" data-a="settings" aria-label="Налаштування" id="btnSettings"></button>
-  </header>
-
+  <header class="top" id="top"></header>
   <main id="view"></main>
-
-  <button class="fab" id="fab" data-a="fab" aria-label="Додати"></button>
-
+  <button class="fab hidden" id="fab" data-a="fab" aria-label="Додати"></button>
   <nav class="tabbar" id="tabbar">
-    <button data-a="tab" data-tab="plans"><i data-ic="plans"></i><span>Плани</span></button>
+    <button data-a="tab" data-tab="home"><i data-ic="home"></i><span>Головна</span></button>
     <button data-a="tab" data-tab="calendar"><i data-ic="calendar"></i><span>Календар</span></button>
     <button data-a="tab" data-tab="finance"><i data-ic="wallet"></i><span>Фінанси</span></button>
-    <button data-a="tab" data-tab="kitchen"><i data-ic="chef"></i><span>Кухня</span></button>
     <button data-a="tab" data-tab="shop"><i data-ic="cart"></i><span>Покупки</span><b class="badge" id="shopBadge"></b></button>
+    <button data-a="tab" data-tab="more"><i data-ic="grid"></i><span>Ще</span></button>
   </nav>
 </div>
 
@@ -34,9 +25,19 @@
   <div class="sheet-bg" data-a="closeSheet"></div>
   <div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
+<div class="lock" id="lock"></div>
 
 <script src="recipes.js"></script>
-<script src="app.js"></script>
+<script src="core.js"></script>
+<script src="finance.js"></script>
+<script src="plans.js"></script>
+<script src="calendar.js"></script>
+<script src="birthdays.js"></script>
+<script src="weather.js"></script>
+<script src="wishes.js"></script>
+<script src="prices.js"></script>
+<script src="shop.js"></script>
+<script src="main.js"></script>
 </body>
 </html>
