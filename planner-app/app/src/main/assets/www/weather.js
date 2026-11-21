@@ -106,7 +106,7 @@ function cityChooser() {
   return `
     <div class="btns" style="margin-top:0"><button class="btn ${S.weather.mode === 'auto' && p ? '' : 'ghost'}" data-a="wAuto">📍 Визначити автоматично</button></div>
     <div class="row" style="margin-top:12px;gap:8px"><input class="input grow" id="wCity" placeholder="Або знайдіть місто: Київ, Львів…" value="${esc(Weather.cityQ)}" enterkeyhint="search">
-      <button class="btn sm" style="padding:15px 16px" data-a="wSearch" aria-label="Шукати">${ICONS.search.replace('<svg', '<svg width="20" height="20"')}</button></div>
+      <button class="btn btn-inline" data-a="wSearch" aria-label="Шукати">${ICONS.search.replace('<svg', '<svg width="20" height="20"')}</button></div>
     ${Weather.cityResults === 'loading' ? '<div class="small muted" style="margin-top:10px">Пошук…</div>'
     : Weather.cityResults && Weather.cityResults.err ? `<div class="small red" style="margin-top:10px">${esc(Weather.cityResults.err)}</div>`
     : Array.isArray(Weather.cityResults) ? (Weather.cityResults.length ? `<div class="list flat" style="margin-top:10px">${Weather.cityResults.map((x, i) => `<div class="item" data-a="wPick" data-i="${i}"><div class="grow"><div class="title">${esc(x.name)}</div><div class="meta">${esc(x.admin)}</div></div></div>`).join('')}</div>` : '<div class="small muted" style="margin-top:10px">Нічого не знайдено</div>') : ''}`;

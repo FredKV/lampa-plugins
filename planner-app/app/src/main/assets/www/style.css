@@ -365,8 +365,8 @@ details.steps li { margin-bottom: 6px; }
 .keypad .kp-icon { background: none; box-shadow: none; display: grid; place-items: center; color: var(--text); }
 .keypad .kp-icon svg { width: 30px; height: 30px; }
 .keypad .kp-text { font-size: 15px; }
-.keypad .kp-bio { color: var(--green); }
-.keypad .kp-bio svg { width: 36px; height: 36px; }
+.keypad .kp-bio { color: var(--text); }
+.keypad .kp-bio svg { width: 54px; height: 54px; }
 
 @media (max-width: 360px) {
   .mono .row4 { grid-template-columns: 1fr 1fr; }
@@ -733,3 +733,25 @@ body.has-fab #app { padding-bottom: calc(var(--sab) + 170px); }
 .sf-offer { width: 100%; text-align: left; }
 .sf-offer.best { background: rgba(24,160,88,.08); border-radius: 14px; }
 .sf-img { width: 40px; height: 40px; border-radius: 10px; object-fit: contain; background: #fff; flex: none; }
+
+/* ===== consistency pass: one size per control type ===== */
+/* switchers */
+.seg button { min-height: 40px; padding: 8px 4px; font-size: 14px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg.seg-sm button { font-size: 13px; padding: 8px 2px; }
+/* buttons: big 52, small 40, inline (next to a field) = field height 52 */
+.btn { min-height: 52px; padding: 0 16px; font-size: 16px; }
+.btn.sm, .btn.sm.card-btn { min-height: 40px; padding: 0 16px; font-size: 14px; border-radius: 12px; }
+.btn.btn-inline { width: auto; flex: none; min-height: 52px; padding: 0 18px; border-radius: 14px; font-size: 15px; }
+/* fields */
+.input, .pick-btn { min-height: 52px; }
+textarea.input { min-height: 80px; }
+/* small round icon buttons */
+.nav-btn.sm { width: 32px; height: 32px; }
+/* «Ще» tiles: same height, one-line captions */
+.tiles { grid-auto-rows: 1fr; }
+.tile { min-height: 118px; }
+.tile b { display: block; line-height: 1.25; }
+.tile .small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+/* section headings: pages and sheets */
+h2 { font-size: 20px; }
+#sheetBody h2 { font-size: 22px; }

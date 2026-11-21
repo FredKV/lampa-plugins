@@ -106,7 +106,7 @@ function wishSheet(id) {
     </div>
     ${!id ? `<div class="field"><label>Вже накопичено, ₴ (необовʼязково)</label><input class="input" id="wStart" inputmode="decimal" placeholder="0"></div>` : ''}
     <div class="field"><label>Пріоритет</label>${seg('wPrio', [['3', 'Високий'], ['2', 'Середній'], ['1', 'Низький']], String(w.prio))}</div>
-    ${w.status !== 'bought' ? `<div class="field"><label>Статус</label>${seg('wStatus', [['want', '✨ Хочу'], ['saving', '🐷 Накопичую']], w.status)}</div>` : ''}
+    ${w.status !== 'bought' ? `<div class="field"><label>Статус</label>${seg('wStatus', [['want', 'Хочу'], ['saving', 'Накопичую']], w.status)}</div>` : ''}
     <div class="field"><textarea class="input" id="wDesc" maxlength="1000" placeholder="Опис (модель, колір, чому хочу…)">${esc(w.desc)}</textarea></div>
     <div class="field"><label>Посилання на товар (необовʼязково)</label><input class="input" id="wUrl" inputmode="url" placeholder="https://…" value="${esc(w.url)}"></div>
     <div class="field"><label>Фото</label>${photoField(w.photo)}</div>

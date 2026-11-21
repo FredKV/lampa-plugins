@@ -196,7 +196,7 @@ VIEWS.calendar = () => {
       : `<div class="card empty" style="padding:20px">Найближчим часом нічого не заплановано</div>`}`;
   }
   return `
-    <div class="seg" style="margin-bottom:10px"><button data-a="calView" data-v="week" class="${week ? 'on' : ''}">📋 Тиждень</button><button data-a="calView" data-v="month" class="${!week ? 'on' : ''}">🗓 Місяць</button></div>
+    <div class="seg" style="margin-bottom:10px"><button data-a="calView" data-v="week" class="${week ? 'on' : ''}">Тиждень</button><button data-a="calView" data-v="month" class="${!week ? 'on' : ''}">Місяць</button></div>
     ${week ? calWeekView(cmap, showCycle) : `<div class="card mgrid-card">${calMonthView(cmap, showCycle)}</div>`}
     <div class="legend-row" style="margin:8px 0 4px">
       <span><i class="tdot imp"></i>Важливо</span><span><i class="tdot ev"></i>Подія</span><span><i class="tdot pl"></i>План</span><span><i class="tdot bd"></i>ДН</span>${showCycle ? '<span><i class="tdot cy"></i>Цикл</span>' : ''}

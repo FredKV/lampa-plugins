@@ -116,7 +116,7 @@ PAGES.goal = p => {
 function goalSheet(id) {
   const g = S.goals.find(x => x.id === id) || { type: 'habit', title: '', min: '', time: '20:00', start: today() };
   openSheet(`<h2>${id ? 'Редагувати ціль' : 'Нова ціль'}</h2>
-    ${seg('gType', [['habit', '🎯 Звичка щодня'], ['quit', '🚭 Відмова від…']], g.type)}
+    ${seg('gType', [['habit', 'Звичка щодня'], ['quit', 'Відмова від…']], g.type)}
     <div class="field"><input class="input" id="gTitle" maxlength="80" placeholder="${g.type === 'quit' ? 'Напр. Кинути курити' : 'Напр. Читати книжку'}" value="${esc(g.title)}"></div>
     <div class="field" id="gMinBox" ${g.type === 'quit' ? 'style="display:none"' : ''}><input class="input" id="gMin" maxlength="40" placeholder="Мінімум (напр. 30 хв)" value="${esc(g.min || '')}"></div>
     <div class="row" style="gap:10px">

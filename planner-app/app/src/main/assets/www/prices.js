@@ -329,7 +329,7 @@ PAGES.prices = () => {
       <div class="row" style="margin-top:10px">
         <div class="servings"><button data-a="dpSrv" data-d="-1">−</button><b>${U.dp.servings}</b><button data-a="dpSrv" data-d="1">+</button></div>
         <span class="small muted grow">порції</span>
-        <button class="btn sm" style="padding:13px 18px" data-a="dpBuild" ${DP.loading ? 'disabled' : ''}>Скласти список</button>
+        <button class="btn btn-inline" data-a="dpBuild" ${DP.loading ? 'disabled' : ''}>Скласти список</button>
       </div>
     </div>
     ${DP.loading ? `<div class="card empty"><div class="spinner"></div>Складаю рецепт і список інгредієнтів…</div>` : ''}

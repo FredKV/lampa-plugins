@@ -69,7 +69,7 @@ const ICONS = {
   plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
   camera: `<svg viewBox="0 0 24 24" ${P}><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg>`,
   refresh: `<svg viewBox="0 0 24 24" ${P}><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>`,
-  finger: `<svg viewBox="0 0 24 24" ${P}><path d="M12 11v3.5c0 2-.6 3.8-1.6 5.3"/><path d="M8.6 9.5A3.5 3.5 0 0 1 15.5 11v2.5c0 1.6-.2 3.2-.7 4.6"/><path d="M5.6 8a7 7 0 0 1 12.8 3v1.5c0 1.6-.2 3.1-.6 4.6"/><path d="M8.5 14.5c0 1.8-.4 3.5-1.2 4.9M5.5 12.5c0 1.4-.2 2.7-.7 4"/><path d="M7.5 4.6a9 9 0 0 1 11.5 2.3"/></svg>`,
+  finger: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"><path d="M8.4 3.4a9.6 9.6 0 0 1 7.2 0"/><path d="M5.4 6a9.4 9.4 0 0 1 13.2 0"/><path d="M3.9 10a8.6 8.6 0 0 1 16.2 0"/><path d="M4.4 16.2c-.3-1.1-.5-2.3-.5-3.5a8.1 8.1 0 0 1 .2-1.5"/><path d="M20 11.3c.1.5.1 1 .1 1.5v.6"/><path d="M6.9 19.6c-.6-1.8-1-3.7-1-5.8v-1a6.1 6.1 0 0 1 12.2 0v1.3"/><path d="M18.1 15.6c-.1 1.3-.4 2.6-.8 3.8"/><path d="M9.4 21.2c-.9-2.1-1.4-4.4-1.4-6.8v-1.6a4 4 0 0 1 8 0v2c0 2.1-.3 4.1-.9 6"/><path d="M12 12.6v2.2c0 2.6.5 5.1 1.5 7.4"/><path d="M10 12.8a2 2 0 0 1 4 0"/></svg>`,
   backspace: `<svg viewBox="0 0 24 24" ${P}><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/></svg>`,
   trash: `<svg viewBox="0 0 24 24" ${P}><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg>`,
   share: `<svg viewBox="0 0 24 24" ${P}><path d="M12 15V3"/><path d="M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>`,
@@ -575,8 +575,8 @@ window.__notifPerm = ok => { if (!ok) toast('Сповіщення вимкнен
 const LAD_SIGN = `<svg viewBox="190 340 640 340" aria-hidden="true"><path d="M222,640 L264.7,419.2 A36,36 0 0,1 335.4,419.7 L369.6,610.3 A36,36 0 0,0 440.4,610.3 L474.6,419.7 A36,36 0 0,1 545.4,419.7 L579.6,610.3 A36,36 0 0,0 650.4,610.3 L684.6,419.7 A36,36 0 0,1 755.3,418.9 L800,640 L700,640 M505,527 L562,527" fill="none" stroke="#000" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 /* launcher icons (activity-alias in the manifest): id, name, background, line */
-const APP_ICONS = [['olive', 'Оливковий', '#C4C17C', '#000'], ['terra', 'Теракотовий', '#D0694A', '#000'], ['yellow', 'Жовтий', '#FDD935', '#1B0A3F'], ['white', 'Білий', '#FFFFFF', '#000'], ['black', 'Чорний', '#000000', '#FFF']];
-const curIcon = () => { try { return (Bridge && Bridge.getIcon && Bridge.getIcon()) || 'olive'; } catch (e) { return 'olive'; } };
+const APP_ICONS = [['black', 'Чорний', '#000000', '#FFF'], ['olive', 'Оливковий', '#C4C17C', '#000'], ['terra', 'Теракотовий', '#D0694A', '#000'], ['yellow', 'Жовтий', '#FDD935', '#1B0A3F'], ['white', 'Білий', '#FFFFFF', '#000']];
+const curIcon = () => { try { return (Bridge && Bridge.getIcon && Bridge.getIcon()) || 'black'; } catch (e) { return 'black'; } };
 
 /* ---------------- Biometrics (fingerprint / face via system prompt) ---------------- */
 const Bio = {

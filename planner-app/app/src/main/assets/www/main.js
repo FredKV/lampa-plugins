@@ -39,7 +39,7 @@ function settingsSheet() {
         <div class="small muted">${s.avatar ? 'Натисніть на фото, щоб змінити' : 'Натисніть, щоб додати фото'}</div></div>
     </div>
     <div class="card st-card">
-      <div class="seg flat" style="margin:0">${[['light', '☀️ Світла'], ['dark', '🌙 Темна'], ['auto', '📱 Авто']].map(([v, l]) => `<button data-a="seg" data-group="theme" data-val="${v}" class="${s.theme === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <div class="seg flat" style="margin:0">${[['light', 'Світла'], ['dark', 'Темна'], ['auto', 'Як у системі']].map(([v, l]) => `<button data-a="seg" data-group="theme" data-val="${v}" class="${s.theme === v ? 'on' : ''}">${l}</button>`).join('')}</div>
     </div>
     ${Bridge && Bridge.setIcon ? `<div class="card st-card"><b>Ярлик додатка</b>
       <div class="icon-pick">${APP_ICONS.map(([id, label, bg, line]) => `<button data-a="iconPick" data-v="${id}" class="${curIcon() === id ? 'on' : ''}" aria-label="${label}">
@@ -52,7 +52,7 @@ function settingsSheet() {
     <div class="card st-card">
       <div class="row between"><b>✨ Gemini AI</b><span class="pill ${hint ? 'green' : ''}">${hint ? 'ключ: ' + esc(hint) : 'ключ не додано'}</span></div>
       <div class="row" style="gap:8px;margin-top:10px"><input class="input grow" id="stKey" type="password" autocomplete="off" placeholder="${hint ? 'Новий ключ, щоб замінити' : 'Вставте ключ Gemini'}">
-        <button class="btn sm" data-a="keySave">OK</button></div>
+        <button class="btn btn-inline" data-a="keySave">OK</button></div>
       <div class="row between" style="margin-top:8px"><b class="link small" data-a="openKey">Отримати безкоштовний ключ ↗</b>
         ${hint ? `<span class="row" style="gap:12px"><b class="link small" data-a="testKey">Перевірити</b><b class="small red" data-a="keyDel">Видалити</b></span>` : ''}</div>
 

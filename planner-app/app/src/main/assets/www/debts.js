@@ -37,7 +37,7 @@ function vFinDebts() {
 function debtSheet(id) {
   const d = S.debts.find(x => x.id === id) || { who: '', amount: '', dir: 'in', date: today(), due: '', note: '' };
   openSheet(`<h2>${id ? 'Редагувати борг' : 'Новий борг'}</h2>
-    ${seg('dDir', [['in', '🫴 Мені винні'], ['out', '🤝 Я винна']], d.dir)}
+    ${seg('dDir', [['in', 'Мені винні'], ['out', 'Я винна']], d.dir)}
     <div class="field"><input class="input big" id="dAmount" inputmode="decimal" placeholder="0 ₴" value="${d.amount || ''}"></div>
     <div class="field"><input class="input" id="dWho" maxlength="60" placeholder="Хто (імʼя)" value="${esc(d.who)}"></div>
     <div class="row" style="gap:10px">

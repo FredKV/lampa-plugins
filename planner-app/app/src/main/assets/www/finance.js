@@ -271,7 +271,7 @@ function txSheet(id, type) {
     ${seg('txType', [['exp', 'Витрата'], ['inc', 'Дохід']], t.type)}
     <div class="field"><input class="input big" id="xAmount" inputmode="decimal" placeholder="0 ₴" value="${t.amount || ''}"></div>
     <div class="field"><label>Категорія</label><div class="chips" id="xCats">${chips(t.type, t.cat)}</div></div>
-    <div class="field" id="xPayBox" ${t.type === 'inc' ? 'style="display:none"' : ''}><label>Спосіб оплати</label>${seg('pay', [['card', '💳 Картка'], ['cash', '💵 Готівка']], t.pay || 'card')}</div>
+    <div class="field" id="xPayBox" ${t.type === 'inc' ? 'style="display:none"' : ''}><label>Спосіб оплати</label>${seg('pay', [['card', 'Картка'], ['cash', 'Готівка']], t.pay || 'card')}</div>
     <div class="field"><input class="input" id="xNote" maxlength="200" placeholder="Опис або коментар" value="${esc(t.note)}"></div>
     <div class="field"><label>Дата</label><input type="date" class="input" id="xDate" value="${t.date}"></div>
     <div class="field" data-receipt="1"><label>Фото чека (необовʼязково)</label>${photoField(t.photo, 'Додати чек')}</div>

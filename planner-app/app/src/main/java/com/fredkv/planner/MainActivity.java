@@ -53,7 +53,7 @@ public class MainActivity extends Activity {
     private long stoppedAt = 0;
     private static final long LOCK_AFTER_MS = 60000;
     private static final String ICON_PKG = "com.fredkv.planner"; // manifest namespace of the aliases
-    private static final String[] ICONS = {"olive", "terra", "yellow", "white", "black"};
+    private static final String[] ICONS = {"black", "olive", "terra", "yellow", "white"};
 
     private ValueCallback<Uri[]> fileCallback;
     private Uri cameraUri;
@@ -403,7 +403,7 @@ public class MainActivity extends Activity {
                 int st = pm.getComponentEnabledSetting(new android.content.ComponentName(MainActivity.this, ICON_PKG + ".Icon_" + id));
                 if (st == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) return id;
             }
-            return "olive";
+            return "black";
         }
 
         @JavascriptInterface

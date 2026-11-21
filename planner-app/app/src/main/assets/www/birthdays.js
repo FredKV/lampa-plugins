@@ -132,7 +132,7 @@ function giftSheet(pid, id) {
   openSheet(`<h2>${id ? 'Подарунок' : 'Ідея подарунка'}</h2>
     <div class="small muted" style="margin:-8px 0 14px">для ${esc(pr.name)}</div>
     <div class="field"><input class="input" id="gTitle" maxlength="120" placeholder="Назва подарунка" value="${esc(g.title)}"></div>
-    <div class="field"><label>Статус</label>${seg('gStatus', [['idea', '💡 Ідея'], ['planned', '🗓 Заплановано'], ['bought', '✅ Придбано']], g.status)}</div>
+    <div class="field"><label>Статус</label>${seg('gStatus', [['idea', 'Ідея'], ['planned', 'Заплановано'], ['bought', 'Придбано']], g.status)}</div>
     <div class="row" style="gap:10px">
       <div class="field grow"><label>Орієнтовна вартість, ₴</label><input class="input" id="gPrice" inputmode="decimal" value="${g.price || ''}" placeholder="0"></div>
     </div>
