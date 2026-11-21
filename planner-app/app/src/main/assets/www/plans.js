@@ -37,29 +37,46 @@ function plansBlock() {
       : emptyCard(U.planFilter === 'done' ? '🏁' : '📝', U.planFilter === 'done' ? 'Ще нічого не виконано' : 'Планів поки немає', U.planFilter === 'done' ? null : { label: 'Додати план', attrs: 'data-a="taskNew"' })}
     ${done.length && U.planFilter !== 'active' ? `<button class="btn ghost card-btn" data-a="clearDone">Видалити виконані</button>` : ''}`;
 }
-function taskSheet(id) {
-  const t = S.tasks.find(x => x.id === id) || { title: '', note: '', prio: 2, due: '' };
+const CAL_IC = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>`;
+/** Updates the calendar button (icon <-> date) and the quick chips from the hidden #tDue value. */
+function syncDue() {
+  const inp = $('#tDue'), btn = $('#tDueBtn'); if (!inp || !btn) return;
+  const v = inp.value;
+  if (v) { const d = parseYmd(v); btn.innerHTML = `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}${d.getFullYear() !== new Date().getFullYear() ? ' ' + String(d.getFullYear()).slice(2) : ''}`; btn.classList.toggle('set', true); btn.setAttribute('aria-label', 'Термін: ' + dateLabel(v)); }
+  else { btn.innerHTML = CAL_IC; btn.classList.toggle('set', false); btn.setAttribute('aria-label', 'Обрати дату'); }
+  const t = today();
+  $$('[data-a="setDue"]').forEach(c => c.classList.toggle('on', c.dataset.d === '' ? !v : v === addDays(t, +c.dataset.d)));
+}
+function taskSheet(id, presetDue) {
+  const t = S.tasks.find(x => x.id === id) || { title: '', note: '', prio: 2, due: presetDue || '' };
   openSheet(`
     <h2>${id ? 'Редагувати план' : 'Новий план'}</h2>
-    <div class="field"><input class="input" id="tTitle" maxlength="200" placeholder="Що потрібно зробити?" value="${esc(t.title)}"></div>
-    <div class="field"><textarea class="input" id="tNote" maxlength="1000" placeholder="Нотатка (необовʼязково)">${esc(t.note)}</textarea></div>
+    <div class="title-row">
+      <input class="input grow" id="tTitle" maxlength="200" placeholder="Що потрібно зробити?" value="${esc(t.title)}">
+      <button class="cal-btn" id="tDueBtn" data-a="pickDue"></button>
+      <input type="date" id="tDue" class="due-hidden" tabindex="-1" aria-hidden="true" value="${t.due || ''}">
+    </div>
     <div class="field"><label>Пріоритет</label>${seg('prio', [['1', 'Низький'], ['2', 'Середній'], ['3', 'Високий']], String(t.prio || 2))}</div>
     <div class="field"><label>Термін</label>
-      <div class="chips" style="margin-bottom:8px">
-        <button class="chip" data-a="setDue" data-d="0">Сьогодні</button><button class="chip" data-a="setDue" data-d="1">Завтра</button>
-        <button class="chip" data-a="setDue" data-d="7">Через тиждень</button><button class="chip" data-a="setDue" data-d="">Без дати</button></div>
-      <input type="date" class="input" id="tDue" value="${t.due || ''}"></div>
+      <div class="due-chips"><button class="chip" data-a="setDue" data-d="0">Сьогодні</button><button class="chip" data-a="setDue" data-d="1">Завтра</button><button class="chip" data-a="setDue" data-d="">Без дати</button></div></div>
+    <div class="field"><textarea class="input" id="tNote" maxlength="1000" style="min-height:64px" placeholder="Нотатка (необовʼязково)">${esc(t.note)}</textarea></div>
     <div class="btns ${id ? 'two' : ''}">
       ${id ? `<button class="btn danger" data-a="taskDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn" data-a="taskSave" data-id="${id || ''}">Зберегти</button>
-    </div>`, r => { if (!id) setTimeout(() => $('#tTitle', r).focus(), 300); });
+    </div>`, r => { syncDue(); if (!id) setTimeout(() => $('#tTitle', r).focus(), 300); });
 }
+document.addEventListener('change', e => { if (e.target.id === 'tDue') syncDue(); });
 Object.assign(A, {
   planFilter: d => { U.planFilter = d.v; render(); },
   taskNew: () => taskSheet(),
   taskToggle: d => { const t = S.tasks.find(x => x.id === d.id); if (!t) return; t.done = !t.done; save(); render(); if (t.done) toast('Виконано ✓'); },
   taskEdit: d => taskSheet(d.id),
-  setDue: d => { $('#tDue').value = d.d === '' ? '' : addDays(today(), +d.d); },
+  setDue: d => { $('#tDue').value = d.d === '' ? '' : addDays(today(), +d.d); syncDue(); },
+  pickDue: () => {
+    const inp = $('#tDue'); if (!inp) return;
+    try { if (inp.showPicker) { inp.showPicker(); return; } } catch (e) { }
+    inp.focus(); inp.click();
+  },
   taskSave: d => {
     const r = $('#sheetBody'); const title = $('#tTitle', r).value.trim();
     if (!title) return invalid('tTitle', 'Введіть назву');

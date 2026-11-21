@@ -301,7 +301,7 @@ Object.assign(A, {
   },
   dayGo: d => { closeSheet(); navigate(d.page, { id: d.id }); },
   dayAddEvent: d => eventSheet(null, d.d),
-  dayAddTask: d => { taskSheet(); setTimeout(() => { const el = $('#tDue'); if (el) el.value = d.d; }, 0); },
+  dayAddTask: d => taskSheet(null, d.d),
   dayFin: d => { closeSheet(); U.finFilter.q = ''; U.finFilter.type = 'all'; U.seg.fin = 'ops'; go('finance'); },
   calToday: () => { U.calSel = today(); U.cal = { y: new Date().getFullYear(), m: new Date().getMonth() }; render(); },
   eventNew: () => eventSheet(null, U.tab === 'calendar' ? U.calSel : today()),

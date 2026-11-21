@@ -483,3 +483,11 @@ select.input { appearance: none; -webkit-appearance: none; background-image: lin
 .rc-links .link { font-size: 14px; }
 .rc-links { flex-wrap: nowrap; justify-content: space-between; }
 .rc-links .link { white-space: nowrap; font-size: 13.5px; }
+
+/* plan sheet: title + calendar button */
+.title-row { display: flex; gap: 8px; align-items: stretch; margin-bottom: 14px; position: relative; }
+.cal-btn { flex: none; min-width: 56px; border-radius: 14px; background: var(--chip); display: grid; place-items: center; padding: 0 12px; font-weight: 600; font-size: 14.5px; white-space: nowrap; color: var(--text); }
+.cal-btn.set { background: var(--primary); color: var(--onprimary); }
+.due-hidden { position: absolute; right: 0; bottom: 0; width: 56px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+.due-chips { display: flex; gap: 8px; }
+.due-chips .chip { flex: 1; text-align: center; }
