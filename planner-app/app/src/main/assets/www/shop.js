@@ -110,8 +110,8 @@ function shopAddSheet(presetDish) {
   U.sf = { dish: presetDish && presetDish !== 'Інше' ? presetDish : '', loading: false, offers: null, err: '' };
   openSheet(`<h2>Додати товар</h2>
     <div class="row" style="gap:10px">
-      <div class="field grow"><input class="input" id="sfName" maxlength="80" placeholder="Що купити (напр. Молоко)"></div>
-      <div class="field" style="width:34%"><input class="input" id="sfQty" maxlength="30" placeholder="Скільки (1 л)"></div></div>
+      <div class="field grow"><input class="input" id="sfName" maxlength="80" placeholder="Що купити?"></div>
+      <div class="field" style="width:34%"><input class="input" id="sfQty" maxlength="30" placeholder="Скільки?"></div></div>
     <button class="btn" data-a="shopFind">🔎 Знайти, де найдешевше</button>
     <div id="sfRes"></div>
     <button class="link small" style="display:block;margin:12px auto 2px" data-a="shopAddPlain">Додати без пошуку ціни</button>`,

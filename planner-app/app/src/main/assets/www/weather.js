@@ -105,7 +105,7 @@ function cityChooser() {
   const p = Weather.place();
   return `
     <div class="btns" style="margin-top:0"><button class="btn ${S.weather.mode === 'auto' && p ? '' : 'ghost'}" data-a="wAuto">📍 Визначити автоматично</button></div>
-    <div class="row" style="margin-top:12px;gap:8px"><input class="input grow" id="wCity" placeholder="Або знайдіть місто: Київ, Львів…" value="${esc(Weather.cityQ)}" enterkeyhint="search">
+    <div class="row" style="margin-top:12px;gap:8px"><input class="input grow" id="wCity" placeholder="Знайти місто" value="${esc(Weather.cityQ)}" enterkeyhint="search">
       <button class="btn btn-inline" data-a="wSearch" aria-label="Шукати">${ICONS.search.replace('<svg', '<svg width="20" height="20"')}</button></div>
     ${Weather.cityResults === 'loading' ? '<div class="small muted" style="margin-top:10px">Пошук…</div>'
     : Weather.cityResults && Weather.cityResults.err ? `<div class="small red" style="margin-top:10px">${esc(Weather.cityResults.err)}</div>`

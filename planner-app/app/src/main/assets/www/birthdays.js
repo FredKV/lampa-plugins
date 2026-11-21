@@ -120,8 +120,8 @@ function personSheet(id) {
     <div class="field"><input class="input" id="pName" maxlength="60" placeholder="Імʼя" value="${esc(p.name)}"></div>
     <div class="field"><label>Дата народження</label><input type="date" class="input" id="pDate" max="${today()}" value="${p.noYear ? '2000' + p.bday.slice(4) : p.bday}"></div>
     <div class="switch" style="padding-top:0"><div><b>Рік невідомий</b><div class="small muted">Вік не показуватиметься</div></div>${toggleHtml('pNoYear', p.noYear)}</div>
-    <div class="field"><label>Нагадати заздалегідь</label>${seg('pRem', [['0', 'Лише в день'], ['1', 'За 1 д.'], ['3', 'За 3 д.'], ['7', 'За тиждень'], ['14', 'За 2 тиж.']], String(p.remind || 0))}</div>
-    <div class="field"><input class="input" id="pNote" maxlength="300" placeholder="Нотатка (розмір одягу, вподобання…)" value="${esc(p.note || '')}"></div>
+    <div class="field"><label>Нагадати за</label>${seg('pRem', [['0', 'У день'], ['1', '1 день'], ['3', '3 дні'], ['7', 'Тиждень'], ['14', '2 тижні']], String(p.remind || 0), 'flat seg-sm')}</div>
+    <div class="field"><input class="input" id="pNote" maxlength="300" placeholder="Нотатка (розмір, вподобання)" value="${esc(p.note || '')}"></div>
     <div class="field"><label>Фото (за бажанням)</label>${photoField(p.photo)}</div>
     <div class="btns ${id ? 'two' : ''}">${id ? `<button class="btn danger" data-a="personDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn" data-a="personSave" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#pName', r).focus(), 300); });

@@ -366,7 +366,7 @@ PAGES.cycle = () => {
     <h2>Налаштування</h2>
     <div class="card">
       <div class="switch"><div><b>Нагадування</b><div class="small muted">Перед очікуваним початком</div></div>${toggleHtml('cycRem', S.cycle.remind).replace('data-a="toggle"', 'data-a="cycRemind"')}</div>
-      ${S.cycle.remind ? `<div class="field" style="margin:4px 0 8px">${seg('cycDays', [['0', 'У день'], ['1', 'За 1 день'], ['2', 'За 2 дні'], ['3', 'За 3 дні']], String(S.cycle.remindDays))}</div>` : ''}
+      ${S.cycle.remind ? `<div class="field" style="margin:4px 0 8px">${seg('cycDays', [['0', 'У день'], ['1', '1 день'], ['2', '2 дні'], ['3', '3 дні']], String(S.cycle.remindDays))}</div>` : ''}
       <div class="switch"><div><b>Приховати в календарі</b><div class="small muted">Цикл не показуватиметься в календарі та на головній</div></div>${toggleHtml('cycHide', S.cycle.hide).replace('data-a="toggle"', 'data-a="cycHide"')}</div>
     </div>
     ${S.cycle.periods.length ? `<button class="btn danger" data-a="cycWipe">Видалити всі дані циклу</button>` : ''}`
