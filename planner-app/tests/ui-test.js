@@ -252,8 +252,8 @@ async function pickDate(p, id, v) {
   await p.evaluate(() => { Keys.set(''); U.stack = []; render(); });
 
   console.log('8. Покупки / ще / налаштування / PIN');
-  const sl = await p.evaluate(() => { const c = $('.receipt'); return c ? { h: c.getBoundingClientRect().height, t: c.textContent } : null; });
-  ok(sl && sl.h < 160 && /До сплати/.test(sl.t) && /Товарів у списку/.test(sl.t) && /У кошику/.test(sl.t) && /Продукти для страви/.test(sl.t), `підсумок покупок «як чек» (${sl && Math.round(sl.h)}px)`);
+  const sl = await p.evaluate(() => { const c = $('.sum-tiles'); return c ? { h: c.getBoundingClientRect().height, t: c.textContent + $('.sum-acts').textContent, n: $$('.sum-tiles .card').length } : null; });
+  ok(sl && sl.n === 2 && sl.h < 120 && /До сплати/.test(sl.t) && /У кошику/.test(sl.t) && /Продукти для страви/.test(sl.t), `підсумок покупок — дві плитки (${sl && Math.round(sl.h)}px)`);
   await p.evaluate(() => { S.shop.push({ id: 'v1', name: 'Картопля', qty: '800 г', price: 20, dish: 'Вареники з картоплею', store: 'АТБ', bought: false }, { id: 'v2', name: 'Борошно', qty: '500 г', price: 16, dish: 'Вареники з картоплею', bought: false }); save(); U.shopMode = 'dishes'; render(); });
   const dl = await p.evaluate(() => $$('#view [data-page=shopDish]').map(e => e.textContent.replace(/\s+/g, ' ').trim()));
   ok(dl.length >= 3 && dl.some(t => /Борщ український/.test(t) && /\/10 куплено/.test(t)) && dl.some(t => /Вареники/.test(t)), 'страви окремими картками з прогресом: ' + dl.length);

@@ -58,11 +58,9 @@ function mergedRow(m) {
 function shopReceipt(list, extra = '') {
   const toBuy = list.filter(i => !i.bought), bought = list.filter(i => i.bought);
   const sumToBuy = toBuy.reduce((a, i) => a + num(i.price), 0), sumBought = bought.reduce((a, i) => a + num(i.price), 0);
-  return `<div class="card receipt">
-      <div class="rc-row"><span>Товарів у списку</span><b>${toBuy.length}${extra}</b></div>
-      <div class="rc-row"><span>У кошику</span><b>${money(sumBought)}</b></div>
-      <div class="rc-cut"></div>
-      <div class="rc-row rc-total"><b>До сплати</b><b>≈ ${money(sumToBuy)}</b></div>`;
+  return `<div class="sum-tiles">
+      <div class="card st-pay"><span>До сплати</span><b>≈ ${money(sumToBuy)}</b><small>${toBuy.length} ${plural(toBuy.length, 'товар', 'товари', 'товарів')}${extra}</small></div>
+      <div class="card st-cart"><span>У кошику</span><b>${money(sumBought)}</b><small>${bought.length} з ${list.length}</small></div></div>`;
 }
 function boughtActions() {
   return S.shop.some(i => i.bought) ? `<div class="btns two"><button class="btn ghost card-btn" data-a="shopClear">Прибрати куплене</button><button class="btn" data-a="shopToExpense">Записати у витрати</button></div>` : '';
@@ -70,11 +68,10 @@ function boughtActions() {
 function vShop() {
   const toBuy = S.shop.filter(i => !i.bought);
   const merged = mergedItems(toBuy);
-  const mergedCount = U.shopMerge && merged.length < toBuy.length ? ` → ${merged.length} після обʼєднання` : '';
+  const mergedCount = U.shopMerge && merged.length < toBuy.length ? ` → ${merged.length}` : '';
   const head = `${shopReceipt(S.shop, U.shopMode === 'all' ? mergedCount : '')}
-      <div class="rc-links"><button class="link" data-a="go" data-page="prices">🔎 Продукти для страви</button>
-        ${U.shopMode === 'all' && toBuy.length ? `<button class="link" data-a="shopMerge">🔗 ${U.shopMerge ? 'Обʼєднано' : 'Обʼєднати однакові'}</button>` : ''}</div>
-    </div>
+      <div class="sum-acts"><button class="chip card-bg grow" data-a="go" data-page="prices">🔎 Продукти для страви</button>
+        ${U.shopMode === 'all' && toBuy.length ? `<button class="chip ${U.shopMerge ? 'on' : 'card-bg'}" data-a="shopMerge">🔗 ${U.shopMerge ? 'Обʼєднано' : 'Обʼєднати'}</button>` : ''}</div>
     <div class="seg"><button data-a="shopMode" data-v="dishes" class="${U.shopMode === 'dishes' ? 'on' : ''}">🍽 Страви</button><button data-a="shopMode" data-v="all" class="${U.shopMode === 'all' ? 'on' : ''}">🧺 Усі продукти</button></div>`;
   if (!S.shop.length) return head + emptyCard('🛒', 'Список покупок порожній.<br>Додайте товар «+» або складіть список для страви з реальними цінами магазинів.', { label: 'Підібрати продукти для страви', attrs: 'data-a="go" data-page="prices"' });
   if (U.shopMode === 'dishes') {
@@ -98,7 +95,7 @@ PAGES.shopDish = p => {
   const rec = S.recipes.find(r => r.dish.toLowerCase() === name.toLowerCase());
   const toBuy = items.filter(i => !i.bought), bought = items.filter(i => i.bought);
   return {
-    title: name, html: `${shopReceipt(items)}</div>
+    title: name, html: `${shopReceipt(items)}
     <div class="list">${toBuy.map(i => itemRow(i, false)).join('')}${!toBuy.length ? '<div class="item muted">Усе куплено ✓</div>' : ''}</div>
     ${bought.length ? `<div class="group-h"><span>✅ У кошику</span><span>${money(bought.reduce((a, i) => a + num(i.price), 0))}</span></div><div class="list">${bought.map(i => itemRow(i, false)).join('')}</div>` : ''}
     <div class="btns ${rec ? 'two' : ''}"><button class="btn ghost card-btn" data-a="shopDishDel" data-id="${esc(name)}">Прибрати страву</button>

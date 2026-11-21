@@ -683,3 +683,15 @@ body.has-fab #app { padding-bottom: calc(var(--sab) + 170px); }
 .del-btn { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
 .del-btn svg { width: 19px; height: 19px; }
 .del-btn:active { background: var(--chip); color: var(--red); }
+
+/* shopping summary: two tiles + action chips */
+.sum-tiles { display: flex; gap: 10px; margin-bottom: 12px; }
+.sum-tiles .card { margin: 0; padding: 14px 16px; min-width: 0; display: flex; flex-direction: column; }
+.sum-tiles .st-pay { flex: 1.35; }
+.sum-tiles .st-cart { flex: 1; }
+.sum-tiles span { font-size: 12.5px; color: var(--muted); }
+.sum-tiles b { font-size: 24px; font-weight: 800; letter-spacing: -.5px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sum-tiles .st-cart b { font-size: 20px; }
+.sum-tiles small { font-size: 12.5px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sum-acts { display: flex; gap: 8px; margin-bottom: 12px; }
+.sum-acts .chip { justify-content: center; white-space: nowrap; }
