@@ -1,4 +1,4 @@
-name: Build "Мій день" APK
+name: Build "Танічка" APK
 
 on:
   push:
@@ -28,20 +28,21 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
-          cp app/build/outputs/apk/release/app-release.apk MyDen.apk
+          cp app/build/outputs/apk/release/app-release.apk Tanichka.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MyDen-apk
-          path: planner-app/MyDen.apk
+          name: Tanichka-apk
+          path: planner-app/Tanichka.apk
 
       - name: Publish to Releases
+        if: ${{ !contains(github.event.head_commit.message, '[wip]') }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: planer-latest
-          name: "Мій день — остання збірка"
+          name: "Танічка🦝 — остання збірка"
           body: |
-            Завантажте **MyDen.apk** на телефон і встановіть (дозвольте встановлення з невідомих джерел).
+            Завантажте **Tanichka.apk** на телефон і встановіть (дозвольте встановлення з невідомих джерел).
             Збірка №${{ github.run_number }}, коміт ${{ github.sha }}.
-          files: planner-app/MyDen.apk
+          files: planner-app/Tanichka.apk
           make_latest: true
