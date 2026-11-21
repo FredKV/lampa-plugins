@@ -3,6 +3,13 @@ const path = require('path');
 const URL = 'file://' + path.resolve(__dirname, '../app/src/main/assets/www/index.html');
 const shots = process.env.SHOTS_DIR || require('os').tmpdir() + '/';
 let fails = 0; const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) fails++; };
+// finger swipe on the calendar (dx < 0 = next)
+const swipe = (page, dx) => page.evaluate(dx => {
+  const el = document.querySelector('.wlist, .mgrid-card'), r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + 40;
+  const t = (cx) => new Touch({ identifier: 1, target: el, clientX: cx, clientY: y });
+  el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [t(x)], changedTouches: [t(x)] }));
+  el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [t(x + dx)] }));
+}, dx);
 const d = n => { const x = new Date(); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
 
 const weather = { current: { time: new Date().toISOString().slice(0, 13) + ':00', temperature_2m: 3.4, apparent_temperature: -1.2, relative_humidity_2m: 81, precipitation: 0.2, weather_code: 61, wind_speed_10m: 5.3, is_day: 1 },
@@ -107,9 +114,10 @@ async function pickDate(p, id, v) {
   await p.click('[data-a=calView][data-v=week]'); await p.waitForTimeout(150);
   const wk = await p.evaluate(() => ({ days: $$('.wday').length, strip: $$('.wstrip button').length, txt: $('.wday.today') && $('.wday.today').textContent }));
   ok(wk.days === 7 && wk.strip === 7 && /Стоматолог/.test(wk.txt), 'перемикач «Тиждень»: дні зі справами');
-  await p.click('[data-a=calNav][data-d="1"]'); await p.waitForTimeout(100);
-  ok(await p.evaluate(() => U.calWeek === addDays(mondayOf(today()), 7)), 'тиждень вперед');
-  await p.click('[data-a=calToday]'); await p.click('[data-a=calView][data-v=month]'); await p.waitForTimeout(150);
+  ok(await p.locator('[data-a=calNav]').count() === 0, 'стрілок у шапці немає');
+  await swipe(p, -150); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => U.calWeek === addDays(mondayOf(today()), 7) && !!$('.wlist.swap-r')), 'свайп ← — тиждень вперед з анімацією');
+  await p.click('[data-a=calToday]'); await p.click('[data-a=calView][data-v=month]'); await p.waitForTimeout(400);
   await p.click('.mcell.today'); await p.waitForTimeout(350);
   const pop = await p.evaluate(() => { const el = $('#dayPop'); if (!el) return null; const r = el.getBoundingClientRect(), c = $('.mcell.today').getBoundingClientRect(); return { txt: el.textContent, above: r.bottom <= c.top + 1 || r.top >= c.bottom - 1, inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 }; });
   ok(pop && /10:30 Стоматолог/.test(pop.txt) && pop.above && pop.inView, 'натискання на дату → спливаюча картка з повним текстом над/під днем');
@@ -124,9 +132,11 @@ async function pickDate(p, id, v) {
   await p.click('#sheetBody [data-a=cycStart]'); await p.waitForTimeout(250);
   ok(await p.evaluate(() => !!Cycle.ongoing()), 'менструація почалась сьогодні (з картки дня)');
   await p.evaluate(() => closeSheet());
-  const m0 = await p.evaluate(() => U.cal.m); await p.click('[data-a=calNav][data-d="1"]'); await p.waitForTimeout(100);
-  ok(await p.evaluate(m => U.cal.m === (m + 1) % 12, m0), 'перемикання місяця');
-  await p.click('[data-a=calToday]'); await p.waitForTimeout(100);
+  const m0 = await p.evaluate(() => U.cal.m); await swipe(p, -150); await p.waitForTimeout(100);
+  ok(await p.evaluate(m => U.cal.m === (m + 1) % 12, m0), 'свайп — наступний місяць');
+  await swipe(p, 150); await p.waitForTimeout(100);
+  ok(await p.evaluate(m => U.cal.m === m, m0), 'свайп → — попередній місяць');
+  await p.evaluate(() => A.calToday()); await p.waitForTimeout(100);
   ok(await p.evaluate(() => U.cal.m === new Date().getMonth() && U.calSel === today()), 'повернення до сьогодні');
   ok(await p.evaluate(() => Cycle.validate(today(), addDays(today(), -3), null) !== ''), 'валідація: кінець раніше початку');
   await p.screenshot({ path: shots + '04-calendar.png', fullPage: true });

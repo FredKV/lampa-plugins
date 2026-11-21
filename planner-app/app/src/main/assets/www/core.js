@@ -243,12 +243,37 @@ function render() {
   hydratePhotos($('#top'));
   $$('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === U.tab));
   const fab = FABS[top ? top.page : U.tab];
-  $('#fab').classList.toggle('hidden', !fab || !!(fab.visible && !fab.visible()));
+  const fabOn = !!fab && !(fab.visible && !fab.visible());
+  $('#fab').classList.toggle('hidden', !fabOn); document.body.classList.toggle('has-fab', fabOn);
   const n = S.shop.filter(i => !i.bought).length;
   $('#shopBadge').textContent = n ? String(n) : '';
   hydratePhotos($('#view'));
   AFTER_RENDER.forEach(f => { try { f(); } catch (e) { console.error(e); } });
 }
+/* ---------- switcher animation: the dark pill slides to the new option, content slides in ---------- */
+const SegMem = new Map();
+function animateSegs(root, scope) {
+  $$('.seg', root).forEach((seg, n) => {
+    const btns = [...seg.children].filter(b => b.tagName === 'BUTTON'); if (!btns.length) return;
+    const f = btns[0], key = scope + '|' + n + '|' + (f.dataset.a || '') + (f.dataset.group || f.dataset.key || '') + btns.length;
+    const idx = btns.findIndex(b => b.classList.contains('on')), prev = SegMem.get(key);
+    SegMem.set(key, idx);
+    if (prev === undefined || prev === idx || idx < 0 || prev < 0 || !btns[prev]) return;
+    const from = btns[prev], to = btns[idx];
+    const th = document.createElement('i'); th.className = 'seg-thumb';
+    const place = (b) => { th.style.top = b.offsetTop + 'px'; th.style.height = b.offsetHeight + 'px'; th.style.left = '0'; th.style.width = b.offsetWidth + 'px'; th.style.transform = `translateX(${b.offsetLeft}px)`; };
+    th.style.transition = 'none'; place(from); seg.prepend(th); seg.classList.add('anim');
+    th.getBoundingClientRect();
+    th.style.transition = ''; place(to);
+    setTimeout(() => { th.remove(); seg.classList.remove('anim'); }, 300);
+    // content after the switcher slides in from the side of the chosen option
+    const dir = idx > prev ? 'swap-r' : 'swap-l';
+    let el = seg.nextElementSibling;
+    for (let k = 0; el && k < 4; k++, el = el.nextElementSibling) { el.classList.remove('swap-r', 'swap-l'); void el.offsetWidth; el.classList.add(dir); }
+  });
+}
+AFTER_RENDER.push(() => { const top = U.stack[U.stack.length - 1]; animateSegs($('#view'), top ? top.page + JSON.stringify(top.p || {}) : 'tab:' + U.tab); });
+
 const segUI = (key, options, cls = '', def) => {
   const val = U.seg[key] || def || options[0][0];
   return `<div class="seg ${cls}">${options.map(([v, l]) => `<button data-a="useg" data-key="${key}" data-val="${v}" class="${v === val ? 'on' : ''}">${l}</button>`).join('')}</div>`;
@@ -413,6 +438,7 @@ function openSheet(html, onMount, onClose) {
   $('#sheetWrap').classList.add('open');
   sheetOnClose = onClose || null;
   if (typeof enhancePickers === 'function') enhancePickers($('#sheetBody'));
+  animateSegs($('#sheetBody'), 'sheet:' + (($('#sheetBody h2') || {}).textContent || ''));
   if (onMount) onMount($('#sheetBody'));
 }
 function closeSheet() {
@@ -461,7 +487,7 @@ const segVal = (root, group) => { const b = $(`[data-group="${group}"].on`, root
 const seg = (group, options, val, cls = 'flat') =>
   `<div class="seg ${cls}">${options.map(([v, l]) => `<button data-a="seg" data-group="${group}" data-val="${v}" class="${String(v) === String(val) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
 /** Compact pill that opens a product page in the browser */
-const goLink = (url, label = 'Відкрити') => `<button class="go-link" data-a="openLink" data-url="${esc(url)}" aria-label="Відкрити товар у магазині">${label}${ICONS.ext}</button>`;
+const goLink = url => `<button class="go-link" data-a="openLink" data-url="${esc(url)}" aria-label="Відкрити товар у магазині">${ICONS.ext}</button>`;
 const toggleHtml = (id, on) => `<button class="toggle ${on ? 'on' : ''}" data-a="toggle" id="${id}"></button>`;
 const progressBar = (pct, color) => `<div class="progress"><div style="width:${clamp(pct, 0, 100)}%;${color ? 'background:' + color : ''}"></div></div>`;
 const emptyCard = (emoji, text, btn) => `<div class="card empty"><div class="big">${emoji}</div>${text}${btn ? `<div class="btns"><button class="btn sm" style="margin:0 auto" ${btn.attrs}>${btn.label}</button></div>` : ''}</div>`;

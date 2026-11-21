@@ -60,7 +60,7 @@ function shopReceipt(list, extra = '') {
   const sumToBuy = toBuy.reduce((a, i) => a + num(i.price), 0), sumBought = bought.reduce((a, i) => a + num(i.price), 0);
   return `<div class="card receipt">
       <div class="rc-row"><span>Товарів у списку</span><b>${toBuy.length}${extra}</b></div>
-      <div class="rc-row"><span>У кошику</span><b>${bought.length} · ${money(sumBought)}</b></div>
+      <div class="rc-row"><span>У кошику</span><b>${money(sumBought)}</b></div>
       <div class="rc-cut"></div>
       <div class="rc-row rc-total"><b>До сплати</b><b>≈ ${money(sumToBuy)}</b></div>`;
 }

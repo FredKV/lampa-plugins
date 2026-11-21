@@ -207,7 +207,7 @@ TAB_HEADERS.calendar = () => {
     title = a.getMonth() === b.getMonth() ? `${a.getDate()}–${b.getDate()} <span class="muted">${MONTHS_GEN[b.getMonth()]}</span>` : `${a.getDate()} ${MONTHS_SHORT[a.getMonth()]} – ${b.getDate()} ${MONTHS_SHORT[b.getMonth()]}`;
   } else title = `${MONTHS[U.cal.m]} <span class="muted">${U.cal.y}</span>`;
   return { title, actions: `${!calAtToday() ? '<button class="chip card-bg" data-a="calToday">Сьогодні</button>' : ''}
-    <button class="icon-btn sm nav-arrow" data-a="calNav" data-d="-1" aria-label="Назад">‹</button><button class="icon-btn sm nav-arrow" data-a="calNav" data-d="1" aria-label="Вперед">›</button>` };
+` };
 };
 
 /* ---------------- day popover (month view) ---------------- */
@@ -373,8 +373,9 @@ PAGES.cycle = () => {
 
 Object.assign(A, {
   calNav: d => {
-    if (U.calView === 'week') { U.calWeek = addDays(U.calWeek || mondayOf(today()), 7 * +d.d); render(); return; }
-    let { y, m } = U.cal; m += +d.d; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } U.cal = { y, m }; render();
+    if (U.calView === 'week') U.calWeek = addDays(U.calWeek || mondayOf(today()), 7 * +d.d);
+    else { let { y, m } = U.cal; m += +d.d; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } U.cal = { y, m }; }
+    render(); calSlide(+d.d > 0 ? 'swap-r' : 'swap-l');
   },
   calView: d => { U.calView = d.v; if (d.v === 'week') U.calWeek = mondayOf(U.calSel || today()); else { const dt = parseYmd(U.calSel || today()); U.cal = { y: dt.getFullYear(), m: dt.getMonth() }; } render(); },
   calWeekPick: d => { U.calSel = d.d; render(); const el = document.getElementById('wd-' + d.d); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
@@ -458,3 +459,21 @@ Object.assign(A, {
   }
 });
 SEG_HOOKS.cycDays = v => { S.cycle.remindDays = +v; save(); };
+
+/* swipe left/right on the calendar = next/previous week or month */
+function calSlide(cls) {
+  ['#cgrid', '.mgrid-card', '.wlist'].forEach(sel => { const el = $(sel, $('#view')); if (el) { el.classList.remove('swap-r', 'swap-l'); void el.offsetWidth; el.classList.add(cls); } });
+  const t = $('#top .tab-title'); if (t) { t.classList.remove('swap-r', 'swap-l'); void t.offsetWidth; t.classList.add(cls); }
+}
+(() => {
+  let sx = 0, sy = 0, st = 0, ok = false;
+  document.addEventListener('touchstart', e => {
+    ok = U.tab === 'calendar' && !U.stack.length && !!e.target.closest('#view') && !e.target.closest('.seg, .sheet, input, textarea');
+    if (!ok) return; const t = e.touches[0]; sx = t.clientX; sy = t.clientY; st = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!ok) return; ok = false;
+    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.6 && Date.now() - st < 800) A.calNav({ d: dx < 0 ? 1 : -1 });
+  }, { passive: true });
+})();
