@@ -268,8 +268,8 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
     ok(!e2.length, 'без JS-помилок у сценарії улюблених ' + e2.join('; '));
     await q.close();
     // without the native module: framed photo instead of a cutout
-    await p.evaluate(() => { U.stack = []; go('home'); });
-    const [fc2] = await Promise.all([p.waitForEvent('filechooser'), p.evaluate(() => startFavorite())]); await fc2.setFiles(fx('product.jpg'));
+    await p.evaluate(() => { U.stack = []; S.favs = []; navigate('favs'); });
+    const [fc2] = await Promise.all([p.waitForEvent('filechooser'), p.click('[data-a=favAdd]')]); await fc2.setFiles(fx('product.jpg'));
     await p.waitForSelector('.ad-preview img', { timeout: 10000 });
     ok(await p.evaluate(() => !U.favNew.cut && !!U.favNew.ad && /Android/.test(U.favNew.cutErr)), 'без модуля вирізання — красива рамка з поясненням');
     await p.evaluate(() => { U.favNew = null; U.stack = []; go('home'); });
