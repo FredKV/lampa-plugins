@@ -247,7 +247,7 @@ function dayPopover(date, cell) {
   const pop = document.createElement('div'); pop.id = 'dayPop'; pop.className = 'daypop'; pop.setAttribute('role', 'dialog');
   const d = parseYmd(date);
   pop.innerHTML = `<div class="row between" style="margin-bottom:8px;gap:8px"><b>${date === today() ? 'Сьогодні, ' : ''}${d.getDate()} ${MONTHS_GEN[d.getMonth()]}</b>
-      <button class="link small" data-a="popOpen" data-d="${date}">Відкрити ›</button></div>
+      ${list.length ? `<button class="pop-share" data-a="dayShare" data-d="${date}" aria-label="Поділитися днем">${ICONS.share}</button>` : ''}</div>
     <div class="daypop-list">${list.length ? list.map(e => `<button class="dc-ent ${e.cls} ${e.done ? 'done' : ''}" ${e.attrs}><b>${esc(e.title)}</b><span>${esc(e.sub)}</span></button>`).join('')
       : '<div class="muted small" style="padding:6px 2px 10px">Записів немає</div>'}</div>
     <div class="row" style="gap:8px;margin-top:4px"><button class="chip grow" data-a="popAdd" data-k="task" data-d="${date}">+ План</button><button class="chip on grow" data-a="popAdd" data-k="event" data-d="${date}">+ Подія</button></div>`;
@@ -381,9 +381,10 @@ Object.assign(A, {
   },
   calView: d => { U.calView = d.v; if (d.v === 'week') U.calWeek = mondayOf(U.calSel || today()); else { const dt = parseYmd(U.calSel || today()); U.cal = { y: dt.getFullYear(), m: dt.getMonth() }; } render(); },
   calWeekPick: d => { U.calSel = d.d; render(); const el = document.getElementById('wd-' + d.d); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
-  calAddOn: d => { U.calSel = d.d; daySheet(d.d); },
+  calAddOn: (d, el) => { U.calSel = d.d; dayPopover(d.d, el); },
   calPick: (d, el) => {
     U.calSel = d.d; const dt = parseYmd(d.d);
+    if (U.calView === 'week' && el && el.closest('.wday')) { dayPopover(d.d, el); return; }
     if (U.calView === 'month' && el && el.classList.contains('mcell')) {
       $$('.mcell.sel').forEach(c => c.classList.remove('sel')); el.classList.add('sel');
       dayPopover(d.d, el); return;

@@ -773,3 +773,11 @@ h2 { font-size: 20px; }
 .w-day .wd-next { flex: 1; border-left: 1px solid var(--line); padding: 12px 14px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; align-content: center; row-gap: 8px; column-gap: 10px; font-size: 14px; }
 .w-day .wd-ic { text-align: center; font-size: 17px; }
 .w-day .wd-t { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* day popover: lighter than the cards behind it (visible in the dark theme) */
+.daypop, .daypop::after { background: var(--pop-bg, var(--card)); }
+.daypop { border: 1px solid var(--pop-line, transparent); }
+.pop-share { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); flex: none; }
+.pop-share svg { width: 18px; height: 18px; }
+:root[data-theme="dark"] { --pop-bg: #2c2c33; --pop-line: #3a3a42; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pop-bg: #2c2c33; --pop-line: #3a3a42; } }
