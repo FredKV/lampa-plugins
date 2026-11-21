@@ -239,6 +239,42 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
   await p.screenshot({ path: shots + '14-dark-home.png', fullPage: true });
   await p.evaluate(() => go('finance')); await p.waitForTimeout(150); await p.screenshot({ path: shots + '15-dark-finance.png' });
 
+  console.log('8b. Улюблені продукти');
+  {
+    const fx = n => path.join(__dirname, 'fixtures', n);
+    const cut = 'data:image/png;base64,' + require('fs').readFileSync(fx('product_cut.png')).toString('base64');
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    // emulate the native ML Kit cutout (the real one runs only inside the Android app)
+    await q.addInitScript(c => { window.AndroidBridge = { cutout: (data, id) => setTimeout(() => window.__cutCb(id, c, null), 200) }; }, cut);
+    await q.goto(URL);
+    await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => { S.shop.push({ id: 'b1', name: 'Йогурт грецький', qty: '', price: 54.9, dish: 'Інше', store: 'Сільпо', bought: true }); save(); go('shop'); });
+    const [fc] = await Promise.all([q.waitForEvent('filechooser'), q.click('[data-a=favFromShop]')]); await fc.setFiles(fx('product.jpg'));
+    await q.waitForSelector('.ad-preview img', { timeout: 10000 }); await q.waitForTimeout(300);
+    ok(await q.evaluate(() => $('#fvName').value === 'Йогурт грецький' && $('#fvStore').value === 'Сільпо' && !!U.favNew.cut), 'куплений товар → фото → фон вирізано, поля заповнено');
+    await q.click('[data-a=favStyle][data-v=dark]'); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => U.favNew.style === 'dark' && U.favNew.ad.startsWith('data:image/jpeg')), 'рекламна картка в обраному стилі');
+    await q.fill('#fvName', ''); await q.click('[data-a=favSave]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => S.favs.length === 0), 'валідація: без назви не зберігається');
+    await q.fill('#fvName', 'Йогурт грецький'); await q.fill('#fvTag', 'Ніжний смак'); await q.click('.stars [data-v="4"]');
+    await q.click('[data-a=favSave]'); await q.waitForTimeout(500);
+    const fv = await q.evaluate(() => S.favs[0]);
+    ok(fv && fv.rating === 4 && fv.ad && fv.cut && fv.photo && fv.store === 'Сільпо', 'збережено в улюблені (картка, вирізане та оригінальне фото)');
+    await q.click('.fav-card'); await q.waitForTimeout(300);
+    await q.click('[data-a=favToShop]'); await q.waitForTimeout(100);
+    ok(await q.evaluate(() => S.shop.some(i => !i.bought && i.name === 'Йогурт грецький')), '«Купити ще» → у список покупок');
+    await q.screenshot({ path: shots + '11b-fav.png', fullPage: true });
+    ok(!e2.length, 'без JS-помилок у сценарії улюблених ' + e2.join('; '));
+    await q.close();
+    // without the native module: framed photo instead of a cutout
+    await p.evaluate(() => { U.stack = []; go('home'); });
+    const [fc2] = await Promise.all([p.waitForEvent('filechooser'), p.evaluate(() => startFavorite())]); await fc2.setFiles(fx('product.jpg'));
+    await p.waitForSelector('.ad-preview img', { timeout: 10000 });
+    ok(await p.evaluate(() => !U.favNew.cut && !!U.favNew.ad && /Android/.test(U.favNew.cutErr)), 'без модуля вирізання — красива рамка з поясненням');
+    await p.evaluate(() => { U.favNew = null; U.stack = []; go('home'); });
+  }
+
   console.log('9. Видалення даних');
   await p.evaluate(() => navigate('cycle')); await p.click('[data-a=cycWipe]'); await p.waitForTimeout(350); await p.click('[data-a=askYes]'); await p.waitForTimeout(200);
   ok(await p.evaluate(() => S.cycle.periods.length === 0), 'дані циклу видалено');

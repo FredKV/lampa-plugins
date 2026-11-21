@@ -86,7 +86,7 @@ const DEF = {
   tasks: [], events: [], tx: [], shop: [], recipes: [],
   customCats: [], budget: { total: 0, cats: {} },
   cycle: { periods: [], remind: true, remindDays: 2, hide: false },
-  people: [], wishes: [],
+  people: [], wishes: [], favs: [],
   prices: { city: '', stores: null, lastRun: null },
   weather: { mode: 'auto', place: null },
   settings: { model: 'gemini-2.5-flash', theme: 'auto', name: '', pin: '', notif: true }
@@ -153,7 +153,7 @@ function migrate(d) {
   out.cycle = { ...DEF.cycle, ...(d.cycle || {}) };
   out.prices = { ...DEF.prices, ...(d.prices || {}) };
   out.weather = { ...DEF.weather, ...(d.weather || {}) };
-  ['tasks', 'events', 'tx', 'shop', 'recipes', 'customCats', 'people', 'wishes'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+  ['tasks', 'events', 'tx', 'shop', 'recipes', 'customCats', 'people', 'wishes', 'favs'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   out.v = SCHEMA;
   return out;
 }
