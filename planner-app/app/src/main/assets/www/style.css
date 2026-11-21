@@ -492,3 +492,68 @@ select.input { appearance: none; -webkit-appearance: none; background-image: lin
 .due-chips { display: flex; gap: 8px; }
 .due-chips .chip { flex: 1; text-align: center; }
 .item .progress { margin-top: 6px; height: 6px; }
+
+/* settings v2: profile + compact */
+.prof-card { display: flex; align-items: center; gap: 14px; background: var(--chip); border-radius: 20px; padding: 14px; margin: 6px 0 12px; }
+.st-ava-btn { position: relative; flex: none; padding: 0; }
+.st-ava { border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, #f8d3e4, #d6ddff); display: grid; place-items: center; }
+.st-ava img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.st-cam { position: absolute; right: -2px; bottom: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: var(--onprimary); display: grid; place-items: center; border: 2px solid var(--card); }
+.name-input { border: 0; background: none; font: inherit; font-size: 20px; font-weight: 700; color: var(--text); width: 100%; padding: 2px 0; outline: none; border-bottom: 1.5px dashed transparent; }
+.name-input:focus { border-bottom-color: var(--line); }
+.st-card { background: var(--chip); box-shadow: none; padding: 12px 14px; margin-bottom: 10px; }
+.st-card .seg.flat { background: var(--card); }
+.st-card .input { background: var(--card); }
+.st-more summary { font-size: 13px; color: var(--muted); margin-top: 10px; }
+.head-ava { width: 46px; height: 46px; border-radius: 50%; overflow: hidden; flex: none; box-shadow: var(--shadow); padding: 0; }
+.head-ava img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.crop-wrap { position: relative; width: min(300px, 78vw); aspect-ratio: 1; margin: 0 auto; overflow: hidden; border-radius: 20px; background: #111; touch-action: none; cursor: grab; }
+.crop-wrap img { position: absolute; max-width: none; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.crop-mask { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at center, transparent 0, transparent 49.5%, rgba(0,0,0,.55) 50%); }
+.crop-mask::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255,255,255,.8); }
+input[type=range] { accent-color: var(--primary); }
+
+/* ===================== calendar v4: month grid (full width) + week list ===================== */
+.cal-top2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 10px; }
+.mgrid-wrap { margin: 0 -16px; }
+.mgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--card); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); touch-action: pan-y; }
+.mh { text-align: center; font-size: 11.5px; font-weight: 600; color: var(--muted); padding: 7px 0; border-bottom: 1px solid var(--line); }
+.mh.we { color: var(--pink); }
+.mcell { min-height: 100px; padding: 4px 2px 3px; display: flex; flex-direction: column; align-items: stretch; gap: 2px; text-align: left; overflow: hidden;
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 0; min-width: 0; }
+.mcell:nth-child(7n + 7) { border-right: 0; }
+.mcell.other { background: var(--card2); }
+.mcell.other .mnum, .mcell.other .mline { opacity: .45; }
+.mnum { align-self: center; font-size: 12.5px; font-weight: 600; min-width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 11px; }
+.mcell.we .mnum { color: var(--pink); }
+.mcell.today .mnum { background: var(--primary); color: var(--onprimary); }
+.mcell.sel { box-shadow: inset 0 0 0 2px var(--primary); }
+.mcell.c-period { background: var(--period-bg); }
+.mcell.c-predicted { background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgba(229,72,77,.08) 5px 7px); }
+.mcell.c-fertile, .mcell.c-ovulation { background: var(--fertile-bg); }
+.mline { font-size: 9.5px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 1px 2px 1px 4px; border-left: 3px solid; border-radius: 2px; color: var(--text); }
+.mline.done { text-decoration: line-through; opacity: .55; }
+.mmore { font-size: 9.5px; color: var(--muted); padding-left: 4px; }
+.mline.imp, .went.imp { border-color: var(--red); } .mline.ev, .went.ev { border-color: var(--blue); } .mline.pl, .went.pl { border-color: var(--green); }
+.mline.bd, .went.bd { border-color: var(--pink); } .mline.cy, .went.cy { border-color: #f3a0a3; }
+.tdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.tdot.imp { background: var(--red); } .tdot.ev { background: var(--blue); } .tdot.pl { background: var(--green); } .tdot.bd { background: var(--pink); } .tdot.cy { background: #f3a0a3; }
+.wstrip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 10px; touch-action: pan-y; }
+.wstrip button { background: var(--card); border-radius: 12px; box-shadow: var(--shadow); padding: 6px 0 5px; font-size: 11px; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.wstrip button b { font-size: 16px; color: var(--text); }
+.wstrip button.we b { color: var(--pink); }
+.wstrip button i { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+.wstrip button i.has { background: var(--blue); }
+.wstrip button.today { box-shadow: inset 0 0 0 2px var(--primary); }
+.wstrip button.sel { background: var(--primary); color: var(--onprimary); }
+.wstrip button.sel b { color: var(--onprimary); }
+.wday { display: flex; gap: 12px; padding: 10px 14px; position: relative; align-items: flex-start; }
+.wday + .wday::before { content: ""; position: absolute; top: 0; left: 14px; right: 14px; height: 1px; background: var(--line); }
+.wdn { width: 42px; flex: none; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.wdn b { font-size: 20px; line-height: 30px; min-width: 34px; border-radius: 10px; }
+.wdn span { font-size: 11px; color: var(--muted); }
+.wday.today .wdn b { background: var(--primary); color: var(--onprimary); }
+.wen { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; padding-top: 2px; }
+.went { text-align: left; font-size: 14px; padding: 7px 10px; border-radius: 10px; background: var(--card2); border-left: 4px solid; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.went.done { text-decoration: line-through; opacity: .55; }
+.wempty { text-align: left; font-size: 13px; color: var(--muted); padding: 7px 2px; }

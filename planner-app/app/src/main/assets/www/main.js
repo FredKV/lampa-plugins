@@ -24,42 +24,85 @@ VIEWS.more = () => {
 };
 
 /* ---------------- settings ---------------- */
+function avatarHtml(size = 64) {
+  const id = S.settings.avatar;
+  return id ? `<div class="st-ava ph-box" style="width:${size}px;height:${size}px"><img data-photo="${esc(id)}" alt=""></div>`
+    : `<div class="st-ava" style="width:${size}px;height:${size}px;font-size:${size * .5}px">🦝</div>`;
+}
 function settingsSheet() {
   const s = S.settings, hint = Keys.hint();
   openSheet(`
-    <h2>Налаштування</h2>
-    <div class="field"><label>Як до вас звертатися</label><input class="input" id="stName" maxlength="30" placeholder="Імʼя" value="${esc(s.name)}"></div>
-    <div class="field"><label>Тема</label>${seg('theme', [['light', 'Світла'], ['dark', 'Темна'], ['auto', 'Як у системі']], s.theme)}</div>
-
-    <h3 class="st-h">🔔 Нагадування</h3>
-    <div class="switch"><div><b>Сповіщення</b><div class="small muted">Дні народження, цикл, події, ціни</div></div>${toggleHtml('stNotif', s.notif)}</div>
-
-    <h3 class="st-h">🔒 Захист даних</h3>
-    <div class="switch"><div><b>PIN-код при вході</b><div class="small muted">Захищає фінанси, цикл та інші особисті дані</div></div>${toggleHtml('stPin', !!s.pin).replace('data-a="toggle"', 'data-a="pinToggle"')}</div>
-
-    <h3 class="st-h">✨ Gemini AI <span class="ai-badge" style="vertical-align:middle">безкоштовно</span></h3>
-    <div class="small muted" style="margin:0 0 12px;line-height:1.45">Потрібен, щоб складати рецепт і список продуктів у «Вигідних продуктах» (самі ціни беруться з магазинів). Ключ зберігається в захищеному сховищі застосунку на телефоні й не потрапляє в експорт.
-      <br><b class="link" data-a="openKey">Отримати ключ → aistudio.google.com/apikey</b></div>
-    <div class="field"><label>API ключ ${hint ? `<span class="pill green" style="margin-left:6px">збережено: ${esc(hint)}</span>` : ''}</label>
-      <input class="input" id="stKey" type="password" autocomplete="off" placeholder="${hint ? 'Введіть новий, щоб замінити' : 'AIza…'}"></div>
-    <div class="field"><label>Модель</label><input class="input" id="stModel" placeholder="gemini-2.5-flash" value="${esc(s.model)}">
-      <div class="chips" style="margin-top:8px">${['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest'].map(m => `<button class="chip" data-a="pickModel" data-m="${m}">${m}</button>`).join('')}</div></div>
-    <div class="btns two"><button class="btn ghost" data-a="testKey">Перевірити ключ</button>${hint ? `<button class="btn danger" data-a="keyDel">Видалити ключ</button>` : '<span></span>'}</div>
-    <div class="btns"><button class="btn" data-a="settingsSave">Зберегти</button></div>
-
-    <h3 class="st-h">💾 Дані</h3>
-    <div class="small muted" style="margin:0 0 12px">Усі дані зберігаються лише на цьому телефоні.</div>
-    <div class="btns two" style="margin-top:0"><button class="btn ghost" data-a="exportData">Експорт</button><button class="btn ghost" data-a="importData">Імпорт</button></div>
-    <div class="btns"><button class="btn danger" data-a="resetData">Видалити всі дані</button></div>
-    <div class="small muted" style="text-align:center;margin-top:18px">Танічка🦝 · схема даних v${SCHEMA}</div>`);
+    <div class="prof-card">
+      <button class="st-ava-btn" data-a="avatarMenu" aria-label="Фото профілю">${avatarHtml(64)}<span class="st-cam">${ICONS.camera.replace('<svg', '<svg width="14" height="14"')}</span></button>
+      <div class="grow" style="min-width:0"><input class="name-input" id="stName" maxlength="30" placeholder="Ваше імʼя" value="${esc(s.name)}">
+        <div class="small muted">${s.avatar ? 'Натисніть на фото, щоб змінити' : 'Натисніть, щоб додати фото'}</div></div>
+    </div>
+    <div class="card st-card">
+      <div class="seg flat" style="margin:0">${[['light', '☀️ Світла'], ['dark', '🌙 Темна'], ['auto', '📱 Авто']].map(([v, l]) => `<button data-a="seg" data-group="theme" data-val="${v}" class="${s.theme === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+    </div>
+    <div class="card st-card" style="padding:2px 14px">
+      <div class="switch"><b>🔔 Сповіщення</b>${toggleHtml('stNotif', s.notif).replace('data-a="toggle"', 'data-a="notifToggle"')}</div>
+      <div class="switch" style="border-top:1px solid var(--line)"><b>🔒 PIN-код</b>${toggleHtml('stPin', !!s.pin).replace('data-a="toggle"', 'data-a="pinToggle"')}</div>
+    </div>
+    <div class="card st-card">
+      <div class="row between"><b>✨ Gemini AI</b><span class="pill ${hint ? 'green' : ''}">${hint ? 'ключ: ' + esc(hint) : 'ключ не додано'}</span></div>
+      <div class="row" style="gap:8px;margin-top:10px"><input class="input grow" id="stKey" type="password" autocomplete="off" placeholder="${hint ? 'Новий ключ, щоб замінити' : 'Вставте ключ AIza…'}">
+        <button class="btn sm" data-a="keySave">OK</button></div>
+      <div class="row between" style="margin-top:8px"><b class="link small" data-a="openKey">Отримати безкоштовний ключ ↗</b>
+        ${hint ? `<span class="row" style="gap:12px"><b class="link small" data-a="testKey">Перевірити</b><b class="small red" data-a="keyDel">Видалити</b></span>` : ''}</div>
+      <details class="st-more"><summary>Модель: ${esc(s.model)}</summary>
+        <div class="chips" style="margin-top:8px">${['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest'].map(m => `<button class="chip ${s.model === m ? 'on' : ''}" data-a="pickModel" data-m="${m}">${m}</button>`).join('')}</div></details>
+    </div>
+    <div class="row" style="gap:8px">
+      <button class="btn ghost card-btn grow" data-a="exportData">⬆️ Експорт</button>
+      <button class="btn ghost card-btn grow" data-a="importData">⬇️ Імпорт</button>
+      <button class="btn danger" style="width:64px" data-a="resetData" aria-label="Видалити всі дані">🗑</button>
+    </div>
+    <div class="small muted" style="text-align:center;margin-top:16px">Усі дані зберігаються лише на цьому телефоні · схема v${SCHEMA}</div>`,
+    null, () => { const n = $('#stName'); if (n && n.value.trim() !== S.settings.name) { S.settings.name = n.value.trim().slice(0, 30); save(); render(); } });
 }
-function readSettingsForm() {
-  const r = $('#sheetBody');
-  return {
-    name: $('#stName', r).value.trim().slice(0, 30), theme: segVal(r, 'theme') || 'auto',
-    model: $('#stModel', r).value.trim() || 'gemini-2.5-flash',
-    notif: $('#stNotif', r).classList.contains('on')
-  };
+
+/* ---------------- photo cropper (zoom · move · circle crop) ---------------- */
+function cropPhoto(src, out = 480) {
+  return new Promise(resolve => {
+    let done = false; const finish = v => { if (!done) { done = true; resolve(v); } };
+    openSheet(`<h2>Фото профілю</h2>
+      <div class="crop-wrap" id="cropWrap"><img id="cropImg" alt="" draggable="false"><div class="crop-mask"></div></div>
+      <div class="row" style="gap:10px;margin:14px 2px 0"><span class="muted">−</span><input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" class="grow"><span class="muted">+</span></div>
+      <div class="small muted" style="text-align:center;margin-top:6px">Перетягніть фото, масштабуйте повзунком або двома пальцями</div>
+      <div class="btns two"><button class="btn ghost" data-a="cropCancel">Скасувати</button><button class="btn" data-a="cropDone">Готово</button></div>`,
+      root => {
+        const wrap = $('#cropWrap', root), img = $('#cropImg', root), zoomEl = $('#cropZoom', root);
+        const st = { z: 1, x: 0, y: 0, base: 1, w: 0, h: 0, V: 0 };
+        const layout = () => {
+          const dw = st.w * st.base * st.z, dh = st.h * st.base * st.z;
+          st.x = clamp(st.x, -(dw - st.V) / 2, (dw - st.V) / 2); st.y = clamp(st.y, -(dh - st.V) / 2, (dh - st.V) / 2);
+          img.style.width = dw + 'px'; img.style.height = dh + 'px';
+          img.style.left = (st.V - dw) / 2 + st.x + 'px'; img.style.top = (st.V - dh) / 2 + st.y + 'px';
+        };
+        img.onload = () => { st.V = wrap.clientWidth; st.w = img.naturalWidth; st.h = img.naturalHeight; st.base = Math.max(st.V / st.w, st.V / st.h); layout(); };
+        img.src = src;
+        zoomEl.oninput = () => { st.z = +zoomEl.value; layout(); };
+        const pts = new Map(); let last = null, pinch = null;
+        wrap.addEventListener('pointerdown', e => { wrap.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); last = [e.clientX, e.clientY]; if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: st.z }; } });
+        wrap.addEventListener('pointermove', e => {
+          if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]);
+          if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()]; st.z = clamp(pinch.z * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d, 1, 4); zoomEl.value = st.z; layout(); return; }
+          if (pts.size === 1 && last) { st.x += e.clientX - last[0]; st.y += e.clientY - last[1]; last = [e.clientX, e.clientY]; layout(); }
+        });
+        const up = e => { pts.delete(e.pointerId); pinch = null; last = pts.size ? [...pts.values()][0] : null; };
+        wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
+        wrap.addEventListener('wheel', e => { e.preventDefault(); st.z = clamp(st.z * (e.deltaY < 0 ? 1.08 : 0.93), 1, 4); zoomEl.value = st.z; layout(); }, { passive: false });
+        root.__cropFinish = finish;
+        root.__cropRender = () => {
+          if (!st.V) return null;
+          const c = document.createElement('canvas'); c.width = out; c.height = out; const k = out / st.V;
+          const dw = st.w * st.base * st.z, dh = st.h * st.base * st.z;
+          c.getContext('2d').drawImage(img, ((st.V - dw) / 2 + st.x) * k, ((st.V - dh) / 2 + st.y) * k, dw * k, dh * k);
+          return c.toDataURL('image/jpeg', .9);
+        };
+      }, () => finish(null));
+  });
 }
 
 /* ---------------- global actions ---------------- */
@@ -83,31 +126,56 @@ Object.assign(A, {
   fab: () => { const top = U.stack[U.stack.length - 1]; const f = FABS[top ? top.page : U.tab]; if (f) f(); },
 
   openKey: () => openUrl('https://aistudio.google.com/apikey'),
-  pickModel: d => { $('#stModel').value = d.m; },
-  settingsSave: () => {
-    const f = readSettingsForm();
-    const key = $('#stKey').value.trim();
-    if (key && !/^[\w-]{20,}$/.test(key)) return invalid('stKey', 'Схоже, ключ некоректний');
-    if (key) Keys.set(key);
-    const notifOn = f.notif && !S.settings.notif;
-    S.settings = { ...S.settings, ...f }; save(); applyTheme(); closeSheet(); render();
-    if (notifOn) ensureNotifPermission();
+  pickModel: d => { S.settings.model = d.m; save(); settingsSheet(); toast('Модель: ' + d.m); },
+  notifToggle: (d, el) => {
+    S.settings.notif = !S.settings.notif; el.classList.toggle('on', S.settings.notif); save();
+    if (S.settings.notif) ensureNotifPermission();
     syncReminders();
-    toast('Збережено');
   },
+  keySave: () => {
+    const key = $('#stKey').value.trim();
+    if (!key) return invalid('stKey', 'Вставте ключ');
+    if (!/^[\w-]{20,}$/.test(key)) return invalid('stKey', 'Схоже, ключ некоректний');
+    Keys.set(key); toast('Ключ збережено'); settingsSheet();
+  },
+  avatarMenu: () => {
+    if (!S.settings.avatar) return A.avatarPick();
+    openSheet(`<h2>Фото профілю</h2><div style="display:flex;justify-content:center;margin-bottom:14px">${avatarHtml(110)}</div>
+      <div class="btns"><button class="btn" data-a="avatarPick">📷 Обрати інше фото</button><button class="btn ghost" data-a="avatarCrop">✂️ Змінити масштаб</button>
+      <button class="btn danger" data-a="avatarRemove">Прибрати фото</button></div>`, null, () => setTimeout(() => { if (!$('#sheetWrap').classList.contains('open')) settingsSheet(); }, 0));
+  },
+  avatarPick: async () => {
+    const id = await pickPhoto(1600); if (!id) return;
+    const src = await Photos.get(id);
+    const cropped = await cropPhoto(src);
+    if (cropped) {
+      [S.settings.avatar, S.settings.avatarSrc].forEach(x => x && Photos.del(x));
+      S.settings.avatar = await Photos.put(cropped); S.settings.avatarSrc = id; save(); render(); toast('Фото оновлено');
+    } else Photos.del(id);
+    settingsSheet();
+  },
+  avatarCrop: async () => {
+    const src = S.settings.avatarSrc && await Photos.get(S.settings.avatarSrc);
+    if (!src) return A.avatarPick();
+    const cropped = await cropPhoto(src);
+    if (cropped) { Photos.del(S.settings.avatar); S.settings.avatar = await Photos.put(cropped); save(); render(); toast('Фото оновлено'); }
+    settingsSheet();
+  },
+  avatarRemove: () => {
+    [S.settings.avatar, S.settings.avatarSrc].forEach(x => x && Photos.del(x));
+    S.settings.avatar = ''; S.settings.avatarSrc = ''; save(); render(); closeSheet(); toast('Фото прибрано');
+  },
+  cropCancel: () => closeSheet(),
+  cropDone: () => { const r = $('#sheetBody'); const v = r.__cropRender && r.__cropRender(); const f = r.__cropFinish; r.__cropFinish = null; if (f) f(v); closeSheet(); },
   keyDel: async () => {
     if (!await ask({ title: 'Видалити ключ Gemini?', text: 'Складання рецептів для «Вигідних продуктів» перестане працювати, доки не додасте новий.', ok: 'Видалити', danger: true })) return;
-    Keys.set(''); toast('Ключ видалено'); render();
+    Keys.set(''); toast('Ключ видалено'); render(); settingsSheet();
   },
-  testKey: async (d, el) => {
-    const key = $('#stKey').value.trim();
-    if (key) Keys.set(key);
-    if (!Keys.has()) { toast('Введіть ключ'); return; }
-    S.settings.model = $('#stModel').value.trim() || 'gemini-2.5-flash';
-    el.textContent = 'Перевіряю…'; el.setAttribute('disabled', '');
+  testKey: async () => {
+    if (!Keys.has()) { toast('Спершу додайте ключ'); return; }
+    toast('Перевіряю…');
     try { await gemini({ contents: [{ parts: [{ text: 'Відповідай одним словом: працює' }] }] }); toast('✅ Ключ працює!'); }
     catch (e) { toast('❌ ' + e.message); }
-    el.textContent = 'Перевірити ключ'; el.removeAttribute('disabled');
   },
   pinToggle: async (d, el) => {
     if (S.settings.pin) {

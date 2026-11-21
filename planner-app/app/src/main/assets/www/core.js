@@ -89,7 +89,7 @@ const DEF = {
   people: [], wishes: [], favs: [],
   prices: { city: '', stores: null, lastRun: null },
   weather: { mode: 'auto', place: null },
-  settings: { model: 'gemini-2.5-flash', theme: 'auto', name: '', pin: '', notif: true }
+  settings: { model: 'gemini-2.5-flash', theme: 'auto', name: '', pin: '', notif: true, avatar: '' }
 };
 
 const MIGRATIONS = {
@@ -209,7 +209,7 @@ function renderHeader(title, actions) {
   head.innerHTML = `<div class="grow">
       <div class="hello">${esc(S.settings.name ? `${g}, ${S.settings.name}` : g)}</div>
       <div class="sub">${wd[0].toUpperCase() + wd.slice(1)}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}</div></div>
-    <button class="icon-btn" data-a="settings" aria-label="Налаштування">${ICONS.gear}</button>`;
+    ${S.settings.avatar ? `<button class="head-ava ph-box" data-a="settings" aria-label="Налаштування"><img data-photo="${esc(S.settings.avatar)}" alt=""></button>` : `<button class="icon-btn" data-a="settings" aria-label="Налаштування">${ICONS.gear}</button>`}`;
 }
 function render() {
   const top = U.stack[U.stack.length - 1];
@@ -230,6 +230,7 @@ function render() {
   }
   $('#view').innerHTML = html;
   paintIcons($('#view'));
+  hydratePhotos($('#top'));
   $$('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === U.tab));
   const fab = FABS[top ? top.page : U.tab];
   $('#fab').classList.toggle('hidden', !fab || !!(fab.visible && !fab.visible()));

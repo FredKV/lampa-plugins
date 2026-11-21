@@ -123,57 +123,92 @@ function dayData(date, cmap) {
 }
 const CYC_LABEL = { period: '🩸 Менструація', predicted: '🩸 Очікувана менструація (прогноз)', ovulation: '🌱 Орієнтовна овуляція', fertile: '🌿 Фертильне вікно (прогноз)' };
 
-VIEWS.calendar = () => {
-  const { y, m } = U.cal;
-  const offset = (new Date(y, m, 1).getDay() + 6) % 7;
-  const start = new Date(y, m, 1 - offset);
-  const tdy = today();
-  const showCycle = !S.cycle.hide && S.cycle.periods.length > 0;
-  const cmap = showCycle ? Cycle.map() : {};
+U.calView = 'month'; // 'month' | 'week'
+try { const v = localStorage.getItem('tanichka.calView'); if (v) U.calView = v; } catch (e) { }
+const mondayOf = ds => { const d = parseYmd(ds); return addDays(ds, -((d.getDay() + 6) % 7)); };
+
+/** Entries of one date for display: [{cls, text, attrs, done}] */
+function dayEntries(date, cmap, withCycle) {
+  const dd = dayData(date, cmap), out = [];
+  dd.bds.forEach(b => out.push({ cls: 'bd', text: `🎂 ${b.p.name}${b.age ? ' · ' + b.age : ''}`, attrs: `data-a="go" data-page="person" data-id="${b.p.id}"` }));
+  dd.evs.forEach(e => out.push({ cls: e.important ? 'imp' : 'ev', text: `${e.time ? e.time + ' ' : ''}${e.title}`, attrs: `data-a="eventEdit" data-id="${e.id}"` }));
+  dd.tasks.forEach(t => out.push({ cls: 'pl', text: t.title, done: t.done, attrs: `data-a="taskEdit" data-id="${t.id}"` }));
+  if (withCycle && dd.cyc) {
+    const prev = cmap[addDays(date, -1)];
+    if (dd.cyc === 'ovulation') out.push({ cls: 'cy', text: '🌱 Овуляція (прогноз)', attrs: 'data-a="go" data-page="cycle"' });
+    else if (dd.cyc === 'period' && prev !== 'period') out.push({ cls: 'cy', text: '🩸 Менструація', attrs: 'data-a="go" data-page="cycle"' });
+    else if (dd.cyc === 'predicted' && prev !== 'predicted' && prev !== 'period') out.push({ cls: 'cy', text: '🩸 Цикл (прогноз)', attrs: 'data-a="go" data-page="cycle"' });
+  }
+  return out;
+}
+
+function calMonthView(cmap, showCycle) {
+  const { y, m } = U.cal, tdy = today();
+  const offset = (new Date(y, m, 1).getDay() + 6) % 7, start = new Date(y, m, 1 - offset);
   const weeks = Math.ceil((offset + new Date(y, m + 1, 0).getDate()) / 7);
-  let cells = WD.map((w, i) => `<div class="cwd ${i > 4 ? 'we' : ''}">${w}</div>`).join('');
+  let cells = WD.map((w, i) => `<div class="mh ${i > 4 ? 'we' : ''}">${w}</div>`).join('');
   for (let i = 0; i < weeks * 7; i++) {
     const d = new Date(start); d.setDate(start.getDate() + i);
-    const s = ymd(d), dd = dayData(s, cmap);
-    const marks = [];
-    if (dd.bds.length) marks.push('<i class="mk bd"></i>');
-    if (dd.evs.some(e => e.important)) marks.push('<i class="mk imp"></i>');
-    if (dd.evs.some(e => !e.important)) marks.push('<i class="mk ev"></i>');
-    if (dd.tasks.some(t => !t.done)) marks.push('<i class="mk task"></i>');
-    const first = dd.bds[0] ? '🎂 ' + dd.bds[0].p.name : dd.evs[0] ? dd.evs[0].title : '';
-    const n = dd.bds.length + dd.evs.length;
-    cells += `<button class="cday ${d.getMonth() !== m ? 'other' : ''} ${i % 7 > 4 ? 'we' : ''} ${s === tdy ? 'today' : ''} ${s === U.calSel ? 'sel' : ''} ${dd.cyc ? 'c-' + dd.cyc : ''}" data-a="calPick" data-d="${s}" aria-label="${d.getDate()} ${MONTHS_GEN[d.getMonth()]}${n ? ', записів: ' + n : ''}">
-      <span class="cnum">${d.getDate()}</span>${first ? `<span class="clbl">${esc(first)}</span>` : ''}<span class="cmarks">${marks.join('')}</span></button>`;
+    const ds = ymd(d), list = dayEntries(ds, cmap, showCycle), cyc = showCycle ? cmap[ds] : '';
+    const shown = list.slice(0, 3);
+    cells += `<button class="mcell ${d.getMonth() !== m ? 'other' : ''} ${i % 7 > 4 ? 'we' : ''} ${ds === tdy ? 'today' : ''} ${ds === U.calSel ? 'sel' : ''} ${cyc ? 'c-' + cyc : ''}" data-a="calPick" data-d="${ds}">
+      <span class="mnum">${d.getDate()}</span>
+      ${shown.map(e => `<span class="mline ${e.cls} ${e.done ? 'done' : ''}">${esc(e.text)}</span>`).join('')}
+      ${list.length > 3 ? `<span class="mmore">+${list.length - 3}</span>` : ''}</button>`;
   }
-  // upcoming 14 days: events, birthdays, plans, expected period
-  const up = [];
-  for (let k = 0; k < 14; k++) {
-    const ds = addDays(tdy, k), dd = dayData(ds, cmap);
-    dd.bds.forEach(b => up.push({ d: ds, ic: '🎂', t: b.p.name, sub: 'День народження' + (b.age ? ` · ${b.age}` : ''), a: `data-a="go" data-page="person" data-id="${b.p.id}"` }));
-    dd.evs.forEach(e => up.push({ d: ds, ic: e.important ? '⭐' : '📌', t: e.title, sub: (e.time || 'весь день') + (e.remind ? ' · 🔔' : ''), a: `data-a="eventEdit" data-id="${e.id}"` }));
-    dd.tasks.filter(t => !t.done).forEach(t => up.push({ d: ds, ic: '📝', t: t.title, sub: 'План', a: `data-a="taskEdit" data-id="${t.id}"` }));
-    if (showCycle && dd.cyc === 'predicted' && (k === 0 || dayData(addDays(ds, -1), cmap).cyc !== 'predicted')) up.push({ d: ds, ic: '🩸', t: 'Очікувана менструація', sub: 'прогноз', a: 'data-a="go" data-page="cycle"' });
+  return `<div class="mgrid" id="cgrid">${cells}</div>`;
+}
+
+function calWeekView(cmap, showCycle) {
+  const tdy = today(), mon = U.calWeek || mondayOf(tdy);
+  const days = Array.from({ length: 7 }, (_, i) => addDays(mon, i));
+  return `<div class="wstrip" id="cgrid">${days.map((ds, i) => { const d = parseYmd(ds), n = dayEntries(ds, cmap, showCycle).length;
+      return `<button class="${ds === tdy ? 'today' : ''} ${ds === U.calSel ? 'sel' : ''} ${i > 4 ? 'we' : ''}" data-a="calWeekPick" data-d="${ds}">${WD[i]}<b>${d.getDate()}</b><i class="${n ? 'has' : ''}"></i></button>`; }).join('')}</div>
+    <div class="list wlist">${days.map((ds, i) => {
+      const d = parseYmd(ds), list = dayEntries(ds, cmap, showCycle);
+      return `<div class="wday ${ds === tdy ? 'today' : ''}" id="wd-${ds}">
+        <button class="wdn" data-a="calPick" data-d="${ds}"><b>${d.getDate()}</b><span>${WD[i]}</span></button>
+        <div class="wen">${list.length ? list.map(e => `<button class="went ${e.cls} ${e.done ? 'done' : ''}" ${e.attrs}>${esc(e.text)}</button>`).join('')
+          : `<button class="wempty" data-a="calAddOn" data-d="${ds}">+ додати</button>`}</div></div>`;
+    }).join('')}</div>`;
+}
+
+VIEWS.calendar = () => {
+  const showCycle = !S.cycle.hide && S.cycle.periods.length > 0;
+  const cmap = showCycle ? Cycle.map() : {};
+  const tdy = today(), week = U.calView === 'week';
+  if (week && !U.calWeek) U.calWeek = mondayOf(U.calSel || tdy);
+  let title;
+  if (week) {
+    const a = parseYmd(U.calWeek), b = parseYmd(addDays(U.calWeek, 6));
+    title = a.getMonth() === b.getMonth() ? `${a.getDate()}–${b.getDate()} <span class="muted">${MONTHS_GEN[b.getMonth()]}</span>` : `${a.getDate()} ${MONTHS_SHORT[a.getMonth()]} – ${b.getDate()} ${MONTHS_SHORT[b.getMonth()]}`;
+  } else title = `${MONTHS[U.cal.m]} <span class="muted">${U.cal.y}</span>`;
+  const atToday = week ? U.calWeek === mondayOf(tdy) : (U.cal.y === new Date().getFullYear() && U.cal.m === new Date().getMonth());
+  // upcoming list only under the month grid
+  let up = '';
+  if (!week) {
+    const items = [];
+    for (let k = 0; k < 14 && items.length < 8; k++) { const ds = addDays(tdy, k); dayEntries(ds, cmap, showCycle).filter(e => !e.done).forEach(e => items.push({ ds, e })); }
+    up = `<h2>Найближчі 2 тижні</h2>${items.length ? `<div class="list">${items.slice(0, 8).map(({ ds, e }) => `<div class="item" ${e.attrs}><div class="up-date"><b>${parseYmd(ds).getDate()}</b><span>${MONTHS_SHORT[parseYmd(ds).getMonth()]}</span></div>
+      <div class="grow" style="min-width:0"><div class="title ellipsis"><span class="tdot ${e.cls}"></span>${esc(e.text)}</div><div class="meta">${ds === tdy ? 'Сьогодні' : ds === addDays(tdy, 1) ? 'Завтра' : dateLabel(ds)}</div></div></div>`).join('')}</div>`
+      : `<div class="card empty" style="padding:20px">Найближчим часом нічого не заплановано</div>`}`;
   }
   return `
-    <div class="card cal-card">
-      <div class="cal-top">
-        <div class="cal-title">${MONTHS[m]} <span class="muted">${y}</span></div>
-        <div class="row" style="gap:6px">
-          ${(y !== new Date().getFullYear() || m !== new Date().getMonth() || U.calSel !== tdy) ? '<button class="chip" data-a="calToday">Сьогодні</button>' : ''}
-          <button class="nav-btn" data-a="calNav" data-d="-1" aria-label="Попередній місяць">‹</button>
-          <button class="nav-btn" data-a="calNav" data-d="1" aria-label="Наступний місяць">›</button></div>
-      </div>
-      <div class="cgrid" id="cgrid">${cells}</div>
-      <div class="legend-row">
-        <span><i class="mk imp"></i>Важливо</span><span><i class="mk ev"></i>Подія</span><span><i class="mk task"></i>План</span><span><i class="mk bd"></i>ДН</span>
-        ${showCycle ? `<span><i class="sq c-period"></i>Цикл</span><span><i class="sq c-predicted"></i>Прогноз</span><span><i class="sq c-fertile"></i>Фертильні</span>` : ''}
-      </div>
+    <div class="cal-top2">
+      <div class="cal-title">${title}</div>
+      <div class="row" style="gap:6px">
+        ${!atToday ? '<button class="chip card-bg" data-a="calToday">Сьогодні</button>' : ''}
+        <button class="nav-btn card-bg" data-a="calNav" data-d="-1" aria-label="Назад">‹</button>
+        <button class="nav-btn card-bg" data-a="calNav" data-d="1" aria-label="Вперед">›</button></div>
     </div>
-    <h2>Найближчі 2 тижні</h2>
-    ${up.length ? `<div class="list">${up.slice(0, 12).map(x => `<div class="item" ${x.a}><div class="up-date"><b>${parseYmd(x.d).getDate()}</b><span>${MONTHS_SHORT[parseYmd(x.d).getMonth()]}</span></div>
-      <div class="grow" style="min-width:0"><div class="title ellipsis">${x.ic} ${esc(x.t)}</div><div class="meta">${x.d === tdy ? 'Сьогодні · ' : x.d === addDays(tdy, 1) ? 'Завтра · ' : ''}${esc(x.sub)}</div></div></div>`).join('')}</div>`
-      : `<div class="card empty" style="padding:20px">Найближчим часом нічого не заплановано</div>`}`;
+    <div class="seg" style="margin-bottom:10px"><button data-a="calView" data-v="month" class="${!week ? 'on' : ''}">🗓 Місяць</button><button data-a="calView" data-v="week" class="${week ? 'on' : ''}">📋 Тиждень</button></div>
+    ${week ? calWeekView(cmap, showCycle) : `<div class="mgrid-wrap">${calMonthView(cmap, showCycle)}</div>`}
+    <div class="legend-row" style="margin:8px 0 4px">
+      <span><i class="tdot imp"></i>Важливо</span><span><i class="tdot ev"></i>Подія</span><span><i class="tdot pl"></i>План</span><span><i class="tdot bd"></i>ДН</span>${showCycle ? '<span><i class="tdot cy"></i>Цикл</span>' : ''}
+    </div>
+    ${up}`;
 };
+FABS.calendar = () => eventSheet(null, U.calSel);
 
 function daySheet(date) {
   const showCycle = !S.cycle.hide && S.cycle.periods.length > 0;
@@ -205,8 +240,6 @@ function daySheet(date) {
     ${empty ? '<div class="muted" style="padding:6px 2px 4px">Записів на цей день немає.</div>' : ''}
     <div class="btns two"><button class="btn ghost" data-a="dayAddTask" data-d="${date}">+ План</button><button class="btn" data-a="dayAddEvent" data-d="${date}">+ Подія</button></div>`);
 }
-
-FABS.calendar = () => eventSheet(null, U.calSel);
 
 // swipe between months on the grid
 (() => {
@@ -293,7 +326,13 @@ PAGES.cycle = () => {
 };
 
 Object.assign(A, {
-  calNav: d => { let { y, m } = U.cal; m += +d.d; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } U.cal = { y, m }; render(); },
+  calNav: d => {
+    if (U.calView === 'week') { U.calWeek = addDays(U.calWeek || mondayOf(today()), 7 * +d.d); render(); return; }
+    let { y, m } = U.cal; m += +d.d; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } U.cal = { y, m }; render();
+  },
+  calView: d => { U.calView = d.v; try { localStorage.setItem('tanichka.calView', d.v); } catch (e) { } if (d.v === 'week') U.calWeek = mondayOf(U.calSel || today()); else { const dt = parseYmd(U.calSel || today()); U.cal = { y: dt.getFullYear(), m: dt.getMonth() }; } render(); },
+  calWeekPick: d => { U.calSel = d.d; render(); const el = document.getElementById('wd-' + d.d); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
+  calAddOn: d => { U.calSel = d.d; daySheet(d.d); },
   calPick: d => {
     U.calSel = d.d; const dt = parseYmd(d.d);
     if (dt.getMonth() !== U.cal.m) U.cal = { y: dt.getFullYear(), m: dt.getMonth() };
@@ -303,7 +342,7 @@ Object.assign(A, {
   dayAddEvent: d => eventSheet(null, d.d),
   dayAddTask: d => taskSheet(null, d.d),
   dayFin: d => { closeSheet(); U.finFilter.q = ''; U.finFilter.type = 'all'; U.seg.fin = 'ops'; go('finance'); },
-  calToday: () => { U.calSel = today(); U.cal = { y: new Date().getFullYear(), m: new Date().getMonth() }; render(); },
+  calToday: () => { U.calSel = today(); U.cal = { y: new Date().getFullYear(), m: new Date().getMonth() }; U.calWeek = mondayOf(today()); render(); },
   eventNew: () => eventSheet(null, U.tab === 'calendar' ? U.calSel : today()),
   eventEdit: d => eventSheet(d.id),
   eventSave: d => {

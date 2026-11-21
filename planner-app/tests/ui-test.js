@@ -91,10 +91,17 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
   ok(cs.reg && cs.reg.label === 'Регулярний', 'регулярність: ' + (cs.reg && cs.reg.label));
   ok(Object.values(cs.m).includes('ovulation') && Object.values(cs.m).includes('fertile'), 'овуляція та фертильне вікно на календарі');
   await p.click('[data-tab=calendar]'); await p.waitForTimeout(150);
-  const grid = await p.evaluate(() => ({ head: $$('.cwd').map(x => x.textContent).join(','), cells: $$('.cday').length, today: $$('.cday.today').length, we: $$('.cday.we').length, w: $('.cday').getBoundingClientRect().width, h: $('.cday').getBoundingClientRect().height }));
+  await p.evaluate(() => { U.calView = 'month'; render(); });
+  const grid = await p.evaluate(() => ({ head: $$('.mh').map(x => x.textContent).join(','), cells: $$('.mcell').length, today: $$('.mcell.today').length, we: $$('.mcell.we').length, w: $('.mcell').getBoundingClientRect().width, h: $('.mcell').getBoundingClientRect().height, line: !!$('.mcell.today .mline') }));
   ok(grid.head === 'Пн,Вт,Ср,Чт,Пт,Сб,Нд' && grid.cells % 7 === 0 && grid.today === 1 && grid.we === grid.cells / 7 * 2, `сітка: ${grid.cells} клітинок, тиждень з понеділка, вихідні виділені`);
-  ok(grid.w >= 44 && grid.h >= 48, `клітинки зручні для пальця (${Math.round(grid.w)}×${Math.round(grid.h)})`);
-  await p.click('.cday.today'); await p.waitForTimeout(350);
+  ok(grid.w >= 50 && grid.h >= 96 && grid.line, `великі клітинки з назвами справ (${Math.round(grid.w)}×${Math.round(grid.h)})`);
+  await p.click('[data-a=calView][data-v=week]'); await p.waitForTimeout(150);
+  const wk = await p.evaluate(() => ({ days: $$('.wday').length, strip: $$('.wstrip button').length, txt: $('.wday.today') && $('.wday.today').textContent }));
+  ok(wk.days === 7 && wk.strip === 7 && /Стоматолог/.test(wk.txt), 'перемикач «Тиждень»: дні зі справами');
+  await p.click('[data-a=calNav][data-d="1"]'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => U.calWeek === addDays(mondayOf(today()), 7)), 'тиждень вперед');
+  await p.click('[data-a=calToday]'); await p.click('[data-a=calView][data-v=month]'); await p.waitForTimeout(150);
+  await p.click('.mcell.today'); await p.waitForTimeout(350);
   ok(await p.evaluate(() => $('#sheetWrap').classList.contains('open') && /Стоматолог/.test($('#sheetBody').textContent)), 'натискання на дату → інформація про день');
   await p.click('#sheetBody [data-a=cycStart]'); await p.waitForTimeout(250);
   ok(await p.evaluate(() => !!Cycle.ongoing()), 'менструація почалась сьогодні (з картки дня)');
@@ -285,6 +292,27 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
     await p.waitForSelector('.ad-preview img', { timeout: 10000 });
     ok(await p.evaluate(() => !U.favNew.cut && !!U.favNew.ad && /Android/.test(U.favNew.cutErr)), 'без модуля вирізання — красива рамка з поясненням');
     await p.evaluate(() => { U.favNew = null; U.stack = []; go('home'); });
+  }
+
+  console.log('8c. Налаштування + фото профілю');
+  {
+    await p.evaluate(() => { S.settings.pin = ''; save(); U.stack = []; go('home'); });
+    await p.click('[data-a=settings]'); await p.waitForTimeout(400);
+    ok(await p.locator('#sheetBody .prof-card').count() === 1 && await p.locator('#sheetBody [data-a=keySave]').count() === 1, 'меню: профіль + компактні блоки');
+    await p.fill('#stName', 'Танічка'); await p.evaluate(() => closeSheet()); await p.waitForTimeout(300);
+    ok(await p.evaluate(() => S.settings.name === 'Танічка'), 'імʼя зберігається без кнопки «Зберегти»');
+    await p.click('[data-a=settings]'); await p.waitForTimeout(400);
+    const [fc3] = await Promise.all([p.waitForEvent('filechooser'), p.click('[data-a=avatarMenu]')]); await fc3.setFiles(path.join(__dirname, 'fixtures', 'product.jpg'));
+    await p.waitForSelector('#cropWrap img', { timeout: 5000 }); await p.waitForTimeout(300);
+    await p.fill('#cropZoom', '2'); await p.evaluate(() => $('#cropZoom').dispatchEvent(new Event('input')));
+    const box = await p.locator('#cropWrap').boundingBox();
+    await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await p.mouse.down(); await p.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2 + 30, { steps: 5 }); await p.mouse.up();
+    await p.screenshot({ path: shots + '12b-crop.png' });
+    await p.click('[data-a=cropDone]'); await p.waitForTimeout(700);
+    const av = await p.evaluate(async () => { const d = await Photos.get(S.settings.avatar); const i = new Image(); i.src = d; await i.decode(); return { w: i.width, h: i.height, head: !!$('#top .head-ava') }; });
+    ok(av.w === 480 && av.h === 480 && av.head, 'фото обрізано (480×480) і показано в шапці');
+    await p.screenshot({ path: shots + '12c-settings.png', fullPage: true });
+    await p.evaluate(() => closeSheet());
   }
 
   console.log('9. Видалення даних');
