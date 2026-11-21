@@ -262,7 +262,6 @@ PAGES.cycle = () => {
   }).join('');
   return {
     title: 'Мій цикл', html: `
-    <div class="hint" style="margin:0 0 12px">ℹ️ Прогнози розраховуються за середніми значеннями ваших записів і є орієнтовними. Це не медичний висновок і не метод контрацепції — з питань здоровʼя зверніться до лікаря.</div>
     ${st ? `<div class="card cycle-hero">
       <div class="small muted">Сьогодні</div><div class="big-line">${esc(st.line)}</div>
       ${st.day ? `<div class="small muted">${st.day}-й день циклу</div>` : ''}
@@ -289,7 +288,6 @@ PAGES.cycle = () => {
       ${S.cycle.remind ? `<div class="field" style="margin:4px 0 8px">${seg('cycDays', [['0', 'У день'], ['1', 'За 1 день'], ['2', 'За 2 дні'], ['3', 'За 3 дні']], String(S.cycle.remindDays))}</div>` : ''}
       <div class="switch"><div><b>Приховати в календарі</b><div class="small muted">Цикл не показуватиметься в календарі та на головній</div></div>${toggleHtml('cycHide', S.cycle.hide).replace('data-a="toggle"', 'data-a="cycHide"')}</div>
     </div>
-    <div class="small muted" style="margin:0 6px 12px;line-height:1.45">🔒 Дані циклу зберігаються лише на цьому телефоні, не надсилаються в інтернет і не потрапляють у тексти сповіщень на заблокованому екрані окрім короткого нагадування. Для захисту увімкніть PIN-код у налаштуваннях.</div>
     ${S.cycle.periods.length ? `<button class="btn danger" data-a="cycWipe">Видалити всі дані циклу</button>` : ''}`
   };
 };

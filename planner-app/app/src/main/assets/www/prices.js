@@ -313,7 +313,6 @@ function analyze(recipe) {
 
 /* ---------------- pages ---------------- */
 U.dp = { recipe: null, dish: '', servings: 2 };
-const SUGGESTED = ['Борщ український', 'Сирники', 'Паста Карбонара', 'Млинці', 'Картопляна запіканка', 'Вареники з картоплею', 'Олівʼє', 'Плов'];
 window.__resumeHooks.push(() => Dir.load());
 
 PAGES.prices = () => {
@@ -332,14 +331,12 @@ PAGES.prices = () => {
         <span class="small muted grow">порції</span>
         <button class="btn sm" style="padding:13px 18px" data-a="dpBuild" ${DP.loading ? 'disabled' : ''}>Скласти список</button>
       </div>
-      <div class="chips" style="margin-top:12px">${SUGGESTED.map(x => `<button class="chip" data-a="dpSuggest" data-d="${esc(x)}">${esc(x)}</button>`).join('')}</div>
-      ${!Keys.has() ? `<div class="hint">Без ключа Gemini доступні лише 6 вбудованих рецептів. <b class="link" data-a="settings">Додати безкоштовний ключ</b></div>` : ''}
     </div>
     ${DP.loading ? `<div class="card empty"><div class="spinner"></div>Складаю рецепт і список інгредієнтів…</div>` : ''}
     ${DP.err && !DP.loading ? `<div class="card"><b class="red">Не вдалося</b><div class="small muted" style="margin-top:6px">${esc(DP.err)}</div></div>` : ''}
     ${S.recipes.length ? `<h2>Збережені рецепти</h2><div class="list">${S.recipes.map(r => `<div class="item" data-a="dpOpen" data-id="${r.id}"><div class="emoji sm">🍽</div>
       <div class="grow"><div class="title">${esc(r.dish)}</div><div class="meta">${r.servings} порц. · ${r.ingredients.length} інгр.${r.results ? ` · ціни від ${fmtDateTime(r.results.ts)}` : ''}</div></div><span class="muted">›</span></div>`).join('')}</div>` : ''}
-    <div class="small muted" style="margin:14px 6px;line-height:1.45">ШІ складає лише рецепт і список продуктів. Ціни беруться напряму з каталогів магазинів (zakaz.ua, Сільпо, АТБ). Якщо магазин не віддає ціни — так і буде показано.</div>`
+`
   };
 };
 
@@ -492,7 +489,6 @@ Object.assign(A, {
     S.prices.city = city; S.prices.stores = on; save(); closeSheet(); render(); toast('Збережено');
   },
   dpSrv: d => { const el = $('#dpDish'); if (el) U.dp.dish = el.value; U.dp.servings = clamp(U.dp.servings + +d.d, 1, 20); render(); },
-  dpSuggest: d => { U.dp.dish = d.d; A.dpBuild(); },
   dpBuild: async () => {
     const el = $('#dpDish'); if (el) U.dp.dish = el.value.trim();
     if (U.dp.dish.length < 2) { toast('Напишіть назву страви'); if (el) el.focus(); return; }
