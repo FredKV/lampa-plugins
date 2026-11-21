@@ -11,7 +11,19 @@ const WMO = {
   77: ['🌨', 'Снігові зерна'], 80: ['🌦', 'Короткочасний дощ'], 81: ['🌧', 'Зливи'], 82: ['⛈', 'Сильні зливи'],
   85: ['🌨', 'Снігопад'], 86: ['❄️', 'Сильний снігопад'], 95: ['⛈', 'Гроза'], 96: ['⛈', 'Гроза з градом'], 99: ['⛈', 'Гроза з градом']
 };
-const wmo = c => WMO[c] || ['🌡', '—'];
+const WMO_NIGHT = { 0: '🌙', 1: '🌙', 2: '☁️', 51: '🌧', 61: '🌧', 80: '🌧' };
+/** icon + text; at night sun icons become moon / clouds */
+const wmo = (c, day = true) => { const w = WMO[c] || ['🌡', '—']; return day || !WMO_NIGHT[c] ? w : [WMO_NIGHT[c], w[1]]; };
+const pad2 = n => String(n).padStart(2, '0');
+const localStamp = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+/** day/night for a local time stamp "YYYY-MM-DDTHH:MM" using the forecast's sunrise/sunset */
+function isDayAt(d, stamp) {
+  const dl = d.daily || {}, i = (dl.time || []).indexOf(stamp.slice(0, 10));
+  if (i >= 0 && dl.sunrise && dl.sunset) return stamp >= dl.sunrise[i] && stamp < dl.sunset[i];
+  const h = d.hourly || {}, k = (h.time || []).findIndex(t => t.slice(0, 13) === stamp.slice(0, 13));
+  if (k >= 0 && h.is_day) return !!h.is_day[k];
+  return d.current ? !!d.current.is_day : true;
+}
 const CACHE_KEY = 'tanichka.weather', TTL = 30 * 60 * 1000;
 
 const Weather = {
@@ -28,8 +40,8 @@ const Weather = {
     this.loading = true; this.err = ''; render();
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}`
       + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day'
-      + '&hourly=temperature_2m,precipitation_probability,weather_code'
-      + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max'
+      + '&hourly=temperature_2m,precipitation_probability,weather_code,is_day'
+      + '&daily=weather_code,sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max'
       + '&timezone=auto&forecast_days=7&wind_speed_unit=ms';
     const r = await http('GET', url);
     this.loading = false;
@@ -70,10 +82,10 @@ const Weather = {
     render();
   },
   current(d) {
-    const c = d.current, h = d.hourly;
-    const hourKey = c.time.slice(0, 13);
-    const idx = Math.max(0, h.time.findIndex(t => t.slice(0, 13) === hourKey));
-    return { ...c, idx, prob: h.precipitation_probability ? h.precipitation_probability[idx] : null };
+    const c = d.current, h = d.hourly, now = localStamp();
+    let idx = h.time.findIndex(t => t.slice(0, 13) === now.slice(0, 13));
+    if (idx < 0) idx = Math.max(0, h.time.findIndex(t => t.slice(0, 13) === c.time.slice(0, 13)));
+    return { ...c, idx, day: isDayAt(d, now), prob: h.precipitation_probability ? h.precipitation_probability[idx] : null };
   },
   mini() {
     const p = this.place();
@@ -82,7 +94,7 @@ const Weather = {
     const c = this.data();
     if (!c) return `<div class="card w-mini" data-a="go" data-page="weather"><div class="w-ic">${this.loading ? '⏳' : '⚠️'}</div><div class="grow"><b>${esc(p.name)}</b><div class="small muted">${this.loading ? 'Завантаження…' : esc(this.err || 'Немає даних')}</div></div></div>`;
     const cur = this.current(c.data), dl = c.data.daily;
-    return `<div class="card w-mini" data-a="go" data-page="weather"><div class="w-ic">${wmo(cur.weather_code)[0]}</div>
+    return `<div class="card w-mini" data-a="go" data-page="weather"><div class="w-ic">${wmo(cur.weather_code, cur.day)[0]}</div>
       <div class="grow"><b style="font-size:22px">${Math.round(cur.temperature_2m)}°</b> <span class="muted small">${esc(wmo(cur.weather_code)[1])}</span>
       <div class="small muted">${esc(p.name)} · ${Math.round(dl.temperature_2m_min[0])}°…${Math.round(dl.temperature_2m_max[0])}°${cur.prob != null ? ` · 💧${cur.prob}%` : ''}</div></div><span class="muted">›</span></div>`;
   }
@@ -116,11 +128,11 @@ PAGES.weather = () => {
     const hours = [];
     for (let i = cur.idx; i < Math.min(h.time.length, cur.idx + 24); i++) hours.push(i);
     body = `
-      <div class="mono weather-hero ${cur.is_day ? 'wh-day' : 'wh-night'}">
+      <div class="mono weather-hero ${cur.day ? 'wh-day' : 'wh-night'}">
         <div class="wh-top"><div class="grow" style="min-width:0"><div class="lbl ellipsis">${esc(p.name)}</div>
           <div class="row" style="gap:10px;align-items:center"><div class="w-temp">${Math.round(cur.temperature_2m)}°</div>
             <div><div class="wh-desc">${esc(wmo(cur.weather_code)[1])}</div><div class="wh-feel">Відчувається як ${Math.round(cur.apparent_temperature)}° · ${Math.round(dl.temperature_2m_min[0])}°…${Math.round(dl.temperature_2m_max[0])}°</div></div></div></div>
-          <div class="wh-ic">${wmo(cur.weather_code)[0]}</div></div>
+          <div class="wh-ic">${wmo(cur.weather_code, cur.day)[0]}</div></div>
         <div class="row4">
           <div class="box"><div>Опади</div><div>${cur.precipitation} мм</div></div>
           <div class="box"><div>Дощ</div><div>${cur.prob != null ? cur.prob + '%' : '—'}</div></div>
@@ -130,7 +142,7 @@ PAGES.weather = () => {
       </div>
       <h2>Найближчі години</h2>
       <div class="card hours">${hours.map((i, k) => `<div class="hour"><div class="small muted">${k === 0 ? 'Зараз' : h.time[i].slice(11, 16)}</div>
-        <div style="font-size:22px">${wmo(h.weather_code[i])[0]}</div><b>${Math.round(h.temperature_2m[i])}°</b>
+        <div style="font-size:22px">${wmo(h.weather_code[i], h.is_day ? !!h.is_day[i] : isDayAt(d, h.time[i]))[0]}</div><b>${Math.round(h.temperature_2m[i])}°</b>
         <div class="small" style="color:var(--blue)">${h.precipitation_probability[i] ? '💧' + h.precipitation_probability[i] + '%' : '&nbsp;'}</div></div>`).join('')}</div>
       <h2>Прогноз на 7 днів</h2>
       <div class="list">${dl.time.map((t, i) => {

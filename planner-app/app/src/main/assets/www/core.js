@@ -260,12 +260,13 @@ function animateSegs(root, scope) {
     SegMem.set(key, idx);
     if (prev === undefined || prev === idx || idx < 0 || prev < 0 || !btns[prev]) return;
     const from = btns[prev], to = btns[idx];
-    const th = document.createElement('i'); th.className = 'seg-thumb';
-    const place = (b) => { th.style.top = b.offsetTop + 'px'; th.style.height = b.offsetHeight + 'px'; th.style.left = '0'; th.style.width = b.offsetWidth + 'px'; th.style.transform = `translateX(${b.offsetLeft}px)`; };
-    th.style.transition = 'none'; place(from); seg.prepend(th); seg.classList.add('anim');
+    const th = document.createElement('span'); th.className = 'seg-thumb';
+    const place = (b) => { th.style.top = b.offsetTop + 'px'; th.style.height = b.offsetHeight + 'px'; th.style.width = b.offsetWidth + 'px'; th.style.transform = `translateX(${b.offsetLeft}px)`; };
+    from.classList.add('was'); seg.classList.add('anim');
+    th.style.transition = 'none'; place(from); seg.prepend(th);
     th.getBoundingClientRect();
-    th.style.transition = ''; place(to);
-    setTimeout(() => { th.remove(); seg.classList.remove('anim'); }, 300);
+    requestAnimationFrame(() => { th.style.transition = ''; place(to); seg.classList.add('go'); });
+    setTimeout(() => { th.remove(); from.classList.remove('was'); seg.classList.remove('anim', 'go'); }, 360);
     // content after the switcher slides in from the side of the chosen option
     const dir = idx > prev ? 'swap-r' : 'swap-l';
     let el = seg.nextElementSibling;
