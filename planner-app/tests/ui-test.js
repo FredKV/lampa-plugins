@@ -94,7 +94,7 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
   await p.evaluate(() => { U.calView = 'month'; render(); });
   const grid = await p.evaluate(() => ({ head: $$('.mh').map(x => x.textContent).join(','), cells: $$('.mcell').length, today: $$('.mcell.today').length, we: $$('.mcell.we').length, w: $('.mcell').getBoundingClientRect().width, h: $('.mcell').getBoundingClientRect().height, line: !!$('.mcell.today .mline') }));
   ok(grid.head === 'Пн,Вт,Ср,Чт,Пт,Сб,Нд' && grid.cells % 7 === 0 && grid.today === 1 && grid.we === grid.cells / 7 * 2, `сітка: ${grid.cells} клітинок, тиждень з понеділка, вихідні виділені`);
-  ok(grid.w >= 50 && grid.h >= 96 && grid.line, `великі клітинки з назвами справ (${Math.round(grid.w)}×${Math.round(grid.h)})`);
+  ok(grid.w >= 44 && grid.h >= 96 && grid.line, `великі клітинки з назвами справ (${Math.round(grid.w)}×${Math.round(grid.h)})`);
   await p.click('[data-a=calView][data-v=week]'); await p.waitForTimeout(150);
   const wk = await p.evaluate(() => ({ days: $$('.wday').length, strip: $$('.wstrip button').length, txt: $('.wday.today') && $('.wday.today').textContent }));
   ok(wk.days === 7 && wk.strip === 7 && /Стоматолог/.test(wk.txt), 'перемикач «Тиждень»: дні зі справами');

@@ -247,5 +247,9 @@ window.addEventListener('error', e => console.error(e.message));
   render();
   Dir.load().catch(() => { });
   syncReminders();
-  setInterval(() => { if (!U.stack.length && !$('#sheetWrap').classList.contains('open')) renderHeader(); }, 60000);
+  setInterval(() => { if (!U.stack.length && U.tab === 'home' && !$('#sheetWrap').classList.contains('open')) renderHeader(); }, 60000);
 })();
+
+TAB_HEADERS.finance = () => ({ title: 'Фінанси' });
+TAB_HEADERS.shop = () => ({ title: 'Покупки' });
+TAB_HEADERS.more = () => ({ title: 'Ще', actions: `<button class="icon-btn" data-a="settings" aria-label="Налаштування">${ICONS.gear}</button>` });

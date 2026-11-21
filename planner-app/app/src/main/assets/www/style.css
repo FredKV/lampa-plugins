@@ -557,3 +557,27 @@ input[type=range] { accent-color: var(--primary); }
 .went { text-align: left; font-size: 14px; padding: 7px 10px; border-radius: 10px; background: var(--card2); border-left: 4px solid; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .went.done { text-decoration: line-through; opacity: .55; }
 .wempty { text-align: left; font-size: 13px; color: var(--muted); padding: 7px 2px; }
+
+/* tab headers (greeting only on Home) */
+.tab-title { font-size: 26px; font-weight: 700; letter-spacing: -.4px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-arrow { font-size: 20px; font-weight: 600; padding: 0; }
+/* month grid — design 1: separate tall tiles with coloured plaques */
+.mgrid-card { padding: 8px 6px; }
+.mgrid { gap: 3px; background: none; border: 0; }
+.mh { border: 0; padding: 2px 0 4px; }
+.mcell { min-height: 96px; border: 0 !important; border-radius: 10px; background: var(--card2); padding: 4px 3px; gap: 2px; }
+.mcell.we { background: color-mix(in srgb, var(--pink) 7%, var(--card2)); }
+.mcell.other { background: var(--card2); opacity: .45; }
+.mcell.other .mnum, .mcell.other .mline { opacity: 1; }
+.mnum { align-self: flex-start; font-size: 13px; font-weight: 700; padding: 0 2px; }
+.mcell.today .mnum { padding: 0; }
+.mline { font-size: 9.5px; font-weight: 600; border-left: 0; border-radius: 5px; padding: 2px 3px; }
+.mline.ev { background: rgba(59,108,255,.15); color: #2a52c9; }
+.mline.imp { background: rgba(229,72,77,.15); color: #c22; }
+.mline.pl { background: rgba(24,160,88,.15); color: #127a43; }
+.mline.bd { background: rgba(224,86,154,.15); color: #b0306e; }
+.mline.cy { background: rgba(229,72,77,.08); color: #c55; }
+[data-theme="dark"] .mline.ev { color: #8fb0ff; } [data-theme="dark"] .mline.imp { color: #ff8a8d; } [data-theme="dark"] .mline.pl { color: #6fd6a0; }
+[data-theme="dark"] .mline.bd { color: #f39ac6; } [data-theme="dark"] .mline.cy { color: #f3a0a3; }
+.mcell.c-period { background: var(--period-bg); }
+.mcell.c-fertile, .mcell.c-ovulation { background: var(--fertile-bg); }

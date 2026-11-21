@@ -181,6 +181,7 @@ function save() {
 const U = { tab: 'home', stack: [], seg: {} };
 const VIEWS = {};      // tab → () => html
 const PAGES = {};      // page → (params) => ({title, html})
+const TAB_HEADERS = {}; // tab → () => ({title (html), actions (html)}); the greeting is shown only on «Головна»
 const FABS = {};       // tab|page → () => void
 const A = {};          // click actions: name → (dataset, el, event)
 const AFTER_RENDER = []; // hooks after every render
@@ -200,6 +201,11 @@ function renderHeader(title, actions) {
   if (title !== undefined) {
     head.innerHTML = `<button class="icon-btn" data-a="back" aria-label="Назад">${ICONS.back}</button>
       <div class="grow page-title ellipsis">${esc(title)}</div>${actions ? `<div class="head-actions">${actions}</div>` : '<span style="width:44px"></span>'}`;
+    return;
+  }
+  if (U.tab !== 'home' && TAB_HEADERS[U.tab]) {
+    const t = TAB_HEADERS[U.tab]();
+    head.innerHTML = `<div class="grow tab-title">${t.title}</div>${t.actions ? `<div class="head-actions">${t.actions}</div>` : ''}`;
     return;
   }
   const h = new Date().getHours();

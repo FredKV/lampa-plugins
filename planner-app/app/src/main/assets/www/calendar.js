@@ -178,12 +178,7 @@ VIEWS.calendar = () => {
   const cmap = showCycle ? Cycle.map() : {};
   const tdy = today(), week = U.calView === 'week';
   if (week && !U.calWeek) U.calWeek = mondayOf(U.calSel || tdy);
-  let title;
-  if (week) {
-    const a = parseYmd(U.calWeek), b = parseYmd(addDays(U.calWeek, 6));
-    title = a.getMonth() === b.getMonth() ? `${a.getDate()}–${b.getDate()} <span class="muted">${MONTHS_GEN[b.getMonth()]}</span>` : `${a.getDate()} ${MONTHS_SHORT[a.getMonth()]} – ${b.getDate()} ${MONTHS_SHORT[b.getMonth()]}`;
-  } else title = `${MONTHS[U.cal.m]} <span class="muted">${U.cal.y}</span>`;
-  const atToday = week ? U.calWeek === mondayOf(tdy) : (U.cal.y === new Date().getFullYear() && U.cal.m === new Date().getMonth());
+  const atToday = calAtToday();
   // upcoming list only under the month grid
   let up = '';
   if (!week) {
@@ -194,21 +189,27 @@ VIEWS.calendar = () => {
       : `<div class="card empty" style="padding:20px">Найближчим часом нічого не заплановано</div>`}`;
   }
   return `
-    <div class="cal-top2">
-      <div class="cal-title">${title}</div>
-      <div class="row" style="gap:6px">
-        ${!atToday ? '<button class="chip card-bg" data-a="calToday">Сьогодні</button>' : ''}
-        <button class="nav-btn card-bg" data-a="calNav" data-d="-1" aria-label="Назад">‹</button>
-        <button class="nav-btn card-bg" data-a="calNav" data-d="1" aria-label="Вперед">›</button></div>
-    </div>
     <div class="seg" style="margin-bottom:10px"><button data-a="calView" data-v="month" class="${!week ? 'on' : ''}">🗓 Місяць</button><button data-a="calView" data-v="week" class="${week ? 'on' : ''}">📋 Тиждень</button></div>
-    ${week ? calWeekView(cmap, showCycle) : `<div class="mgrid-wrap">${calMonthView(cmap, showCycle)}</div>`}
+    ${week ? calWeekView(cmap, showCycle) : `<div class="card mgrid-card">${calMonthView(cmap, showCycle)}</div>`}
     <div class="legend-row" style="margin:8px 0 4px">
       <span><i class="tdot imp"></i>Важливо</span><span><i class="tdot ev"></i>Подія</span><span><i class="tdot pl"></i>План</span><span><i class="tdot bd"></i>ДН</span>${showCycle ? '<span><i class="tdot cy"></i>Цикл</span>' : ''}
     </div>
     ${up}`;
 };
 FABS.calendar = () => eventSheet(null, U.calSel);
+function calAtToday() {
+  const tdy = today();
+  return U.calView === 'week' ? (U.calWeek || mondayOf(tdy)) === mondayOf(tdy) : (U.cal.y === new Date().getFullYear() && U.cal.m === new Date().getMonth());
+}
+TAB_HEADERS.calendar = () => {
+  let title;
+  if (U.calView === 'week') {
+    const mon = U.calWeek || mondayOf(today()), a = parseYmd(mon), b = parseYmd(addDays(mon, 6));
+    title = a.getMonth() === b.getMonth() ? `${a.getDate()}–${b.getDate()} <span class="muted">${MONTHS_GEN[b.getMonth()]}</span>` : `${a.getDate()} ${MONTHS_SHORT[a.getMonth()]} – ${b.getDate()} ${MONTHS_SHORT[b.getMonth()]}`;
+  } else title = `${MONTHS[U.cal.m]} <span class="muted">${U.cal.y}</span>`;
+  return { title, actions: `${!calAtToday() ? '<button class="chip card-bg" data-a="calToday">Сьогодні</button>' : ''}
+    <button class="icon-btn sm nav-arrow" data-a="calNav" data-d="-1" aria-label="Назад">‹</button><button class="icon-btn sm nav-arrow" data-a="calNav" data-d="1" aria-label="Вперед">›</button>` };
+};
 
 function daySheet(date) {
   const showCycle = !S.cycle.hide && S.cycle.periods.length > 0;
