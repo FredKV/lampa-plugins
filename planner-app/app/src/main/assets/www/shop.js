@@ -20,15 +20,13 @@ function vShop() {
       ${i.url && !i.bought ? `<button class="small link" data-a="openLink" data-url="${esc(i.url)}">товар ↗</button>` : ''}
       ${i.bought ? `<button class="small link" data-a="favFromShop" data-id="${i.id}" aria-label="В улюблені">❤️ в улюблені</button>` : ''}</div></div>`;
   return `
-    <div class="sumline">
-      <div><span>До сплати</span><b>≈ ${money(sumToBuy)}</b></div>
-      <div><span>Товарів</span><b>${toBuy.length}</b></div>
-      <div><span>У кошику</span><b>${bought.length}</b></div>
-      <div><span>Кошик, сума</span><b>${money(sumBought)}</b></div>
-    </div>
-    <div class="row between" style="margin:0 2px 8px">
-      <button class="chip card-bg" data-a="go" data-page="prices">🔎 Продукти для страви</button>
-      ${toBuy.length ? `<button class="chip card-bg" data-a="shopGroup">⇅ ${by === 'store' ? 'Магазини' : 'Страви'}</button>` : ''}
+    <div class="card receipt">
+      <div class="rc-row"><span>Товарів у списку</span><b>${toBuy.length}</b></div>
+      <div class="rc-row"><span>У кошику</span><b>${bought.length} · ${money(sumBought)}</b></div>
+      <div class="rc-cut"></div>
+      <div class="rc-row rc-total"><b>До сплати</b><b>≈ ${money(sumToBuy)}</b></div>
+      <div class="rc-links"><button class="link" data-a="go" data-page="prices">🔎 Продукти для страви</button>
+        ${toBuy.length ? `<button class="link" data-a="shopGroup">⇅ За ${by === 'store' ? 'магазинами' : 'стравами'}</button>` : ''}</div>
     </div>
     ${!S.shop.length ? emptyCard('🛒', 'Список покупок порожній.<br>Додайте товар «+» або складіть список для страви з реальними цінами магазинів.', { label: 'Підібрати продукти для страви', attrs: 'data-a="go" data-page="prices"' }) : ''}
     ${Object.entries(groups).map(([g, l]) => `<div class="group-h"><span>${by === 'store' ? (g === 'Без магазину' ? '🛒 ' : '🏪 ') : '🍽 '}${esc(g)}</span><span>${money(l.reduce((a, i) => a + num(i.price), 0))}</span></div>

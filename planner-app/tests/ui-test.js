@@ -217,8 +217,8 @@ const geminiPrices = { candidates: [{ content: { parts: [{ text: '```json\n' + J
   await p.evaluate(() => { Keys.set(''); U.stack = []; render(); });
 
   console.log('8. Покупки / ще / налаштування / PIN');
-  const sl = await p.evaluate(() => { const c = $('.sumline'); return c ? { h: c.getBoundingClientRect().height, t: c.textContent } : null; });
-  ok(sl && sl.h < 70 && /До сплати/.test(sl.t) && /Товарів/.test(sl.t) && /У кошику/.test(sl.t) && /Кошик, сума/.test(sl.t), `компактний підсумок покупок (${sl && Math.round(sl.h)}px)`);
+  const sl = await p.evaluate(() => { const c = $('.receipt'); return c ? { h: c.getBoundingClientRect().height, t: c.textContent } : null; });
+  ok(sl && sl.h < 160 && /До сплати/.test(sl.t) && /Товарів у списку/.test(sl.t) && /У кошику/.test(sl.t) && /Продукти для страви/.test(sl.t), `підсумок покупок «як чек» (${sl && Math.round(sl.h)}px)`);
   ok(await p.locator('.group-h:has-text("🏪")').count() >= 2, 'покупки згруповано за магазинами');
   await p.screenshot({ path: shots + '11a-shop.png', fullPage: true });
   await p.click('[data-tab=more]'); await p.waitForTimeout(150); await p.screenshot({ path: shots + '11-more.png' });

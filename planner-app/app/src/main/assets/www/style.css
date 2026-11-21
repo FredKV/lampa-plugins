@@ -471,3 +471,15 @@ select.input { appearance: none; -webkit-appearance: none; background-image: lin
 .stars button { font-size: 26px; line-height: 1; color: var(--line); padding: 2px; }
 .stars button.on { color: #f5a524; }
 .fav-meta span .muted { color: var(--line); }
+
+/* shopping summary: variant E (receipt) */
+.receipt { padding: 12px 16px; }
+.rc-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 14px; padding: 2px 0; }
+.rc-row span { color: var(--muted); }
+.rc-cut { border-top: 2px dashed var(--line); margin: 9px 0 7px; }
+.rc-total b:last-child { font-size: 22px; letter-spacing: -.4px; }
+.rc-total b:first-child { font-size: 16px; }
+.rc-links { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; }
+.rc-links .link { font-size: 14px; }
+.rc-links { flex-wrap: nowrap; justify-content: space-between; }
+.rc-links .link { white-space: nowrap; font-size: 13.5px; }
