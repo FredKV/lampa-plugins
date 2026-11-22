@@ -151,3 +151,31 @@ Object.assign(A, {
   bkRestore: () => Bridge.openBackup ? Bridge.openBackup() : A.importData(),
   bkOff: async () => { if (!await ask({ title: 'Вимкнути автокопію?', text: 'Файл з копією залишиться на місці.', ok: 'Вимкнути' })) return; Bridge.forgetBackup(); settingsSheet(); }
 });
+
+/* ---------------- home-screen widget ---------------- */
+function widgetData() {
+  const days = {}, w = typeof Weather !== 'undefined' ? Weather.data() : null;
+  for (let k = 0; k < 3; k++) {
+    const d = addDays(today(), k), dd = dayData(d, null);
+    const items = [...dd.bds.map(b => `🎂 ${b.p.name}`), ...dd.evs.map(e => `${e.time ? e.time + '  ' : '📅 '}${e.title}`), ...dd.tasks.filter(t => !t.done).map(t => `📝 ${t.title}`)];
+    let weather = '';
+    if (w) { const dl = w.data.daily, i = dl.time.indexOf(d);
+      if (i >= 0) weather = k === 0 ? `${wmo(w.data.current.weather_code, Weather.current(w.data).day)[0]} ${Math.round(w.data.current.temperature_2m)}°` : `${wmo(dl.weather_code[i])[0]} ${Math.round(dl.temperature_2m_max[i])}°`; }
+    days[d] = { items, weather };
+  }
+  const goals = (S.goals || []).filter(g => g.type === 'habit' || g.type === 'quit').slice(0, 3).map(g => ({
+    id: g.id, title: g.title, per: g.per || 'day', times: g.times || 0, log: Object.keys(g.log || {}).filter(d => d >= addDays(today(), -35)) }));
+  return { days, goals, ts: Date.now() };
+}
+function pushWidget() { try { if (Bridge && Bridge.setWidget) Bridge.setWidget(JSON.stringify(widgetData())); } catch (e) { } }
+function applyWidgetTicks() {
+  if (!Bridge || !Bridge.takeWidgetToggles) return;
+  let q = []; try { q = JSON.parse(Bridge.takeWidgetToggles() || '[]'); } catch (e) { }
+  if (!q.length) return;
+  q.forEach(t => { const g = S.goals.find(x => x.id === t.id); if (!g) return; g.log = g.log || {}; if (t.on) g.log[t.date] = 1; else delete g.log[t.date]; });
+  save(); render();
+}
+(() => { const s0 = syncReminders; window.syncReminders = syncReminders = () => { s0(); pushWidget(); }; })();
+window.__resumeHooks.push(() => { applyWidgetTicks(); pushWidget(); });
+setTimeout(() => { applyWidgetTicks(); pushWidget(); }, 1200);
+let wPushT = 0; AFTER_RENDER.push(() => { clearTimeout(wPushT); wPushT = setTimeout(pushWidget, 3000); });

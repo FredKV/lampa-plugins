@@ -649,6 +649,27 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8q. Віджет');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.addInitScript(() => { window.__w = null; window.__wq = '[]'; window.AndroidBridge = { setWidget: j => { window.__w = JSON.parse(j); }, takeWidgetToggles: () => { const x = window.__wq; window.__wq = '[]'; return x; } }; });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => {
+      S.events.push({ id: 'e1', title: 'Стоматолог', date: today(), time: '10:30', note: '', important: true, remind: '' });
+      S.tasks.push({ id: 't1', title: 'Купити квіти', note: '', prio: 2, due: today(), done: false });
+      S.goals.push({ id: 'g1', type: 'habit', title: 'Читати', per: 'day', log: {}, attempts: [] }); save();
+    });
+    await q.waitForTimeout(1200);
+    const w = await q.evaluate(() => window.__w);
+    const t = await q.evaluate(() => today());
+    ok(w && w.days[t].items.some(x => /10:30\s+Стоматолог/.test(x)) && w.days[t].items.some(x => /Купити квіти/.test(x)) && w.goals[0].title === 'Читати', 'віджет отримує події, плани й цілі на сьогодні');
+    await q.evaluate(d => { window.__wq = JSON.stringify([{ id: 'g1', date: d, on: true }]); window.__onResume && window.__onResume(); }, t); await q.waitForTimeout(300);
+    ok(await q.evaluate(() => Goals.doneToday(S.goals[0])), 'галочка, поставлена на віджеті, зʼявляється в додатку');
+    ok(e2.length === 0, 'без JS-помилок (віджет) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="w_bg">#F7F9FC</color>
+    <color name="w_text">#111114</color>
+    <color name="w_muted">#75757D</color>
+    <color name="w_done">#18A058</color>
+    <string name="widget_desc">Плани, події, цілі й погода на сьогодні</string>
+    <style name="WItem">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:textColor">@color/w_text</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+    <style name="WGoal" parent="WItem">
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:paddingTop">3dp</item>
+        <item name="android:paddingBottom">3dp</item>
+    </style>
+</resources>

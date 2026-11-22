@@ -514,6 +514,18 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** Home-screen widget data (today/tomorrow items, weather, goals). */
+        @JavascriptInterface
+        public void setWidget(String json) { TodayWidget.save(MainActivity.this, json); }
+
+        /** Goal ticks made on the widget since the app was last opened; cleared on read. */
+        @JavascriptInterface
+        public String takeWidgetToggles() {
+            String q = Store.get(MainActivity.this, "w_toggles", "[]");
+            Store.put(MainActivity.this, "w_toggles", null);
+            return q;
+        }
+
         /** Short haptic feedback: tick | heavy | success */
         @JavascriptInterface
         public void vibrate(String kind) {
