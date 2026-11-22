@@ -351,7 +351,7 @@ PAGES.cycle = () => {
       <div class="kv"><span>Овуляція (орієнтовно)</span><b>${st.ovu ? shortDate(st.ovu) : '—'}</b></div>
       <div class="kv"><span>Фертильне вікно</span><b>${st.ovu ? `${shortDate(addDays(st.ovu, -5))} – ${shortDate(addDays(st.ovu, 1))}` : '—'}</b></div>
       ${st.ongoing ? `<div class="btns"><button class="btn" data-a="cycEnd" data-d="${today()}">Сьогодні останній день</button></div>`
-        : `<div class="btns"><button class="btn" data-a="cycStart" data-d="${today()}">🩸 Почалась сьогодні</button></div>`}
+        : `<div class="btns"><button class="btn" data-a="cycStart" data-d="${today()}">Почалась сьогодні</button></div>`}
     </div>` : `<div class="card empty"><div class="big">🌸</div>Позначте перший день останньої менструації — і ЛАД порахує прогноз.
       <div class="btns"><button class="btn sm" style="margin:0 auto" data-a="cycNew">Додати</button></div></div>`}
     ${st ? `<h2>Статистика</h2><div class="stats">
@@ -362,7 +362,7 @@ PAGES.cycle = () => {
       ${reg ? `<div style="margin-top:6px"><span class="pill ${reg.label === 'Регулярний' ? 'green' : reg.label === 'Нерегулярний' ? 'red' : 'blue'}">${reg.label}</span></div>
         <div class="small muted" style="margin-top:8px;line-height:1.45">Тривалість циклу від ${reg.min} до ${reg.max} днів, відхилення ±${reg.sd} дн. (за ${reg.n} ${plural(reg.n, 'циклом', 'циклами', 'циклами')}).</div>`
         : `<div class="small muted" style="margin-top:6px">Потрібно щонайменше 3 записи, щоб оцінити регулярність.</div>`}</div>` : ''}
-    ${ps.length ? `<div class="row between" style="margin:22px 4px 10px"><h2 style="margin:0">Попередні цикли</h2><button class="chip card-bg" data-a="cycNew">+ Додати</button></div><div class="list">${hist}</div>` : ''}
+    ${ps.length ? `<div class="row between" style="margin:22px 4px 10px"><h2 style="margin:0">Попередні цикли</h2><button class="link small" data-a="cycNew">+ Додати</button></div><div class="list">${hist}</div>` : ''}
     <h2>Налаштування</h2>
     <div class="card">
       <div class="switch"><div><b>Нагадування</b><div class="small muted">Перед очікуваним початком</div></div>${toggleHtml('cycRem', S.cycle.remind).replace('data-a="toggle"', 'data-a="cycRemind"')}</div>

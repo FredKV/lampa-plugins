@@ -61,7 +61,7 @@ function taskSheet(id, presetDue) {
       <div class="due-chips"><button class="chip" data-a="setDue" data-d="0">Сьогодні</button><button class="chip" data-a="setDue" data-d="1">Завтра</button><button class="chip" data-a="setDue" data-d="">Без дати</button></div></div>
     ${repeatChips(t.repeat, 'task')}
     <div class="field"><textarea class="input" id="tNote" maxlength="1000" placeholder="Нотатка (необовʼязково)">${esc(t.note)}</textarea></div>
-    ${id ? `<div class="row" style="gap:8px;margin-bottom:10px"><button class="btn ghost grow" data-a="taskToEvent" data-id="${id}">📅 У події</button><button class="btn ghost grow" data-a="taskShare" data-id="${id}">${ICONS.share} Поділитися</button></div>` : ''}
+    ${id ? `<div class="row" style="gap:8px;margin-bottom:10px"><button class="btn ghost grow" data-a="taskToEvent" data-id="${id}">У події</button><button class="btn ghost grow" data-a="taskShare" data-id="${id}">${ICONS.share} Поділитися</button></div>` : ''}
     <div class="btns ${id ? 'two' : ''}">
       ${id ? `<button class="btn danger" data-a="taskDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn" data-a="taskSave" data-id="${id || ''}">Зберегти</button>

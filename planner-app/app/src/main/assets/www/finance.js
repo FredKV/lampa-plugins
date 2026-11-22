@@ -181,7 +181,7 @@ function vFinOverview() {
     <div class="row" style="gap:8px;margin-bottom:12px">
       <button class="btn sm card-btn grow" data-a="txNew" data-type="exp">− Витрата</button>
       <button class="btn sm card-btn grow" data-a="txNew" data-type="inc">+ Дохід</button>
-      <button class="btn sm card-btn grow" data-a="receiptStart">📷 Чек</button>
+      <button class="btn sm card-btn grow" data-a="receiptStart">Чек</button>
     </div>
     ${U.finOff === 0 ? billsCard() : ''}
     ${lim && segOf('finPer', 'month') === 'month' && U.finOff === 0 ? `<div class="card" data-a="useg" data-key="fin" data-val="budget">
@@ -236,7 +236,7 @@ function vFinBudget() {
       <div class="grow"><div class="row between"><span class="title">${esc(c[2])}</span><span class="small">${money(s)}${l ? ` / ${money(l)}` : ''}</span></div>
       ${l ? `${progressBar(pct, state === 'red' ? 'var(--red)' : state === 'amber' ? 'var(--amber)' : '')}
         <div class="small ${state === 'red' ? 'red' : 'muted'}" style="margin-top:5px">${s > l ? `⚠️ Перевищено на ${money(s - l)}` : `${pct >= 80 ? '⚠️ ' : ''}Залишилось ${money(l - s)}`}</div>`
-        : `<div class="small muted">Ліміт не встановлено · натисніть, щоб задати</div>`}</div></div>`;
+        : ``}</div></div>`;
   };
   const cats = Fin.cats('exp');
   const withLim = cats.filter(c => S.budget.cats[c[0]]), without = cats.filter(c => !S.budget.cats[c[0]]);

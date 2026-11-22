@@ -130,7 +130,7 @@ PAGES.goal = p => {
       <div class="muted">${quit ? `${plural(big, 'день', 'дні', 'днів')} без зривів 💚` : per ? `${Goals.perThis(g)} · ціль ${timesTxt(g.times)} на ${Goals.perWord(g)}` : `${plural(big, 'день', 'дні', 'днів')} поспіль`}</div>
       ${per ? `<div style="margin:12px auto 0;max-width:240px">${progressBar(Math.min(100, big / g.times * 100), big >= g.times ? 'var(--green)' : '')}</div>` : ''}
       ${g.min ? `<div class="small muted" style="margin-top:4px">Мінімум: ${esc(g.min)}</div>` : ''}
-      <button class="btn ${done ? 'ghost card-btn' : ''}" style="margin-top:16px" data-a="goalCheck" data-id="${g.id}">${done ? '✓ Сьогодні відмічено' : quit ? '✅ Сьогодні тримаюсь!' : '✅ Сьогодні виконала'}</button>
+      <button class="btn ${done ? 'ghost card-btn' : ''}" style="margin-top:16px" data-a="goalCheck" data-id="${g.id}">${done ? 'Сьогодні відмічено ✓' : quit ? 'Сьогодні тримаюсь' : 'Сьогодні виконала'}</button>
     </div>
     <h2>Останні 4 тижні</h2>
     <div class="card goal-days">${days.map(d => `<i class="${Goals.doneOn(g, d) || (quit && g.start && d >= g.start && d < today()) ? 'on' : ''} ${d === today() ? 'today' : ''}" title="${d}"></i>`).join('')}</div>
@@ -142,7 +142,7 @@ PAGES.goal = p => {
         : `<div class="kv"><span>Найдовша серія</span><b>${Math.max(Goals.best(g), quit ? Goals.clean(g) : 0)} ${plural(Math.max(Goals.best(g), quit ? Goals.clean(g) : 0), 'день', 'дні', 'днів')}</b></div>`}
       ${g.time ? `<div class="kv"><span>Нагадування</span><b>о ${g.time}</b></div>` : ''}
       ${quit && (g.attempts || []).length ? `<div class="kv"><span>Попередні спроби</span><b>${g.attempts.map(a => a.days).join(', ')} дн.</b></div>` : ''}</div>
-    <div class="btns two">${quit ? `<button class="btn ghost card-btn" data-a="goalRelapse" data-id="${g.id}">😔 Зірвалась</button>` : `<button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button>`}
+    <div class="btns two">${quit ? `<button class="btn ghost card-btn" data-a="goalRelapse" data-id="${g.id}">Зірвалась</button>` : `<button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button>`}
       <button class="btn ghost card-btn" data-a="goalEdit" data-id="${g.id}">Редагувати</button></div>
     ${quit ? `<div class="btns"><button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button></div>` : ''}`
   };

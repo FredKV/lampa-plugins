@@ -80,7 +80,6 @@ function vShop() {
       <div class="grow" style="min-width:0"><div class="title ellipsis">${esc(d.name)}</div>
         <div class="meta">${d.bought}/${d.total} куплено${d.left ? ' · ' + money(d.left) : d.bought === d.total ? ' · усе є ✓' : ''}</div>
         ${progressBar(d.bought / d.total * 100, 'var(--green)')}</div><button class="del-btn" data-a="shopDishDel" data-id="${esc(d.name)}" aria-label="Прибрати страву">${ICONS.trash}</button></div>`).join('')}</div>
-      <div class="small muted" style="margin:6px">Натисніть на страву, щоб відкрити її список. «Усі продукти» — однакові продукти з різних страв обʼєднано.</div>
       ${boughtActions()}`;
   }
   const bought = S.shop.filter(i => i.bought);
@@ -112,7 +111,7 @@ function shopAddSheet(presetDish) {
     <div class="row" style="gap:10px">
       <div class="field grow"><input class="input" id="sfName" maxlength="80" placeholder="Що купити?"></div>
       <div class="field" style="width:34%"><input class="input" id="sfQty" maxlength="30" placeholder="Скільки?"></div></div>
-    <button class="btn" data-a="shopFind">🔎 Знайти, де найдешевше</button>
+    <button class="btn" data-a="shopFind">Знайти, де найдешевше</button>
     <div id="sfRes"></div>
     <button class="link small" style="display:block;margin:12px auto 2px" data-a="shopAddPlain">Додати без пошуку ціни</button>`,
     r => setTimeout(() => $('#sfName', r).focus(), 300));

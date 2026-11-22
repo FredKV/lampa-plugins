@@ -108,7 +108,7 @@ function voiceSheet() {
       <div class="field grow"><label>${r.kind === 'task' ? 'Термін' : 'Дата'}</label><input type="date" class="input" id="vcDate" value="${r.date || ''}"></div>
       ${r.kind === 'event' ? `<div class="field" style="width:40%"><label>Час</label><input type="time" class="input" id="vcTime" value="${r.time || ''}"></div>` : ''}</div>
       ${r.date ? `<div class="small muted" style="margin:-4px 4px 10px">${esc(dateLabel(r.date))}${r.time ? ' о ' + r.time : ''}</div>` : ''}` : ''}
-    <div class="btns two"><button class="btn ghost card-btn" data-a="vcAgain">🎙 Ще раз</button><button class="btn" data-a="vcSave">Додати</button></div>`);
+    <div class="btns two"><button class="btn ghost card-btn" data-a="vcAgain">Ще раз</button><button class="btn" data-a="vcSave">Додати</button></div>`);
 }
 function vcRead() {
   const r = U.vc && U.vc.r; if (!r) return null; const b = $('#sheetBody');

@@ -26,9 +26,9 @@ function wishCard(w) {
   const i = Wishes.info(w);
   return `<div class="card wish" data-a="go" data-page="wish" data-id="${w.id}">
     <div class="row" style="gap:14px;align-items:flex-start">
-      ${w.photo ? `<div class="thumb lg ph-box"><img data-photo="${esc(w.photo)}" alt=""></div>` : `<div class="emoji lg">${WISH_STATUS[w.status][0]}</div>`}
+      ${w.photo ? `<div class="thumb lg ph-box"><img data-photo="${esc(w.photo)}" alt=""></div>` : `<div class="emoji lg">${(WISH_STATUS[w.status] || WISH_STATUS.want)[0]}</div>`}
       <div class="grow" style="min-width:0">
-        <div class="row between"><b class="ellipsis">${esc(w.title)}</b><span class="dot" title="${PRIO[w.prio][0]}" style="background:${PRIO[w.prio][1]}"></span></div>
+        <div class="row between"><b class="ellipsis">${esc(w.title)}</b><span class="dot" title="${PRIO[w.prio || 2][0]}" style="background:${PRIO[w.prio || 2][1]}"></span></div>
         <div class="small muted" style="margin-top:2px">${w.status === 'bought' ? `Придбано${w.boughtAt ? ' ' + shortDate(w.boughtAt) : ''}` : `${money(i.saved)} з ${money(i.price)}`}</div>
         ${w.status !== 'bought' ? `${progressBar(i.pct, i.pct >= 100 ? 'var(--green)' : '')}
           <div class="row between small" style="margin-top:6px"><span class="muted">${i.pct}% · залишилось ${money(i.left)}</span>
@@ -62,8 +62,8 @@ PAGES.wish = p => {
     actions: shareBtn('wishShare', w.id), title: w.title, html: `
     ${w.photo ? `<div class="hero-photo ph-box"><img data-photo="${esc(w.photo)}" alt=""></div>` : ''}
     <div class="card">
-      <div class="row between"><span class="pill ${w.status === 'bought' ? 'green' : w.status === 'saving' ? 'blue' : ''}">${WISH_STATUS[w.status].join(' ')}</span>
-        <span class="small muted"><span class="dot" style="background:${PRIO[w.prio][1]}"></span> ${PRIO[w.prio][0]} пріоритет</span></div>
+      <div class="row between"><span class="pill ${w.status === 'bought' ? 'green' : w.status === 'saving' ? 'blue' : ''}">${(WISH_STATUS[w.status] || WISH_STATUS.want).join(' ')}</span>
+        <span class="small muted"><span class="dot" style="background:${PRIO[w.prio || 2][1]}"></span> ${PRIO[w.prio || 2][0]} пріоритет</span></div>
       <div style="font-size:22px;font-weight:700;margin-top:10px">${esc(w.title)}</div>
       ${w.desc ? `<div class="muted" style="margin-top:6px;line-height:1.45;white-space:pre-wrap">${esc(w.desc)}</div>` : ''}
       ${w.url ? `<button class="chip" style="margin-top:10px" data-a="openLink" data-url="${esc(w.url)}">🔗 ${esc(domainOf(w.url) || 'Посилання')} ↗</button>` : ''}
@@ -84,7 +84,7 @@ PAGES.wish = p => {
       : `<div class="hint ok">🎉 Ціль досягнуто! Можна купувати.</div>`}
     <div class="btns two"><button class="btn" data-a="wishAdd" data-id="${w.id}">+ Відкласти</button>
       <button class="btn ghost card-btn" data-a="wishTake" data-id="${w.id}" ${i.saved > 0 ? '' : 'disabled'}>Забрати</button></div>
-    <div class="btns"><button class="btn card-btn ghost" data-a="wishBuy" data-id="${w.id}">✅ Придбано — закрити ціль</button></div>`
+    <div class="btns"><button class="btn card-btn ghost" data-a="wishBuy" data-id="${w.id}">Придбано — закрити ціль</button></div>`
       : `<div class="card"><div class="kv"><span>Придбано</span><b>${w.boughtAt ? shortDate(w.boughtAt) : '—'}</b></div>
         <div class="kv"><span>Ціна</span><b>${money(num(w.price))}</b></div>
         ${w.txId && S.tx.some(t => t.id === w.txId) ? '<div class="small muted" style="margin-top:6px">💸 Покупку внесено у витрати «Покупки»</div>' : ''}

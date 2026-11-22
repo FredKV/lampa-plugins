@@ -103,7 +103,7 @@ PAGES.person = p => {
         <div class="small ${t.planned > pr.budget ? 'red' : 'muted'}" style="margin-top:6px">${t.planned > pr.budget ? `Перевищено на ${money(t.planned - pr.budget)}` : `Залишилось ${money(pr.budget - t.planned)}`}</div>`
         : `<div class="small muted" style="margin-top:6px">Скільки готові витратити на подарунок?</div>`}
     </div>
-    <div class="row between" style="margin:22px 4px 10px"><h2 style="margin:0">Ідеї подарунків</h2><button class="chip card-bg" data-a="giftNew" data-pid="${pr.id}">+ Ідея</button></div>
+    <div class="row between" style="margin:22px 4px 10px"><h2 style="margin:0">Ідеї подарунків</h2><button class="link small" data-a="giftNew" data-pid="${pr.id}">+ Ідея</button></div>
     ${gifts.length ? `<div class="list">${gifts.map(g => `<div class="item" data-a="giftEdit" data-pid="${pr.id}" data-id="${g.id}">
       ${g.photo ? `<div class="thumb ph-box"><img data-photo="${esc(g.photo)}" alt=""></div>` : `<div class="emoji">${GIFT_STATUS[g.status][0]}</div>`}
       <div class="grow"><div class="title">${esc(g.title)}</div><div class="meta"><span class="pill ${g.status === 'bought' ? 'green' : g.status === 'planned' ? 'blue' : ''}">${GIFT_STATUS[g.status][1]}</span>${g.url ? '🔗' : ''}${g.note ? `<span class="ellipsis">${esc(g.note)}</span>` : ''}</div></div>

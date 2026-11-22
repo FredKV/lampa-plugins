@@ -162,7 +162,7 @@ PAGES.favNew = () => {
       <div class="field"><label>Гасло на картці</label><input class="input" id="fvTag" maxlength="60" placeholder="Напр. Ніжний смак щоранку"></div>
       <div class="field"><label>Оцінка</label>${starsHtml(5)}</div>
       <div class="field"><textarea class="input" id="fvNote" maxlength="300" placeholder="Чим сподобався (смак, розмір, для кого)"></textarea></div>
-      <div class="btns"><button class="btn" data-a="favSave">❤️ Додати в улюблені</button></div>
+      <div class="btns"><button class="btn" data-a="favSave">Додати в улюблені</button></div>
     </div>`
   };
 };
@@ -173,7 +173,7 @@ PAGES.favs = () => {
     title: 'Улюблені продукти', html: list.length ? `<div class="fav-grid">${list.map(f => `<button class="fav-card" data-a="go" data-page="fav" data-id="${f.id}">
       <div class="ph-box"><img data-photo="${esc(f.ad || f.photo)}" alt=""></div>
       <div class="fav-meta"><b class="ellipsis">${esc(f.name || 'Без назви')}</b><span class="ellipsis">${'★'.repeat(f.rating || 0)}<span class="muted">${'★'.repeat(5 - (f.rating || 0))}</span>${f.price ? ' · ' + money(f.price) : ''}</span></div></button>`).join('')}</div>`
-      : emptyCard('❤️', 'Купили щось і сподобалось? Сфотографуйте — ЛАД виріже фон і зробить красиву картку.', { label: '📷 Додати товар', attrs: 'data-a="favAdd"' })
+      : emptyCard('❤️', 'Купили щось і сподобалось? Сфотографуйте — ЛАД виріже фон і зробить красиву картку.', { label: 'Додати товар', attrs: 'data-a="favAdd"' })
   };
 };
 FABS.favs = () => startFavorite();
@@ -193,7 +193,7 @@ PAGES.fav = p => {
       <div class="kv"><span>Додано</span><b>${f.date ? shortDate(f.date) : '—'}</b></div>
       ${f.note ? `<div class="small muted" style="margin-top:8px;line-height:1.45">${esc(f.note)}</div>` : ''}
     </div>
-    <div class="btns two"><button class="btn" data-a="favToShop" data-id="${f.id}">🛒 Купити ще</button><button class="btn ghost card-btn" data-a="favEdit" data-id="${f.id}">Редагувати</button></div>
+    <div class="btns two"><button class="btn" data-a="favToShop" data-id="${f.id}">Купити ще</button><button class="btn ghost card-btn" data-a="favEdit" data-id="${f.id}">Редагувати</button></div>
     <div class="chips" style="margin:12px 2px">${AD_STYLES.map(([v, l]) => `<button class="chip ${f.style === v ? 'on' : 'card-bg'}" data-a="favRestyle" data-id="${f.id}" data-v="${v}">${l}</button>`).join('')}</div>
     <div class="btns"><button class="btn danger" data-a="favDel" data-id="${f.id}">Видалити</button></div>`
   };

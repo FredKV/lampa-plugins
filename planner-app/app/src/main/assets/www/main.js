@@ -174,7 +174,7 @@ Object.assign(A, {
   avatarMenu: () => {
     if (!S.settings.avatar) return A.avatarPick();
     openSheet(`<h2>Фото профілю</h2><div style="display:flex;justify-content:center;margin-bottom:14px">${avatarHtml(110)}</div>
-      <div class="btns"><button class="btn" data-a="avatarPick">📷 Обрати інше фото</button><button class="btn ghost" data-a="avatarCrop">✂️ Змінити масштаб</button>
+      <div class="btns"><button class="btn" data-a="avatarPick">Обрати інше фото</button><button class="btn ghost" data-a="avatarCrop">Змінити масштаб</button>
       <button class="btn danger" data-a="avatarRemove">Прибрати фото</button></div>`, null, () => setTimeout(() => { if (!$('#sheetWrap').classList.contains('open')) settingsSheet(); }, 0));
   },
   avatarPick: async () => {

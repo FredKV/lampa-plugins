@@ -369,7 +369,7 @@ PAGES.recipe = () => {
     ${r.steps && r.steps.length ? `<details class="steps" style="margin-top:12px"><summary>Як готувати</summary><ol>${r.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol></details>` : ''}
     <div class="btns two" style="margin-top:12px"><button class="btn ghost card-btn" data-a="rcSave">${r.id ? '✓ Збережено' : 'Зберегти рецепт'}</button>
       ${r.results ? `<button class="btn ghost card-btn" data-a="go" data-page="priceResults">Останні ціни</button>` : '<span></span>'}</div>
-    <div class="sticky-cta"><button class="btn" data-a="rcSearch" ${need ? '' : 'disabled'}>🔎 Знайти найвигідніші ціни</button></div>`
+    <div class="sticky-cta"><button class="btn" data-a="rcSearch" ${need ? '' : 'disabled'}>Знайти найвигідніші ціни</button></div>`
   };
 };
 FABS.recipe = () => A.rcAdd();
