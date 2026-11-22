@@ -262,6 +262,8 @@ public class MainActivity extends Activity {
             i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "uk-UA");
             i.putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+            i.putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 900L);
+            i.putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 700L);
             recognizer.startListening(i);
         } catch (Exception e) { js("window.__voiceCb&&window.__voiceCb('',true,'x')"); }
     }

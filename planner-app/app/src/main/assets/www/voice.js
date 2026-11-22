@@ -22,7 +22,7 @@ function listenOverlay() {
     window.__voiceRms = db => { lvl = lvl * .6 + Math.max(0, (db + 2) / 10) * .4; };
     window.__voicePartial = t => { const el = $('#vcLive'); if (el) el.textContent = `«${t}»`; };
     window.__voiceCb = (t, fail, why) => {
-      if (t) { const el = $('#vcLive'); if (el) el.textContent = `«${t}»`; haptic && haptic('tick'); setTimeout(() => done({ text: t }), 350); return; }
+      if (t) { const el = $('#vcLive'); if (el) el.textContent = `«${t}»`; haptic && haptic('tick'); setTimeout(() => done({ text: t }), 120); return; }
       done({ text: '', fail: !!fail, why: why || '' });
     };
     A.vcCancel = () => { try { Bridge.listenStop(true); } catch (e) { } done({ text: '', cancel: true }); };
@@ -70,8 +70,8 @@ async function parseVoice(text) {
       'Визнач, що додати в планер, і відповідай ЛИШЕ JSON: {"kind":"event"|"task"|"expense"|"income"|"shop","title":"коротко","date":"YYYY-MM-DD або порожньо","time":"HH:MM або порожньо",' +
       `"amount":число або 0,"cat":"для витрати одна з: ${cats}","items":["для покупок — список товарів"]}. ` +
       'event — подія/зустріч з датою; task — справа без конкретного часу; expense — витратила гроші; income — отримала гроші; shop — що купити.' }] }],
-    generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
-  });
+    generationConfig: { temperature: 0.1, responseMimeType: 'application/json', maxOutputTokens: 200 }
+  }, { fast: true, timeout: 8000 });
   const j = extractJson(out);
   return { kind: ['event', 'task', 'expense', 'income', 'shop'].includes(j.kind) ? j.kind : 'task', title: String(j.title || text).slice(0, 200),
     date: isDate(j.date) ? j.date : '', time: /^\d\d:\d\d$/.test(j.time || '') ? j.time : '', amount: round2(num(j.amount)),
@@ -85,7 +85,7 @@ function voiceSheet() {
   const r = v.r;
   const what = r.kind === 'shop' ? r.items.map(esc).join(', ') : esc(r.title);
   const when = [r.date ? dateLabel(r.date) : '', r.time].filter(Boolean).join(' о ');
-  openSheet(`<h2>Голосом</h2><div class="vc-said">«${esc(v.text)}»</div>
+  openSheet(`<h2>Голосом${v.refining ? ' <span class="vc-ai" title="Gemini уточнює"></span>' : ''}</h2><div class="vc-said">«${esc(v.text)}»</div>
     <div class="card" style="margin:0 0 12px"><div class="small muted">${VC_LBL[r.kind]}</div>
       <div style="font-size:18px;font-weight:700;margin-top:4px">${what || '—'}</div>
       ${r.amount ? `<div style="font-size:22px;font-weight:800;margin-top:4px">${money(r.amount)}</div>` : ''}
@@ -101,9 +101,14 @@ async function startVoice(typed) {
     text = r.text;
   }
   if (!text.trim()) return;
-  U.vc = { text, loading: true }; voiceSheet();
-  try { U.vc.r = await parseVoice(text); } catch (e) { U.vc.r = parseLocal(text); }
-  U.vc.loading = false; voiceSheet();
+  const vc = U.vc = { text, loading: false, r: parseLocal(text), refining: Keys.has(), touched: false };
+  voiceSheet();
+  if (!vc.refining) return;
+  try {
+    const r = await parseVoice(text);
+    if (U.vc === vc && !vc.touched && $('#sheetWrap').classList.contains('open')) { vc.r = r; }
+  } catch (e) { }
+  if (U.vc === vc) { vc.refining = false; if ($('#sheetWrap').classList.contains('open') && $('[data-a=vcSave]')) voiceSheet(); }
 }
 function voiceTypeSheet() {
   openSheet(`<h2>Що додати?</h2><div class="small muted" style="margin-bottom:10px">Голосове введення недоступне — напишіть так, як сказали б: «завтра о 10 стоматолог», «витратила 250 на каву», «купити молоко, хліб».</div>
@@ -154,7 +159,7 @@ Object.assign(A, {
   voiceStart: () => startVoice(),
   vcTyped: () => { const t = $('#vcText').value.trim(); if (!t) return invalid('vcText', 'Напишіть фразу'); startVoice(t); },
   vcAgain: () => { closeSheet(); setTimeout(() => startVoice(), 250); },
-  vcKind: d => { if (!U.vc || !U.vc.r) return; const r = U.vc.r; r.kind = d.v; if (d.v === 'shop' && !r.items.length) r.items = [r.title]; voiceSheet(); },
+  vcKind: d => { if (!U.vc || !U.vc.r) return; U.vc.touched = true; const r = U.vc.r; r.kind = d.v; if (d.v === 'shop' && !r.items.length) r.items = [r.title]; voiceSheet(); },
   vcSave: () => {
     const r = U.vc && U.vc.r; if (!r) return; let msg = '';
     if (r.kind === 'event') { S.events.push({ id: uid(), title: r.title, date: r.date || today(), time: r.time, note: '', important: false, remind: r.time ? 'hour' : 'day' }); msg = `📅 Подію додано: ${dateLabel(r.date || today())}`; }

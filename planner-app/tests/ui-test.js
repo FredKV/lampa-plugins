@@ -621,8 +621,9 @@ async function pickDate(p, id, v) {
     await q.evaluate(() => go('home')); await q.waitForTimeout(150);
     // no Gemini key → offline parser
     await q.click('#top [data-a=voiceStart]'); await q.waitForSelector('[data-a=vcSave]', { timeout: 4000 });
+    await q.waitForTimeout(300);
     ok(await q.evaluate(() => window.__seenOv >= 1 && !document.querySelector('#vcOv')), 'власне вікно «Говоріть…» з хвилею показано і закрито після фрази');
-    ok(await q.evaluate(() => U.vc.r.kind === 'event' && U.vc.r.date === addDays(today(), 1) && U.vc.r.time === '10:00' && /Стоматолог/.test(U.vc.r.title)), '«завтра о 10 стоматолог» → подія на завтра о 10:00');
+    ok(await q.evaluate(() => !!U.vc && U.vc.r.kind === 'event' && U.vc.r.date === addDays(today(), 1) && U.vc.r.time === '10:00' && /Стоматолог/.test(U.vc.r.title)), '«завтра о 10 стоматолог» → подія на завтра о 10:00');
     await q.click('[data-a=vcSave]'); await q.waitForTimeout(150);
     ok(await q.evaluate(() => S.events.some(e => /Стоматолог/.test(e.title) && e.time === '10:00')), 'подію додано');
     await q.click('#top [data-a=voiceStart]'); await q.waitForSelector('[data-a=vcSave]', { timeout: 4000 });
@@ -668,6 +669,23 @@ async function pickDate(p, id, v) {
     await q.evaluate(d => { window.__wq = JSON.stringify([{ id: 'g1', date: d, on: true }]); window.__onResume && window.__onResume(); }, t); await q.waitForTimeout(300);
     ok(await q.evaluate(() => Goals.doneToday(S.goals[0])), 'галочка, поставлена на віджеті, зʼявляється в додатку');
     ok(e2.length === 0, 'без JS-помилок (віджет) ' + e2.join('; '));
+    await q.close();
+  }
+
+  console.log('8r. Голос + Gemini: миттєво, потім уточнення');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    let model = '';
+    await q.route('**/generativelanguage.googleapis.com/**', async r => { model = r.request().url().match(/models\/([^:]+)/)[1]; await new Promise(x => setTimeout(x, 1500));
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ kind: 'expense', title: 'Кава з подругою', amount: 250, cat: 'cafe', date: '', time: '', items: [] }) }] } }] }) }); });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const t0 = Date.now();
+    await q.evaluate(() => { Keys.set('AQ.testkey1234567890abcdef'); startVoice('витратила 250 на каву з подругою'); });
+    await q.waitForSelector('[data-a=vcSave]', { timeout: 3000 }); const first = Date.now() - t0;
+    const early = await q.evaluate(() => ({ kind: U.vc.r.kind, amt: U.vc.r.amount, ai: !!$('.vc-ai') }));
+    ok(first < 600 && early.kind === 'expense' && early.amt === 250 && early.ai, `результат одразу (${first} мс), Gemini уточнює у фоні`);
+    await q.waitForTimeout(2000);
+    ok(await q.evaluate(() => U.vc.r.cat === 'cafe' && !$('.vc-ai')) && model === 'gemini-2.5-flash-lite', 'уточнення від найшвидшої моделі (flash-lite) підставлено');
     await q.close();
   }
 

@@ -319,16 +319,17 @@ function geminiRaw(body, model) {
   return http('POST', `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, JSON.stringify(body), { 'x-goog-api-key': k });
 }
 /** Calls Gemini and returns {text, data}. Throws Error with a human message. */
-async function gemini(body) {
+async function gemini(body, opts = {}) {
   if (!Keys.has()) throw new Error('Додайте безкоштовний ключ Gemini у Налаштуваннях.');
-  const order = geminiOk ? [geminiOk, ...GEMINI_MODELS.filter(m => m !== geminiOk)] : GEMINI_MODELS;
+  const pref = opts.fast ? 'gemini-2.5-flash-lite' : geminiOk;
+  const order = (pref ? [pref, ...GEMINI_MODELS.filter(m => m !== pref)] : GEMINI_MODELS).slice(0, opts.fast ? 2 : 9);
   let r, data = null;
   for (const model of order) {
     // 2.5 models «think» before answering — for recipes it only slows things down
     const b = model.startsWith('gemini-2.5') ? { ...body, generationConfig: { ...(body.generationConfig || {}), thinkingConfig: { thinkingBudget: 0 } } } : body;
-    r = await Promise.race([geminiRaw(b, model), new Promise(res => setTimeout(() => res({ status: 408, text: '' }), GEMINI_TIMEOUT))]);
+    r = await Promise.race([geminiRaw(b, model), new Promise(res => setTimeout(() => res({ status: 408, text: '' }), opts.timeout || GEMINI_TIMEOUT))]);
     data = null; try { data = JSON.parse(r.text); } catch (e) { }
-    if (r.status === 200) { geminiOk = model; break; }
+    if (r.status === 200) { if (!opts.fast) geminiOk = model; break; }
     if (![0, 404, 408, 429, 500, 503].includes(r.status) || (r.status === 0 && /UnknownHost|ENOTFOUND/i.test(r.text || ''))) break; // key/network problems: another model won't help
   }
   if (r.status !== 200) {

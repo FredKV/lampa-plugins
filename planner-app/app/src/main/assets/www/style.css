@@ -842,3 +842,5 @@ h2 { font-size: 20px; }
 .vc-wave i { width: 5px; height: 70px; border-radius: 9px; background: linear-gradient(#8ec5ff, #7be3a6 50%, #ff9ecb); transform: scaleY(.15); transition: transform .08s linear; }
 .vc-hint { opacity: .6; font-size: 15px; }
 .vc-x { position: absolute; bottom: calc(var(--sab) + 56px); width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.13); color: #fff; font-size: 24px; }
+
+.vc-ai { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 6px; vertical-align: 4px; background: linear-gradient(135deg,#4796E3,#CA6673); animation: nagPulse 1.2s infinite; }
