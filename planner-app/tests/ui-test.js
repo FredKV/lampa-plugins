@@ -772,6 +772,30 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8x. Відкладене на хотілку — не витрата');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const r = await q.evaluate(() => {
+      S.wishes.push({ id: 'w1', title: 'Навушники', price: 3000, status: 'saving', prio: 2, created: Date.now() });
+      Fin.add({ type: 'inc', amount: 10000, cat: 'salary', note: '', date: today() });
+      Fin.add({ type: 'exp', amount: 400, cat: 'food', note: '', date: today() });
+      Fin.add({ type: 'save', amount: 1000, wishId: 'w1', note: '', date: today() });
+      save(); U.seg.fin = 'overview'; go('finance');
+      const st = Fin.stats(today(), today());
+      const ops = $$('#view .list .item').length;
+      U.seg.fin = 'ops'; U.finFilter.type = 'all'; render(); const opsAll = $$('#view .list .item').length;
+      U.finFilter.type = 'save'; render(); const opsSave = $$('#view .list .item').length;
+      return { exp: st.exp, bal: st.bal, total: Fin.totalBalance(), ops, opsAll, opsSave, wish: Wishes.saved(S.wishes[0]) };
+    });
+    ok(r.exp === 400 && r.bal === 9600 && r.total === 9600, 'відкладене не входить у витрати і не зменшує баланс ' + JSON.stringify(r));
+    ok(r.ops === 2 && r.opsAll === 2 && r.opsSave === 1, 'у списку операцій лише доходи/витрати; відкладене — тільки у фільтрі «Відкладено»');
+    ok(r.wish === 1000, 'на хотілці накопичено 1000');
+    ok(e2.length === 0, 'без JS-помилок (відкладене) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8w. Gemini: старі моделі вимкнено (404) → знаходить доступну');
   {
     const q = await b.newPage({ viewport: { width: 390, height: 844 } });

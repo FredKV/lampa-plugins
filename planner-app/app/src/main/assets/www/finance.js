@@ -42,9 +42,10 @@ const Fin = {
   stats(from, to) {
     const l = S.tx.filter(t => Fin.inRange(t, from, to));
     const inc = Fin.sum(l, 'inc'), exp = Fin.sum(l, 'exp'), saved = Fin.sum(l, 'save');
-    return { list: l, inc, exp, saved, bal: inc - exp - saved };
+    // money put aside for a wish is still yours — it is not an expense and does not lower the balance
+    return { list: l.filter(t => t.type !== 'save'), inc, exp, saved, bal: inc - exp };
   },
-  totalBalance() { return S.tx.reduce((a, t) => a + (t.type === 'inc' ? t.amount : -t.amount), 0); },
+  totalBalance() { return S.tx.reduce((a, t) => a + (t.type === 'inc' ? t.amount : t.type === 'exp' ? -t.amount : 0), 0); },
   totalSaved() { return S.tx.filter(t => t.type === 'save').reduce((a, t) => a + t.amount, 0); },
   monthRange(y, m) { return [ymd(new Date(y, m, 1)), ymd(new Date(y, m + 1, 0))]; },
   spentInMonth(cat, y, m) {
@@ -134,7 +135,7 @@ function txRow(t) {
   const title = t.type === 'save' ? (t.amount < 0 ? 'Повернено з накопичень' : 'Відкладено') : c[2];
   const sub = [t.type === 'save' && wish ? wish.title : '', t.note, t.type !== 'save' ? (t.pay === 'cash' ? '💵 готівка' : '💳 картка') : '', t.photo ? '🧾 чек' : '']
     .filter(Boolean).join(' · ');
-  const sign = t.type === 'inc' ? '+' : t.type === 'save' ? (t.amount < 0 ? '+' : '−') : '−';
+  const sign = t.type === 'inc' ? '+' : t.type === 'save' ? (t.amount < 0 ? '↩ ' : '') : '−';
   return `<div class="item" data-a="txEdit" data-id="${t.id}"><div class="emoji">${c[1]}</div>
     <div class="grow"><div class="title">${esc(title)}</div>${sub ? `<div class="meta ellipsis">${esc(sub)}</div>` : ''}</div>
     <div class="amount ${t.type === 'inc' ? 'green' : t.type === 'save' ? 'violet' : ''}">${sign}${money(Math.abs(t.amount))}</div></div>`;
@@ -144,8 +145,9 @@ function txGroups(list) {
   list.forEach(t => (groups[t.date] = groups[t.date] || []).push(t));
   return Object.keys(groups).sort().reverse().map(d => {
     const l = groups[d];
-    const sum = l.reduce((a, t) => a + (t.type === 'inc' ? t.amount : -t.amount), 0);
-    return `<div class="group-h"><span>${dateLabel(d)}</span><span>${money(sum, true)}</span></div><div class="list">${l.map(txRow).join('')}</div>`;
+    const sum = l.reduce((a, t) => a + (t.type === 'inc' ? t.amount : t.type === 'exp' ? -t.amount : 0), 0);
+    const onlySave = l.every(t => t.type === 'save');
+    return `<div class="group-h"><span>${dateLabel(d)}</span><span>${onlySave ? '🐷 ' + money(l.reduce((a, t) => a + t.amount, 0)) : money(sum, true)}</span></div><div class="list">${l.map(txRow).join('')}</div>`;
   }).join('');
 }
 
@@ -172,7 +174,7 @@ function vFinOverview() {
         <button class="nav-btn sm" data-a="finNav" data-d="1" aria-label="Наступний період" ${U.finOff >= 0 ? 'disabled style="opacity:.3"' : ''}>›</button>
       </div>
       <div class="fin-tiles">
-        <div class="ft"><span>Баланс</span><b class="${st.bal < 0 ? 'red' : ''}">${money(st.bal)}</b><small>загальний ${money(total)}</small></div>
+        <div class="ft"><span>Баланс</span><b class="${st.bal < 0 ? 'red' : ''}">${money(st.bal)}</b><small>загальний ${money(total)}${savedAll > 0 ? ` · з них відкладено ${money(savedAll)}` : ''}</small></div>
         <div class="ft g" data-a="finTile" data-v="inc"><span>↑ Доходи</span><b class="green">${money(st.inc)}</b></div>
         <div class="ft r" data-a="finTile" data-v="exp"><span>↓ Витрати</span><b>${money(st.exp)}</b></div>
         <div class="ft v" data-a="go" data-page="wishes"><span>🎯 Відкладено</span><b class="violet">${money(st.saved)}</b></div>
@@ -212,7 +214,7 @@ function vFinOps() {
   const f = U.finFilter;
   const q = f.q.trim().toLowerCase();
   let list = S.tx.slice().sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
-  if (f.type !== 'all') list = list.filter(t => t.type === f.type);
+  list = list.filter(t => f.type === 'all' ? t.type !== 'save' : t.type === f.type);
   if (q) list = list.filter(t => [t.note, Fin.cat(t.type, t.cat)[2], String(t.amount)].join(' ').toLowerCase().includes(q));
   const shown = list.slice(0, f.limit);
   return `
