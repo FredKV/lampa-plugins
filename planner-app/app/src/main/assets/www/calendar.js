@@ -315,7 +315,7 @@ function eventSheet(id, date) {
     <div class="btns ${id ? 'two' : ''}">
       ${id ? `<button class="btn danger" data-a="eventDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn" data-a="eventSave" data-id="${id || ''}">Зберегти</button></div>`,
-    r => { if (!id) setTimeout(() => $('#eTitle', r).focus(), 300); });
+    r => { if (!id) setTimeout(() => $('#eTitle', r)?.focus(), 300); });
 }
 
 function cycleSheet(id, start = '', end = '') {

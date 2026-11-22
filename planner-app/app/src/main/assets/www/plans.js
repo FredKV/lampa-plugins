@@ -68,7 +68,7 @@ function taskSheet(id, presetDue) {
     <div class="btns ${id ? 'two' : ''}">
       ${id ? `<button class="btn danger" data-a="taskDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn" data-a="taskSave" data-id="${id || ''}">Зберегти</button>
-    </div>`, r => { syncDue(); if (!id) setTimeout(() => $('#tTitle', r).focus(), 300); });
+    </div>`, r => { syncDue(); if (!id) setTimeout(() => $('#tTitle', r)?.focus(), 300); });
 }
 document.addEventListener('change', e => { if (e.target.id === 'tDue') syncDue(); });
 REMINDER_PROVIDERS.push(() => S.tasks.filter(t => !t.done && t.due && t.time && t.due >= today()).map(t => {
@@ -157,7 +157,8 @@ VIEWS.home = () => {
       ${progressBar(spent / lim * 100, spent > lim ? 'var(--red)' : spent > lim * .8 ? 'var(--amber)' : '')}</div>` : ''}
     ${homePager()}`;
 };
-FABS.home = () => taskSheet();
+/* «+» adds what the open tab shows: plan, goal or event (for the chosen date) */
+FABS.home = () => { const D = U.hpDate || today(), i = $('#hpager') ? U.hpIdx : 0; if (i === 1) goalSheet(); else if (i === 2) eventSheet(null, D); else taskSheet(null, U.hpDate); };
 
 /* Home: «Цілі на сьогодні» ⇄ «Мої плани» — swipe pager; the tab strip slides with the pages, dots below */
 U.hpIdx = U.hpIdx || 0;

@@ -517,7 +517,7 @@ function askNumber({ title, label = 'Сума, ₴', value = '', hint = '', ok =
     openSheet(`<h2>${esc(title)}</h2>${hint ? `<div class="small muted" style="margin:-8px 0 12px">${hint}</div>` : ''}
       <div class="field"><label>${esc(label)}</label><input class="input big" id="askNum" inputmode="decimal" value="${esc(value)}" placeholder="0"></div>
       <div class="btns"><button class="btn" data-a="askNumOk">${esc(ok)}</button></div>`,
-      r => { r.__askNum = finish; r.__neg = allowNegative; r.__zero = allowZero; setTimeout(() => $('#askNum', r).focus(), 300); }, () => finish(null));
+      r => { r.__askNum = finish; r.__neg = allowNegative; r.__zero = allowZero; setTimeout(() => $('#askNum', r)?.focus(), 300); }, () => finish(null));
   });
 }
 Object.assign(A, {

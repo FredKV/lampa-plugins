@@ -284,7 +284,7 @@ function txSheet(id, type) {
     <div class="btns ${id ? 'two' : ''}">
       ${id ? `<button class="btn danger" data-a="txDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn" data-a="txSave" data-id="${id || ''}">Зберегти</button></div>`,
-    r => { r.__chips = chips; r.__keepCat = t.cat; if (!id) setTimeout(() => $('#xAmount', r).focus(), 300); });
+    r => { r.__chips = chips; r.__keepCat = t.cat; if (!id) setTimeout(() => $('#xAmount', r)?.focus(), 300); });
 }
 function saveTxSheet(t) {
   const w = S.wishes.find(x => x.id === t.wishId);
@@ -300,7 +300,7 @@ function catSheet(type = 'exp') {
     ${seg('ncType', [['exp', 'Витрата'], ['inc', 'Дохід']], type)}
     <div class="field"><input class="input" id="ncName" maxlength="30" placeholder="Назва (напр. Тварини)"></div>
     <div class="field"><label>Значок</label><div class="chips" id="ncEmo">${EMO.map((e, i) => `<button class="chip ${i === 0 ? 'on' : ''}" data-a="pickEmo" data-e="${e}" style="font-size:20px;padding:6px 10px">${e}</button>`).join('')}</div></div>
-    <div class="btns"><button class="btn" data-a="catSave">Створити</button></div>`, r => setTimeout(() => $('#ncName', r).focus(), 300));
+    <div class="btns"><button class="btn" data-a="catSave">Створити</button></div>`, r => setTimeout(() => $('#ncName', r)?.focus(), 300));
 }
 
 /* ---------------- actions ---------------- */

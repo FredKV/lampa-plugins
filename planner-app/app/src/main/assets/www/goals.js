@@ -221,7 +221,7 @@ function goalSheet(id) {
     <div class="row" style="gap:10px">
       <div class="field grow" id="gStartBox"><label id="gStartL">${g.type === 'quit' ? 'Без зривів з' : 'Початок'}</label><input type="date" class="input" id="gStart" value="${g.start || (g.created ? ymd(new Date(g.created)) : today())}"></div>
       <div class="field grow"><label>Нагадувати о</label><input type="time" class="input" id="gTime" value="${g.time || ''}"></div></div>
-    <div class="btns"><button class="btn" data-a="goalSave" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#gTitle', r).focus(), 300); });
+    <div class="btns"><button class="btn" data-a="goalSave" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#gTitle', r)?.focus(), 300); });
 }
 SEG_HOOKS.gType = v => {
   const q = v === 'quit';

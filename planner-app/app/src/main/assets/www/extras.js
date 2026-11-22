@@ -52,7 +52,7 @@ function billSheet(id) {
     ${id ? `<div class="btns"><button class="btn" data-a="billPay" data-id="${id}">Оплачено зараз</button></div>` : ''}
     <div class="btns ${id ? 'two' : ''}">${id ? `<button class="btn danger" data-a="billDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn ${id ? 'ghost card-btn' : ''}" data-a="billSave" data-id="${id || ''}">Зберегти</button></div>`,
-    r => { if (!id) setTimeout(() => $('#bAmount', r).focus(), 300); });
+    r => { if (!id) setTimeout(() => $('#bAmount', r)?.focus(), 300); });
 }
 REMINDER_PROVIDERS.push(() => (S.bills || []).flatMap(b => [
   { id: 'bill3-' + b.id, at: at9(addDays(b.next, -3), 10), title: `🔁 ${b.name} — через 3 дні`, text: `${money(b.amount)} · ${shortDate(b.next)}`, page: 'bills' },
@@ -183,3 +183,12 @@ Object.assign(A, {
   },
   weekShare: d => shareText(weekText(d.id))
 });
+
+/* «+» on detail pages adds the thing that page is about */
+const fabTop = () => (U.stack[U.stack.length - 1] || {}).p || {};
+FABS.cycle = () => A.cycNew();
+FABS.debt = () => A.debtPay({ id: fabTop().id });
+FABS.wish = () => { const w = S.wishes.find(x => x.id === fabTop().id); if (w && w.status !== 'bought') A.wishAdd({ id: w.id }); };
+FABS.wish.visible = () => { const w = S.wishes.find(x => x.id === fabTop().id); return !!w && w.status !== 'bought'; };
+FABS.goal = () => goalSheet();
+FABS.debt.visible = () => { const d = (S.debts || []).find(x => x.id === fabTop().id); return !!d && !d.closed; };

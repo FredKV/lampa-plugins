@@ -111,7 +111,7 @@ function wishSheet(id) {
     <div class="field"><textarea class="input" id="wDesc" maxlength="1000" placeholder="Опис (модель, колір, чому хочу…)">${esc(w.desc)}</textarea></div>
     <div class="field"><label>Посилання на товар (необовʼязково)</label><input class="input" id="wUrl" inputmode="url" placeholder="https://…" value="${esc(w.url)}"></div>
     <div class="field"><label>Фото</label>${photoField(w.photo)}</div>
-    <div class="btns"><button class="btn" data-a="wishSave" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#wTitle', r).focus(), 300); });
+    <div class="btns"><button class="btn" data-a="wishSave" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#wTitle', r)?.focus(), 300); });
 }
 function buySheet(w) {
   const i = Wishes.info(w);

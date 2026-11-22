@@ -121,7 +121,7 @@ function personSheet(id) {
     <div class="field"><input class="input" id="pNote" maxlength="300" placeholder="Нотатка (розмір, вподобання)" value="${esc(p.note || '')}"></div>
     <div class="field"><label>Фото (за бажанням)</label>${photoField(p.photo)}</div>
     <div class="btns ${id ? 'two' : ''}">${id ? `<button class="btn danger" data-a="personDel" data-id="${id}">Видалити</button>` : ''}
-      <button class="btn" data-a="personSave" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#pName', r).focus(), 300); });
+      <button class="btn" data-a="personSave" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#pName', r)?.focus(), 300); });
 }
 function giftSheet(pid, id) {
   const pr = S.people.find(x => x.id === pid);
@@ -139,7 +139,7 @@ function giftSheet(pid, id) {
     <div class="field"><label>Фото подарунка</label>${photoField(g.photo)}</div>
     ${g.txId ? `<div class="small muted" style="margin-bottom:8px">💸 Сума внесена у витрати «Подарунки»</div>` : ''}
     <div class="btns ${id ? 'two' : ''}">${id ? `<button class="btn danger" data-a="giftDel" data-pid="${pid}" data-id="${id}">Видалити</button>` : ''}
-      <button class="btn" data-a="giftSave" data-pid="${pid}" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#gTitle', r).focus(), 300); });
+      <button class="btn" data-a="giftSave" data-pid="${pid}" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#gTitle', r)?.focus(), 300); });
 }
 
 Object.assign(A, {

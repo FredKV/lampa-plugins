@@ -844,6 +844,31 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8fab. «+» додає те, що зараз відкрито');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const r = await q.evaluate(async () => {
+      const W = ms => new Promise(r => setTimeout(r, ms));
+      S.events.push({ id: 'e1', title: 'Кіт', date: today(), time: '', note: '', important: true, remind: '' });
+      S.debts.push({ id: 'd1', who: 'Оля', amount: 500, dir: 'in', date: today(), due: '', note: '', pays: [], closed: false });
+      S.wishes.push({ id: 'w1', title: 'Навушники', price: 3000, status: 'saving', prio: 2, created: Date.now() }); save();
+      const out = {};
+      const h2 = async () => { await W(60); const t = ($('#sheetBody h2') || $('.dlg h3') || $('.dlg') || {}).textContent || ''; closeSheet(); document.querySelectorAll('.dlg-wrap, .ask').forEach(x => x.remove && x.remove()); await W(60); return t.trim().slice(0, 30); };
+      go('home');
+      for (const i of [0, 1, 2]) { U.hpIdx = i; A.fab(); out['home' + i] = await h2(); }
+      navigate('goal', { id: 'x' });
+      U.stack = []; go('more'); navigate('goals'); A.fab(); out.goals = await h2();
+      U.stack = []; go('finance'); A.fab(); out.fin = await h2();
+      return out;
+    });
+    ok(/план/i.test(r.home0) && /ціль/i.test(r.home1) && /справ|поді/i.test(r.home2), '«+» на головній: Плани → план, Цілі → ціль, Події → подія ' + JSON.stringify(r));
+    ok(/ціль/i.test(r.goals) && /витрат/i.test(r.fin), '«+» у цілях — ціль, у фінансах — витрата');
+    ok(e2.length === 0, 'без JS-помилок (+) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8w. Gemini: старі моделі вимкнено (404) → знаходить доступну');
   {
     const q = await b.newPage({ viewport: { width: 390, height: 844 } });

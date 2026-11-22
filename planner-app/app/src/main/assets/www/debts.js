@@ -45,7 +45,7 @@ function debtSheet(id) {
       <div class="field grow"><label>Повернути до</label><input type="date" class="input" id="dDue" value="${d.due || ''}"></div></div>
     <div class="field"><input class="input" id="dNote" maxlength="200" placeholder="За що (необовʼязково)" value="${esc(d.note || '')}"></div>
     <div class="btns ${id ? 'two' : ''}">${id ? `<button class="btn danger" data-a="debtDel" data-id="${id}">Видалити</button>` : ''}
-      <button class="btn" data-a="debtSave" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#dAmount', r).focus(), 300); });
+      <button class="btn" data-a="debtSave" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#dAmount', r)?.focus(), 300); });
 }
 
 PAGES.debt = p => {

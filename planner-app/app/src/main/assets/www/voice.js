@@ -150,7 +150,7 @@ async function startVoice(typed) {
 function voiceTypeSheet() {
   openSheet(`<h2>Що додати?</h2><div class="small muted" style="margin-bottom:10px">Голосове введення недоступне — напишіть так, як сказали б: «завтра о 10 стоматолог», «витратила 250 на каву», «купити молоко, хліб».</div>
     <div class="field"><input class="input" id="vcText" maxlength="200" placeholder="Напишіть фразу"></div>
-    <div class="btns"><button class="btn" data-a="vcTyped">Розібрати</button></div>`, r => setTimeout(() => $('#vcText', r).focus(), 300));
+    <div class="btns"><button class="btn" data-a="vcTyped">Розібрати</button></div>`, r => setTimeout(() => $('#vcText', r)?.focus(), 300));
 }
 
 /* ---------------- shared shopping list ---------------- */
@@ -214,7 +214,7 @@ Object.assign(A, {
   shopShare: () => { const t = shopListText(); if (!t) { toast('Список порожній'); return; } shareText(t); },
   shopPaste: () => openSheet(`<h2>Вставити список</h2><div class="small muted" style="margin-bottom:10px">Вставте список, який вам надіслали (кожен товар з нового рядка).</div>
     <div class="field"><textarea class="input" id="plText" style="min-height:150px" placeholder="Молоко — 1 л&#10;Хліб&#10;Яйця — 10 шт"></textarea></div>
-    <div class="btns"><button class="btn" data-a="shopPasteDo">Додати в покупки</button></div>`, r => setTimeout(() => $('#plText', r).focus(), 300)),
+    <div class="btns"><button class="btn" data-a="shopPasteDo">Додати в покупки</button></div>`, r => setTimeout(() => $('#plText', r)?.focus(), 300)),
   shopPasteDo: () => {
     const items = parseListText($('#plText').value); if (!items.length) return invalid('plText', 'Не знайшла жодного товару');
     items.forEach(i => S.shop.push({ id: uid(), name: i.name, qty: i.qty, buy: '', price: 0, dish: 'Від когось', store: '', url: '', bought: false }));
