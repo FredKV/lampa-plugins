@@ -72,7 +72,7 @@ A.undoSwipe = () => {
   let it = null, sx = 0, sy = 0, dx = 0, mode = '';
   document.addEventListener('touchstart', e => {
     const el = e.target.closest('.item[data-swr], .item[data-swl]');
-    if (!el || e.target.closest('button.check, .go-link, .del-btn, input')) { it = null; return; }
+    if (!el || el.closest('#hpager') || e.target.closest('button.check, .go-link, .del-btn, input')) { it = null; return; }
     it = el; sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; mode = '';
   }, { passive: true });
   document.addEventListener('touchmove', e => {

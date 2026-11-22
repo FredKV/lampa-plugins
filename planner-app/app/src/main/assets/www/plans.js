@@ -25,13 +25,13 @@ function taskRow(t) {
       <div class="meta"><span class="dot" style="background:${pr[1]}"></span>${pr[0]}${due ? ' ' + due : ''}${t.repeat ? ` <span class="pill">🔁 ${REPEAT_SHORT[t.repeat]}</span>` : ''}${t.note ? `<span class="ellipsis" style="max-width:100%">${esc(t.note)}</span>` : ''}</div>
     </div></div>`;
 }
-function plansBlock() {
+function plansBlock(inPager) {
   const active = S.tasks.filter(t => !t.done), done = S.tasks.filter(t => t.done);
   const list = (U.planFilter === 'active' ? active : U.planFilter === 'done' ? done : S.tasks.slice()).sort(taskSort);
   const pct = S.tasks.length ? Math.round(done.length / S.tasks.length * 100) : 0;
   return `
-    <div class="row between" style="margin:22px 4px 10px"><h2 style="margin:0">Мої плани</h2>
-      ${S.tasks.length ? `<span class="small muted">${done.length}/${S.tasks.length} · ${pct}%</span>` : ''}</div>
+    ${inPager ? '' : `<div class="row between" style="margin:22px 4px 10px"><h2 style="margin:0">Мої плани</h2>
+      ${S.tasks.length ? `<span class="small muted">${done.length}/${S.tasks.length} · ${pct}%</span>` : ''}</div>`}
     <div class="seg">${[['active', 'Активні'], ['done', 'Виконані'], ['all', 'Усі']].map(([v, l]) => `<button data-a="planFilter" data-v="${v}" class="${U.planFilter === v ? 'on' : ''}">${l}</button>`).join('')}</div>
     ${list.length ? `<div class="list">${list.map(taskRow).join('')}</div>`
       : emptyCard(U.planFilter === 'done' ? '🏁' : '📝', U.planFilter === 'done' ? 'Ще нічого не виконано' : 'Планів поки немає', U.planFilter === 'done' ? null : { label: 'Додати план', attrs: 'data-a="taskNew"' })}
@@ -135,7 +135,38 @@ VIEWS.home = () => {
     ${lim ? `<div class="card" data-a="tabSeg" data-tab="finance" data-key="fin" data-val="budget" style="cursor:pointer">
       <div class="row between"><b>Бюджет на ${MONTHS[n.getMonth()].toLowerCase()}</b><span class="small muted">${money(spent)} з ${money(lim)}</span></div>
       ${progressBar(spent / lim * 100, spent > lim ? 'var(--red)' : spent > lim * .8 ? 'var(--amber)' : '')}</div>` : ''}
-    ${typeof goalsHome === 'function' ? goalsHome() : ''}
-    ${plansBlock()}`;
+    ${S.goals && S.goals.length ? homePager() : plansBlock()}`;
 };
 FABS.home = () => taskSheet();
+
+/* Home: «Цілі на сьогодні» ⇄ «Мої плани» — swipe pager; the tab strip slides with the pages, dots below */
+U.hpIdx = U.hpIdx || 0;
+function homePager() {
+  const pend = Goals.pending().length, done = S.tasks.filter(t => t.done).length;
+  const tabs = [`Цілі на сьогодні${pend ? ` <i class="hp-badge">${pend}</i>` : ''}`, `Мої плани${S.tasks.length ? ` <small>${done}/${S.tasks.length}</small>` : ''}`];
+  return `<div class="hp-head"><div class="hp-tabs" id="hpTabs">${tabs.map((t, i) => `<button data-a="hpGo" data-i="${i}" class="${i === U.hpIdx ? 'on' : ''}">${t}</button>`).join('')}<span class="hp-line" id="hpLine"></span></div>
+      <div class="hp-dots">${tabs.map((_, i) => `<i class="${i === U.hpIdx ? 'on' : ''}"></i>`).join('')}</div></div>
+    <div class="hpager" id="hpager">
+      <section><div class="list">${S.goals.map(goalRow).join('')}</div>
+        <div class="small ${pend ? 'red' : 'green'}" style="margin:8px 6px 0">${pend ? `${pend} чекає на сьогодні` : 'На сьогодні все ✓'}</div></section>
+      <section>${plansBlock(true)}</section></div>`;
+}
+function hpSync(idx, smooth) {
+  const pg = $('#hpager'); if (!pg) return;
+  const w = pg.clientWidth, x = idx === undefined ? pg.scrollLeft / w : idx;
+  // tab strip follows the finger: active tab moves to the left, the other slides in
+  const tabs = $('#hpTabs'); if (tabs) {
+    const b = [...tabs.querySelectorAll('button')], over = Math.max(0, tabs.scrollWidth - tabs.parentNode.clientWidth);
+    tabs.style.transform = `translateX(${-x * over}px)`;
+    b.forEach((el, i) => el.style.opacity = String(Math.max(.35, 1 - Math.abs(x - i) * .65)));
+    const ul = $('#hpLine'); if (ul && b[1]) { const l = b[0].offsetLeft + (b[1].offsetLeft - b[0].offsetLeft) * x, w = b[0].offsetWidth + (b[1].offsetWidth - b[0].offsetWidth) * x; ul.style.transform = `translateX(${l}px)`; ul.style.width = w + 'px'; } }
+  $$('.hp-dots i').forEach((d, i) => d.classList.toggle('on', Math.round(x) === i));
+  const secs = pg.children, k = Math.round(x); if (secs[k]) pg.style.height = secs[k].offsetHeight + 'px';
+}
+AFTER_RENDER.push(() => {
+  const pg = $('#hpager'); if (!pg) return;
+  pg.scrollLeft = U.hpIdx * pg.clientWidth; hpSync(U.hpIdx);
+  let t = 0;
+  pg.addEventListener('scroll', () => { hpSync(); clearTimeout(t); t = setTimeout(() => { const k = Math.round(pg.scrollLeft / pg.clientWidth); if (k !== U.hpIdx) { U.hpIdx = k; typeof haptic === 'function' && haptic('tick'); } hpSync(k); }, 90); }, { passive: true });
+});
+A.hpGo = d => { const pg = $('#hpager'); if (!pg) return; U.hpIdx = +d.i; pg.scrollTo({ left: U.hpIdx * pg.clientWidth, behavior: 'smooth' }); };

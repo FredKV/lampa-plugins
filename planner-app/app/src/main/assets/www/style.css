@@ -845,3 +845,20 @@ h2 { font-size: 20px; }
 
 .vc-ai { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 6px; vertical-align: 4px; background: linear-gradient(135deg,#4796E3,#CA6673); animation: nagPulse 1.2s infinite; }
 .vc-kind { margin-bottom: 12px; }
+
+/* home pager */
+.hp-head { margin: 22px 4px 10px; overflow: hidden; }
+.hp-tabs { display: flex; gap: 18px; white-space: nowrap; will-change: transform; }
+.hp-tabs button { font-size: 20px; font-weight: 700; padding: 0; color: var(--text); transition: opacity .15s; }
+.hp-tabs small { font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.hp-badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--red); color: #fff; font-size: 12px; font-style: normal; vertical-align: 3px; margin-left: 4px; }
+.hp-dots { display: flex; gap: 5px; margin-top: 8px; }
+.hp-dots i { width: 6px; height: 6px; border-radius: 99px; background: var(--line); transition: width .2s, background .2s; }
+.hp-dots i.on { width: 18px; background: var(--text); }
+.hpager { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; align-items: flex-start; transition: height .25s ease; margin: 0 -16px; padding: 0; }
+.hpager::-webkit-scrollbar { display: none; }
+.hpager > section { flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; padding: 0 16px; box-sizing: border-box; min-width: 0; }
+.hp-tabs { position: relative; padding-bottom: 8px; }
+.hp-tabs button { font-size: 19px; }
+.hp-line { position: absolute; left: 0; bottom: 0; height: 3px; border-radius: 9px; background: var(--text); width: 0; }
+.hp-dots { display: none; }

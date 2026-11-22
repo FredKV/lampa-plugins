@@ -708,6 +708,24 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8t. Головна: перегортання «Цілі» ⇄ «Мої плани»');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => { S.goals.push({ id: 'g1', type: 'habit', title: 'Читати', per: 'day', log: {}, attempts: [] }); S.tasks.push({ id: 't1', title: 'Помити авто', prio: 2, due: '', done: false, note: '' }); save(); go('home'); });
+    await q.waitForTimeout(300);
+    ok(await q.locator('#hpager > section').count() === 2 && await q.locator('#hpTabs button').count() === 2, 'дві сторінки й вкладки над ними');
+    await q.click('#hpTabs [data-i="1"]'); await q.waitForTimeout(700);
+    ok(await q.evaluate(() => U.hpIdx === 1 && Math.abs($('#hpager').scrollLeft - $('#hpager').clientWidth) < 2), 'натискання на «Мої плани» перегортає сторінку');
+    await q.evaluate(() => { const pg = $('#hpager'); pg.scrollLeft = 0; }); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => U.hpIdx === 0), 'перегортання назад (свайп) повертає «Цілі»');
+    await q.click('[data-a=goalCheck]'); await q.waitForTimeout(200);
+    ok(await q.evaluate(() => U.hpIdx === 0 && $('#hpager').scrollLeft < 2), 'після відмітки сторінка не стрибає');
+    ok(e2.length === 0, 'без JS-помилок (перегортання) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);
