@@ -155,10 +155,9 @@ function homePager() {
   const pend = isT ? Goals.pending().length : 0;
   const label = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
   const dayTasks = isT ? null : S.tasks.filter(t => t.due === D);
-  return `<div class="hp-strip" id="hpStrip">
-      <button data-a="hpGo" data-i="0"><span>Цілі${pend ? ` <i class="hp-badge">${pend}</i>` : ''}</span></button>
-      <button data-a="hpGo" data-i="1"><span>Плани</span></button>
-      <button class="hp-pill ${U.hpCal ? 'open' : ''}" id="hpPill" data-a="hpCal">${label}<i class="hp-chev"></i></button></div>
+  const slot = (i, name) => `<button class="hp-slot ${i === U.hpIdx ? 'on' : ''}" data-a="hpSlot" data-i="${i}"><span class="hp-roll"><span class="hp-l">${name}</span><span class="hp-l">${label}<i class="hp-chev"></i></span></span></button>`;
+  return `<div class="hp-strip ${U.hpCal ? 'cal-open' : ''}" id="hpStrip"><span class="hp-pill" id="hpPill" style="transform:translateX(${U.hpIdx * 100}%)"></span>
+      ${slot(0, `Цілі${pend ? ` <i class="hp-badge">${pend}</i>` : ''}`)}${slot(1, 'Плани')}</div>
     ${U.hpCal ? hpCalHtml(D) : ''}
     <div class="hp-dots" id="hpDots">${[0, 1].map(i => `<i data-a="hpGo" data-i="${i}" class="${i === U.hpIdx ? 'on' : ''}"></i>`).join('')}</div>
     <div class="hpager" id="hpager">
@@ -177,11 +176,12 @@ function hpCalHtml(sel) {
 }
 function hpSync(idx) {
   const pg = $('#hpager'); if (!pg) return;
-  const w = pg.clientWidth, x = Math.max(0, Math.min(1, idx === undefined ? pg.scrollLeft / w : idx));
-  const pill = $('#hpPill'), strip = $('#hpStrip');
-  if (pill && strip) pill.style.transform = `translateX(${x * (strip.clientWidth - 8) / 2}px)`;
-  $$('.hp-dots i').forEach((d, i) => d.classList.toggle('on', Math.round(x) === i));
-  const secs = pg.children, k = Math.round(x); if (secs[k]) pg.style.height = secs[k].offsetHeight + 'px';
+  const x = idx === undefined ? pg.scrollLeft / pg.clientWidth : idx, k = Math.max(0, Math.min(1, Math.round(x)));
+  // like Look Car: the pill snaps to the new slot (spring), labels roll name ⇅ date
+  const pill = $('#hpPill'); if (pill) pill.style.transform = `translateX(${k * 100}%)`;
+  $$('#hpStrip .hp-slot').forEach((el, i) => el.classList.toggle('on', i === k));
+  $$('.hp-dots i').forEach((d, i) => d.classList.toggle('on', i === k));
+  const secs = pg.children; if (secs[k]) pg.style.height = secs[k].offsetHeight + 'px';
 }
 AFTER_RENDER.push(() => {
   const pg = $('#hpager'); if (!pg) return;
@@ -190,6 +190,7 @@ AFTER_RENDER.push(() => {
   pg.addEventListener('scroll', () => { hpSync(); clearTimeout(t); t = setTimeout(() => { const k = Math.round(pg.scrollLeft / pg.clientWidth); if (k !== U.hpIdx) { U.hpIdx = k; typeof haptic === 'function' && haptic('tick'); } hpSync(k); }, 90); }, { passive: true });
 });
 Object.assign(A, {
+  hpSlot: d => { if (+d.i === U.hpIdx) A.hpCal(); else A.hpGo(d); },
   hpCal: () => { if (U.hpCal) U.hpCal = null; else { const d = parseYmd(U.hpDate || today()); U.hpCal = { y: d.getFullYear(), m: d.getMonth() }; } render(); },
   hpCalNav: d => { let { y, m } = U.hpCal; m += +d.d; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } U.hpCal = { y, m }; render(); },
   hpPick: d => { U.hpDate = d.d === today() ? '' : d.d; U.hpCal = null; render(); },

@@ -890,3 +890,18 @@ h2 { font-size: 20px; }
 .hp-cal-g button { height: 36px; border-radius: 10px; font-size: 14.5px; }
 .hp-cal-g button.tdy { box-shadow: inset 0 0 0 1.5px var(--text); }
 .hp-cal-g button.sel { background: var(--primary); color: var(--onprimary); }
+
+/* strip v3 (Look Car): pill behind the slots snaps with a spring; text rolls vertically */
+.hp-strip { position: relative; display: flex; }
+.hp-strip .hp-pill { position: absolute; left: 4px; top: 4px; bottom: 4px; width: calc(50% - 4px); height: auto; border-radius: 12px; background: var(--primary); z-index: 0;
+  transition: transform .34s cubic-bezier(.34,1.45,.64,1); pointer-events: none; }
+.hp-strip .hp-slot { flex: 1; position: relative; z-index: 1; height: 40px; overflow: hidden; border-radius: 12px; background: none; padding: 0; }
+.hp-roll { display: flex; flex-direction: column; transition: transform .32s cubic-bezier(.3,1.25,.6,1); }
+.hp-l { height: 40px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--muted); transition: color .25s; }
+.hp-slot.on .hp-roll { transform: translateY(-40px); }
+.hp-slot.on .hp-l { color: var(--onprimary); }
+.hp-strip.cal-open .hp-slot.on .hp-chev { transform: rotate(-135deg) translate(-2px, 0); }
+.hp-strip .hp-pill { background: var(--chip); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.hp-slot.on .hp-l { color: var(--text); }
+.hp-l { line-height: 40px; }
+.hp-l .hp-badge { line-height: 18px; vertical-align: 0; }
