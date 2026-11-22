@@ -844,3 +844,4 @@ h2 { font-size: 20px; }
 .vc-x { position: absolute; bottom: calc(var(--sab) + 56px); width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.13); color: #fff; font-size: 24px; }
 
 .vc-ai { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 6px; vertical-align: 4px; background: linear-gradient(135deg,#4796E3,#CA6673); animation: nagPulse 1.2s infinite; }
+.vc-kind { margin-bottom: 12px; }

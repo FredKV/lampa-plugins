@@ -14,13 +14,13 @@ VIEWS.more = () => {
     ['wishes', '🎯', 'Мої хотілки', act.length ? `${act.length} ${plural(act.length, 'ціль', 'цілі', 'цілей')} · ${money(act.reduce((a, x) => a + Wishes.saved(x), 0))}` : 'Цілі накопичення'],
     ['weather', '🌤', 'Погода', w ? `${Math.round(w.data.current.temperature_2m)}° · ${Weather.place().name}` : 'Прогноз на 7 днів'],
     ['prices', '🧺', 'Вигідні продукти', S.recipes.length ? `${S.recipes.length} ${plural(S.recipes.length, 'рецепт', 'рецепти', 'рецептів')} · ${cityName(priceCity())}` : 'Страва → де купити дешевше'],
+    ['week', '🗓', 'Підсумок тижня', 'Витрати, цілі, що далі'],
     ['cycle', '🌸', 'Мій цикл', cyc && !S.cycle.hide ? cyc.line : 'Відстеження циклу']
   ];
   return `<div class="tiles">${tiles.map(t => `<button class="tile" data-a="go" data-page="${t[0]}">
       <span class="tile-ic">${t[1]}</span><b>${t[2]}</b><span class="small muted ellipsis">${esc(t[3])}</span></button>`).join('')}</div>
     <div class="list" style="margin-top:4px">
-      <div class="item" data-a="go" data-page="week"><div class="emoji sm">🗓</div><div class="grow"><div class="title">Підсумок тижня</div><div class="meta">Витрати, цілі й що чекає далі</div></div><span class="muted">›</span></div>
-      <div class="item" data-a="tabSeg" data-tab="finance" data-key="fin" data-val="budget"><div class="emoji sm">📊</div><div class="grow"><div class="title">Бюджет і категорії</div></div><span class="muted">›</span></div>
+            <div class="item" data-a="tabSeg" data-tab="finance" data-key="fin" data-val="budget"><div class="emoji sm">📊</div><div class="grow"><div class="title">Бюджет і категорії</div></div><span class="muted">›</span></div>
       <div class="item" data-a="settings"><div class="emoji sm">⚙️</div><div class="grow"><div class="title">Налаштування</div><div class="meta">Тема, Gemini, PIN-код, дані</div></div><span class="muted">›</span></div>
     </div>`;
 };

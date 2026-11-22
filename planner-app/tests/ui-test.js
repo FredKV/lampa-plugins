@@ -689,6 +689,25 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8s. Голос: ключові слова, дата видна й редагується');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const r = await q.evaluate(() => { const a = parseLocal('запиши у витрати купівлю телевізора за 13890 грн'); const b = parseLocal('післязавтра подія день народження Олі'); return { a, b, d2: addDays(today(), 2) }; });
+    ok(r.a.kind === 'expense' && r.a.amount === 13890 && r.a.title === 'Купівлю телевізора', '«запиши у витрати … 13890 грн» → одразу витрата 13 890 ₴');
+    ok(r.b.kind === 'event' && r.b.date === r.d2 && r.b.title === 'День народження Олі', '«післязавтра подія …» → подія на післязавтра');
+    await q.evaluate(() => startVoice('на 10:00 манікюр')); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => $('#vcDate').value === today() && /Сьогодні/.test($('#sheetBody').textContent)), 'дату видно у вікні');
+    await q.click('[data-a=vcKind][data-v=income]'); await q.waitForTimeout(150);
+    await q.click('[data-a=vcKind][data-v=shop]'); await q.waitForTimeout(150);
+    await q.click('[data-a=vcKind][data-v=event]'); await q.waitForTimeout(150);
+    await q.evaluate(() => { $('#vcDate').value = addDays(today(), 3); }); await q.click('[data-a=vcSave]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => S.events.some(e => e.title === 'Манікюр' && e.date === addDays(today(), 3) && e.time === '10:00')), 'тип перемикається без помилок, змінена дата зберігається');
+    ok(e2.length === 0, 'без JS-помилок (голос) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);
