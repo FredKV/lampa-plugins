@@ -19,6 +19,7 @@ VIEWS.more = () => {
   return `<div class="tiles">${tiles.map(t => `<button class="tile" data-a="go" data-page="${t[0]}">
       <span class="tile-ic">${t[1]}</span><b>${t[2]}</b><span class="small muted ellipsis">${esc(t[3])}</span></button>`).join('')}</div>
     <div class="list" style="margin-top:4px">
+      <div class="item" data-a="go" data-page="week"><div class="emoji sm">🗓</div><div class="grow"><div class="title">Підсумок тижня</div><div class="meta">Витрати, цілі й що чекає далі</div></div><span class="muted">›</span></div>
       <div class="item" data-a="tabSeg" data-tab="finance" data-key="fin" data-val="budget"><div class="emoji sm">📊</div><div class="grow"><div class="title">Бюджет і категорії</div></div><span class="muted">›</span></div>
       <div class="item" data-a="settings"><div class="emoji sm">⚙️</div><div class="grow"><div class="title">Налаштування</div><div class="meta">Тема, Gemini, PIN-код, дані</div></div><span class="muted">›</span></div>
     </div>`;
