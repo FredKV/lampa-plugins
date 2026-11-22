@@ -15,12 +15,21 @@ import org.json.JSONObject;
 final class Reminders {
     private Reminders() {}
 
-    static final String CHANNEL = "reminders";
+    static final String CHANNEL = "reminders_lad";
 
     static void ensureChannels(Context c) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         if (nm == null) return;
-        nm.createNotificationChannel(new NotificationChannel(CHANNEL, "Нагадування", NotificationManager.IMPORTANCE_DEFAULT));
+        if (nm.getNotificationChannel(CHANNEL) == null) {
+            NotificationChannel ch = new NotificationChannel(CHANNEL, "Нагадування", NotificationManager.IMPORTANCE_DEFAULT);
+            android.net.Uri snd = android.net.Uri.parse("android.resource://" + c.getPackageName() + "/" + R.raw.lad_notify);
+            ch.setSound(snd, new android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+            ch.enableVibration(true);
+            nm.createNotificationChannel(ch);
+        }
+        nm.deleteNotificationChannel("reminders");
         nm.deleteNotificationChannel("prices");
     }
 

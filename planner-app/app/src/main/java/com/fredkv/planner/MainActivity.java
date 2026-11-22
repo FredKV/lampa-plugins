@@ -235,6 +235,16 @@ public class MainActivity extends Activity {
         if (cover != null) cover.setVisibility(View.GONE);
     }
 
+    /** Short «speak now» sound; listening starts right after it so the sound isn't recognised as speech. */
+    private void micCueThenListen() {
+        try {
+            android.media.MediaPlayer mp = android.media.MediaPlayer.create(this, R.raw.lad_mic);
+            if (mp == null) { startListening(); return; }
+            mp.setOnCompletionListener(p -> { p.release(); startListening(); });
+            mp.start();
+        } catch (Exception e) { startListening(); }
+    }
+
     /** In-app speech recognition (own UI): partial text, sound level and final text go to JS. */
     private void startListening() {
         try {
@@ -355,7 +365,7 @@ public class MainActivity extends Activity {
             if (granted) fetchLocation(id);
             else locationResult(id, null, "Доступ до геолокації не надано");
         }
-        if (requestCode == REQ_MIC) { if (granted) startListening(); else js("window.__voiceCb&&window.__voiceCb('',true,'mic')"); }
+        if (requestCode == REQ_MIC) { if (granted) micCueThenListen(); else js("window.__voiceCb&&window.__voiceCb('',true,'mic')"); }
         if (requestCode == REQ_NOTIF) js("window.__notifPerm&&window.__notifPerm(" + granted + ")");
     }
 
@@ -501,7 +511,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void listenStart() {
             runOnUiThread(() -> {
-                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) startListening();
+                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) micCueThenListen();
                 else requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MIC);
             });
         }
