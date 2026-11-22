@@ -611,7 +611,7 @@ async function pickDate(p, id, v) {
       window.__said = ['завтра о 10 стоматолог', 'витратила 250 на каву', 'купити молоко, хліб і яйця'];
       window.__bk = { uri: false, data: '' }; window.__shared = [];
       window.AndroidBridge = {
-        voice: () => setTimeout(() => window.__voiceCb(window.__said.shift() || ''), 50),
+        listenStart: () => { const t = window.__said.shift() || ''; setTimeout(() => { window.__voiceReady && window.__voiceReady(); window.__voiceRms && window.__voiceRms(6); window.__voicePartial && window.__voicePartial(t.split(' ').slice(0, 2).join(' ')); window.__seenOv = (window.__seenOv || 0) + (document.querySelector('#vcOv .vc-wave') ? 1 : 0); }, 30); setTimeout(() => window.__voiceCb(t), 120); }, listenStop: () => {},
         share: t => window.__shared.push(t),
         pickBackup: () => { window.__bk.uri = true; setTimeout(() => window.__bkPicked(true), 30); }, hasBackup: () => window.__bk.uri, backupName: () => 'LAD-backup.json',
         writeBackup: j => { window.__bk.data = j; return true; }, forgetBackup: () => { window.__bk.uri = false; }, openBackup: () => setTimeout(() => window.__bkOpened(window.__bk.data), 30)
@@ -621,6 +621,7 @@ async function pickDate(p, id, v) {
     await q.evaluate(() => go('home')); await q.waitForTimeout(150);
     // no Gemini key → offline parser
     await q.click('#top [data-a=voiceStart]'); await q.waitForSelector('[data-a=vcSave]', { timeout: 4000 });
+    ok(await q.evaluate(() => window.__seenOv >= 1 && !document.querySelector('#vcOv')), 'власне вікно «Говоріть…» з хвилею показано і закрито після фрази');
     ok(await q.evaluate(() => U.vc.r.kind === 'event' && U.vc.r.date === addDays(today(), 1) && U.vc.r.time === '10:00' && /Стоматолог/.test(U.vc.r.title)), '«завтра о 10 стоматолог» → подія на завтра о 10:00');
     await q.click('[data-a=vcSave]'); await q.waitForTimeout(150);
     ok(await q.evaluate(() => S.events.some(e => /Стоматолог/.test(e.title) && e.time === '10:00')), 'подію додано');

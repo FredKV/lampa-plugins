@@ -7,7 +7,33 @@
    ===================================================================== */
 
 /* ---------------- voice ---------------- */
+/* full-screen listening (variant C): live text + wave in the logo colours */
+function listenOverlay() {
+  return new Promise(res => {
+    const ov = document.createElement('div'); ov.className = 'vc-ov'; ov.id = 'vcOv';
+    ov.innerHTML = `<div class="vc-text" id="vcLive">Говоріть…</div><div class="vc-wave">${Array.from({ length: 21 }, () => '<i></i>').join('')}</div>
+      <div class="vc-hint" id="vcHint">Я слухаю</div><button class="vc-x" data-a="vcCancel" aria-label="Скасувати">✕</button>`;
+    document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add('show'));
+    const bars = [...ov.querySelectorAll('.vc-wave i')]; let lvl = 0, raf = 0, t0 = performance.now();
+    const draw = now => { bars.forEach((b, i) => { const w = Math.sin(now / 160 + i * .7) * .5 + .5; b.style.transform = `scaleY(${.15 + Math.min(1, lvl) * (.35 + w * .65)})`; }); raf = requestAnimationFrame(draw); };
+    raf = requestAnimationFrame(draw);
+    const done = r => { cancelAnimationFrame(raf); ov.classList.remove('show'); setTimeout(() => ov.remove(), 220); ['__voiceCb', '__voicePartial', '__voiceRms', '__voiceReady'].forEach(k => window[k] = null); res(r); };
+    window.__voiceReady = () => { $('#vcHint').textContent = 'Я слухаю'; };
+    window.__voiceRms = db => { lvl = lvl * .6 + Math.max(0, (db + 2) / 10) * .4; };
+    window.__voicePartial = t => { const el = $('#vcLive'); if (el) el.textContent = `«${t}»`; };
+    window.__voiceCb = (t, fail, why) => {
+      if (t) { const el = $('#vcLive'); if (el) el.textContent = `«${t}»`; haptic && haptic('tick'); setTimeout(() => done({ text: t }), 350); return; }
+      done({ text: '', fail: !!fail, why: why || '' });
+    };
+    A.vcCancel = () => { try { Bridge.listenStop(true); } catch (e) { } done({ text: '', cancel: true }); };
+    Bridge.listenStart();
+  });
+}
 function listen() {
+  if (Bridge && Bridge.listenStart) return listenOverlay().then(r => r.why === 'na' && Bridge.voice ? listenSystem() : r);
+  return listenSystem();
+}
+function listenSystem() {
   return new Promise(res => {
     if (Bridge && Bridge.voice) { window.__voiceCb = (t, fail) => { window.__voiceCb = null; res({ text: t || '', fail: !!fail }); }; Bridge.voice(); return; }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -69,7 +95,11 @@ function voiceSheet() {
 }
 async function startVoice(typed) {
   let text = typed;
-  if (!text) { const r = await listen(); if (r.fail && !r.text) { voiceTypeSheet(); return; } text = r.text; }
+  if (!text) {
+    const r = await listen(); if (r.cancel) return;
+    if (r.fail && !r.text) { if (r.why === 'mic') toast('Потрібен дозвіл на мікрофон'); else if (/^e(6|7)$/.test(r.why)) toast('Нічого не почула — спробуйте ще раз'); else voiceTypeSheet(); return; }
+    text = r.text;
+  }
   if (!text.trim()) return;
   U.vc = { text, loading: true }; voiceSheet();
   try { U.vc.r = await parseVoice(text); } catch (e) { U.vc.r = parseLocal(text); }

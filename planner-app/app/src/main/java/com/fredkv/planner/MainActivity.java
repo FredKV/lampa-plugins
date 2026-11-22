@@ -44,6 +44,8 @@ public class MainActivity extends Activity {
     private static final int REQ_LOCATION = 42;
     private static final int REQ_NOTIF = 43;
     private static final int REQ_VOICE = 44;
+    private static final int REQ_MIC = 47;
+    private android.speech.SpeechRecognizer recognizer;
     private static final int REQ_BK_CREATE = 45;
     private static final int REQ_BK_OPEN = 46;
 
@@ -233,6 +235,37 @@ public class MainActivity extends Activity {
         if (cover != null) cover.setVisibility(View.GONE);
     }
 
+    /** In-app speech recognition (own UI): partial text, sound level and final text go to JS. */
+    private void startListening() {
+        try {
+            if (!android.speech.SpeechRecognizer.isRecognitionAvailable(this)) { js("window.__voiceCb&&window.__voiceCb('',true,'na')"); return; }
+            if (recognizer != null) recognizer.destroy();
+            recognizer = android.speech.SpeechRecognizer.createSpeechRecognizer(this);
+            recognizer.setRecognitionListener(new android.speech.RecognitionListener() {
+                public void onReadyForSpeech(Bundle b) { js("window.__voiceReady&&window.__voiceReady()"); }
+                public void onBeginningOfSpeech() {}
+                public void onRmsChanged(float db) { js("window.__voiceRms&&window.__voiceRms(" + db + ")"); }
+                public void onBufferReceived(byte[] b) {}
+                public void onEndOfSpeech() {}
+                public void onError(int code) { js("window.__voiceCb&&window.__voiceCb('',true,'e" + code + "')"); }
+                public void onResults(Bundle b) {
+                    java.util.ArrayList<String> r = b.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
+                    js("window.__voiceCb&&window.__voiceCb(" + JSONObject.quote(r != null && !r.isEmpty() ? r.get(0) : "") + ")");
+                }
+                public void onPartialResults(Bundle b) {
+                    java.util.ArrayList<String> r = b.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
+                    if (r != null && !r.isEmpty()) js("window.__voicePartial&&window.__voicePartial(" + JSONObject.quote(r.get(0)) + ")");
+                }
+                public void onEvent(int t, Bundle b) {}
+            });
+            Intent i = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "uk-UA");
+            i.putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+            recognizer.startListening(i);
+        } catch (Exception e) { js("window.__voiceCb&&window.__voiceCb('',true,'x')"); }
+    }
+
     private String pendingPage = null;
 
     private void takePage(Intent i) {
@@ -320,6 +353,7 @@ public class MainActivity extends Activity {
             if (granted) fetchLocation(id);
             else locationResult(id, null, "Доступ до геолокації не надано");
         }
+        if (requestCode == REQ_MIC) { if (granted) startListening(); else js("window.__voiceCb&&window.__voiceCb('',true,'mic')"); }
         if (requestCode == REQ_NOTIF) js("window.__notifPerm&&window.__notifPerm(" + granted + ")");
     }
 
@@ -459,6 +493,20 @@ public class MainActivity extends Activity {
                     js("window.__voiceCb&&window.__voiceCb('',true)");
                 }
             });
+        }
+
+        /** Own-UI listening (needs the microphone permission once). */
+        @JavascriptInterface
+        public void listenStart() {
+            runOnUiThread(() -> {
+                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) startListening();
+                else requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MIC);
+            });
+        }
+
+        @JavascriptInterface
+        public void listenStop(boolean cancel) {
+            runOnUiThread(() -> { if (recognizer == null) return; if (cancel) { recognizer.cancel(); } else recognizer.stopListening(); });
         }
 
         /** Auto-backup: choose where the copy lives (any folder or Google Drive). */
