@@ -531,6 +531,14 @@ Object.assign(A, {
     const f = r.__askNum; r.__askNum = null; f && f(round2(v)); closeSheet();
   }
 });
+const MALE_A = ['микола', 'ілля', 'сава', 'кузьма', 'лука', 'хома', 'фома', 'ніколя', 'савва', 'гаврила', 'данила', 'михайло'];
+function userGender() {
+  const g = S.settings && S.settings.gender; if (g === 'm' || g === 'f') return g;
+  const n = String((S.settings && S.settings.name) || '').trim().toLowerCase().split(/\s+/)[0];
+  return n && /[ая]$/.test(n) && !MALE_A.includes(n) ? 'f' : 'm';
+}
+/** G('виконав', 'виконала') — text for him / her */
+const G = (m, f) => userGender() === 'f' ? f : m;
 const SEG_HOOKS = {};  // in-sheet segmented group → (value) => void
 const USEG_HOOKS = {}; // page-level segmented key → (value) => true to cancel default re-render
 const segVal = (root, group) => { const b = $(`[data-group="${group}"].on`, root); return b ? b.dataset.val : null; };

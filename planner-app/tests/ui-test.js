@@ -869,6 +869,38 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8nag. Червона позначка на «Ще» видно на плитці');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const r = await q.evaluate(() => { S.goals.push({ id: 'g1', type: 'quit', title: 'Алкоголь', start: addDays(today(), -3), log: {}, attempts: [] }); save(); go('more');
+      const t = $('.tile[data-page=goals]'); return { tab: $('#tabbar [data-tab=more]').classList.contains('nag'), badge: t.querySelector('.tile-badge')?.textContent, n: $$('.tile-badge').length }; });
+    ok(r.tab && r.badge === '1' && r.n === 1, 'крапка на «Ще» — і такий самий значок на плитці «Цілі та звички» ' + JSON.stringify(r));
+    await q.close();
+  }
+
+  console.log('8g2. Він / вона');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const r = await q.evaluate(() => {
+      const out = {};
+      S.settings.name = 'Федір'; out.fedir = userGender(); S.settings.name = 'Таня'; out.tanya = userGender(); S.settings.name = 'Микола'; out.mykola = userGender();
+      S.settings.name = 'Федір'; S.goals.push({ id: 'g1', type: 'quit', title: 'Куріння', start: addDays(today(), -5), log: {}, attempts: [] }); save();
+      out.praise = PRAISE.map(f => f(570)).join(' | '); navigate('goal', { id: 'g1' }); out.btn = $('#view [data-a=goalRelapse]').textContent;
+      settingsSheet('profile');
+      return out;
+    });
+    await q.waitForTimeout(400); await q.click('#sheetBody [data-group=stGender][data-val=f]'); await q.waitForTimeout(150);
+    Object.assign(r, await q.evaluate(() => { const o = { after: S.settings.gender, praiseF: PRAISE[4](570) }; closeSheet(); render(); o.btnF = $('#view [data-a=goalRelapse]').textContent; return o; }));
+    ok(r.fedir === 'm' && r.tanya === 'f' && r.mykola === 'm', 'стать вгадується з імені (Федір — він, Таня — вона, Микола — він) ' + JSON.stringify(r));
+    ok(/Король самоконтролю/.test(r.praise) && /неймовірний/.test(r.praise) && !/Королева|неймовірна/.test(r.praise) && r.btn === 'Зірвався', 'для нього: «Король», «неймовірний», «Зірвався»');
+    ok(r.after === 'f' && /Королева/.test(r.praiseF) && r.btnF === 'Зірвалась', 'у профілі можна вибрати «Вона» — тексти змінюються ' + JSON.stringify(r));
+    ok(e2.length === 0, 'без JS-помилок (він/вона) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8w. Gemini: старі моделі вимкнено (404) → знаходить доступну');
   {
     const q = await b.newPage({ viewport: { width: 390, height: 844 } });

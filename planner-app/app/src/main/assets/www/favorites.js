@@ -158,7 +158,7 @@ PAGES.favNew = () => {
       <div class="field"><label>Назва</label><input class="input" id="fvName" maxlength="60" placeholder="Напр. Йогурт грецький" value="${esc(pf.name || '')}"></div>
       <div class="row" style="gap:10px"><div class="field grow"><label>Бренд</label><input class="input" id="fvBrand" maxlength="40" value="${esc(pf.brand || '')}"></div>
         <div class="field grow"><label>Ціна, ₴</label><input class="input" id="fvPrice" inputmode="decimal" value="${pf.price || ''}"></div></div>
-      <div class="field"><label>Де купувала</label><input class="input" id="fvStore" maxlength="40" placeholder="Сільпо, АТБ…" value="${esc(pf.store || '')}"></div>
+      <div class="field"><label>${G('Де купував', 'Де купувала')}</label><input class="input" id="fvStore" maxlength="40" placeholder="Сільпо, АТБ…" value="${esc(pf.store || '')}"></div>
       <div class="field"><label>Гасло на картці</label><input class="input" id="fvTag" maxlength="60" placeholder="Напр. Ніжний смак щоранку"></div>
       <div class="field"><label>Оцінка</label>${starsHtml(5)}</div>
       <div class="field"><textarea class="input" id="fvNote" maxlength="300" placeholder="Чим сподобався (смак, розмір, для кого)"></textarea></div>
@@ -188,7 +188,7 @@ PAGES.fav = p => {
         ${f.brand ? `<div class="muted">${esc(f.brand)}</div>` : ''}</div>${starsHtml(f.rating).replace('class="stars"', `class="stars" data-id="${f.id}"`)}</div>
       ${f.tagline ? `<div style="margin-top:8px;font-style:italic">«${esc(f.tagline)}»</div>` : ''}
       <div class="sep"></div>
-      ${f.store ? `<div class="kv"><span>Де купувала</span><b>${esc(f.store)}</b></div>` : ''}
+      ${f.store ? `<div class="kv"><span>${G('Де купував', 'Де купувала')}</span><b>${esc(f.store)}</b></div>` : ''}
       ${f.price ? `<div class="kv"><span>Ціна</span><b>${money(f.price)}</b></div>` : ''}
       <div class="kv"><span>Додано</span><b>${f.date ? shortDate(f.date) : '—'}</b></div>
       ${f.note ? `<div class="small muted" style="margin-top:8px;line-height:1.45">${esc(f.note)}</div>` : ''}
@@ -204,7 +204,7 @@ function favEditSheet(f) {
     <div class="field"><label>Назва</label><input class="input" id="feName" maxlength="60" value="${esc(f.name || '')}"></div>
     <div class="row" style="gap:10px"><div class="field grow"><label>Бренд</label><input class="input" id="feBrand" maxlength="40" value="${esc(f.brand || '')}"></div>
       <div class="field grow"><label>Ціна, ₴</label><input class="input" id="fePrice" inputmode="decimal" value="${f.price || ''}"></div></div>
-    <div class="field"><label>Де купувала</label><input class="input" id="feStore" maxlength="40" value="${esc(f.store || '')}"></div>
+    <div class="field"><label>${G('Де купував', 'Де купувала')}</label><input class="input" id="feStore" maxlength="40" value="${esc(f.store || '')}"></div>
     <div class="field"><label>Гасло</label><input class="input" id="feTag" maxlength="60" value="${esc(f.tagline || '')}"></div>
     <div class="field"><textarea class="input" id="feNote" maxlength="300">${esc(f.note || '')}</textarea></div>
     <div class="btns"><button class="btn" data-a="favEditSave" data-id="${f.id}">Зберегти</button></div>`);

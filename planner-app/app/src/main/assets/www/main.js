@@ -9,7 +9,7 @@ VIEWS.more = () => {
   const w = Weather.data();
   const tiles = [
     ['birthdays', '🎂', 'Дні народження', bd ? `${bd.p.name} — ${Birthdays.countdown(bd.days)}` : `${S.people.length} ${plural(S.people.length, 'людина', 'людини', 'людей')}`],
-    ['goals', '🏆', 'Цілі та звички', S.goals.length ? (Goals.pending().length ? `${Goals.pending().length} не відмічено сьогодні` : 'Сьогодні все відмічено ✓') : 'Звички, кинути курити…'],
+    ['goals', '🏆', 'Цілі та звички', S.goals.length ? (Goals.pending().length ? `${Goals.pending().length} чекає сьогодні` : 'Сьогодні все відмічено ✓') : 'Звички, кинути курити…'],
     ['favs', '❤️', 'Улюблені продукти', S.favs.length ? `${S.favs.length} ${plural(S.favs.length, 'товар', 'товари', 'товарів')}` : 'Сфотографуй — і в улюблені'],
     ['wishes', '🎯', 'Мої хотілки', act.length ? `${act.length} ${plural(act.length, 'ціль', 'цілі', 'цілей')} · ${money(act.reduce((a, x) => a + Wishes.saved(x), 0))}` : 'Цілі накопичення'],
     ['weather', '🌤', 'Погода', w ? `${Math.round(w.data.current.temperature_2m)}° · ${Weather.place().name}` : 'Прогноз на 7 днів'],
@@ -17,8 +17,10 @@ VIEWS.more = () => {
     ['week', '🗓', 'Підсумок тижня', 'Витрати, цілі, що далі'],
     ['cycle', '🌸', 'Мій цикл', cyc && !S.cycle.hide ? cyc.line : 'Відстеження циклу']
   ];
-  return `<div class="tiles">${tiles.map(t => `<button class="tile" data-a="go" data-page="${t[0]}">
-      <span class="tile-ic">${t[1]}</span><b>${t[2]}</b><span class="small muted ellipsis">${esc(t[3])}</span></button>`).join('')}</div>
+  // the red dot on «Ще» comes from goals waiting for today — the same mark sits on their tile
+  const nag = { goals: S.goals.length ? Goals.pending().length : 0 };
+  return `<div class="tiles">${tiles.map(t => `<button class="tile ${nag[t[0]] ? 'has-nag' : ''}" data-a="go" data-page="${t[0]}">
+      ${nag[t[0]] ? `<i class="tile-badge">${nag[t[0]]}</i>` : ''}<span class="tile-ic">${t[1]}</span><b>${t[2]}</b><span class="small ${nag[t[0]] ? 'red' : 'muted'} ellipsis">${esc(t[3])}</span></button>`).join('')}</div>
     <div class="list" style="margin-top:4px">
             <div class="item" data-a="tabSeg" data-tab="finance" data-key="fin" data-val="budget"><div class="emoji sm">📊</div><div class="grow"><div class="title">Бюджет і категорії</div></div><span class="muted">›</span></div>
       <div class="item" data-a="settings"><div class="emoji sm">⚙️</div><div class="grow"><div class="title">Налаштування</div><div class="meta">Тема, Gemini, PIN-код, дані</div></div><span class="muted">›</span></div>
@@ -70,10 +72,12 @@ function settingsSheet(sub) {
       ${stRow(stBox('#8e8e93', stSvg('data', 18, '#fff')), 'Дані', stChev(), 'data-a="stOpen" data-v="data"')}</div>
   </div>`, null, onClose);
 }
+SEG_HOOKS.stGender = v => { S.settings.gender = v; save(); render(); toast(v === 'f' ? 'Звертатимусь до вас як до неї 🌸' : 'Звертатимусь до вас як до нього 💪'); };
 const ST_SUB = {
   profile: { title: 'Профіль', html: s => `<div class="prof-card">
       <button class="st-ava-btn" data-a="avatarMenu" aria-label="Фото профілю">${avatarHtml(64)}<span class="st-cam">${ICONS.camera.replace('<svg', '<svg width="14" height="14"')}</span></button>
-      <div class="grow" style="min-width:0"><input class="name-input" id="stName" maxlength="30" placeholder="Ваше імʼя" value="${esc(s.name)}"></div></div>` },
+      <div class="grow" style="min-width:0"><input class="name-input" id="stName" maxlength="30" placeholder="Ваше імʼя" value="${esc(s.name)}"></div></div>
+    <div class="field" style="margin-top:14px"><label>Звертатися до мене</label>${seg('stGender', [['m', 'Він'], ['f', 'Вона']], userGender())}</div>` },
   theme: { title: 'Тема', html: s => `<div class="st-group">${THEMES.map(([v, l]) => stRow('', l, s.theme === v ? `<span class="green">${stSvg('check', 20)}</span>` : '', `data-a="themeSet" data-v="${v}"`)).join('')}</div>` },
   icon: { title: 'Ярлик', html: () => `<div class="icon-pick">${APP_ICONS.map(([id, label, bg, line]) => `<button data-a="iconPick" data-v="${id}" class="${curIcon() === id ? 'on' : ''}" aria-label="${label}">
         <span style="background:${bg}">${LAD_SIGN.replace('stroke="#000"', `stroke="${line}"`)}</span></button>`).join('')}</div>` },

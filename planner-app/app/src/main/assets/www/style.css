@@ -966,3 +966,6 @@ details.fold .list.flat { margin: 0 0 8px; }
 .gi-pick button.on { box-shadow: inset 0 0 0 2px var(--text); background: var(--card); }
 .goal-days i.bad { background: var(--red); }
 .check.round.slip { border-color: var(--red); background: rgba(229,72,77,.15); }
+.tile { position: relative; }
+.tile-badge { position: absolute; top: 14px; right: 14px; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 99px; background: var(--red); color: #fff;
+  font-size: 12.5px; font-weight: 700; font-style: normal; display: grid; place-items: center; animation: nagPulse 1.4s ease-in-out infinite; }

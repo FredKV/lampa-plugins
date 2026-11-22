@@ -92,7 +92,7 @@ async function parseVoice(text) {
   if (!Keys.has()) return parseLocal(text);
   const cats = Fin.cats('exp').map(c => c[0]).join(', ');
   const { text: out } = await gemini({
-    contents: [{ role: 'user', parts: [{ text: `Сьогодні ${today()} (${WD_FULL[parseYmd(today()).getDay()]}). Користувачка сказала: «${text}». ` +
+    contents: [{ role: 'user', parts: [{ text: `Сьогодні ${today()} (${WD_FULL[parseYmd(today()).getDay()]}). ${G('Користувач сказав', 'Користувачка сказала')}: «${text}». ` +
       'Визнач, що додати в планер, і відповідай ЛИШЕ JSON: {"kind":"event"|"task"|"expense"|"income"|"shop","title":"коротко","date":"YYYY-MM-DD або порожньо","time":"HH:MM або порожньо",' +
       `"amount":число або 0,"cat":"для витрати одна з: ${cats}","items":["для покупок — список товарів"]}. ` +
       'Якщо фраза прямо каже «витрата/витрати», «дохід», «план», «подія», «покупки» — це і є kind. title — лише суть 1–3 словами в називному відмінку, без дати, часу і слів-команд (приклад: «запиши в план відвідування стоматолога 23 числа на 10 годину» → kind task, title «Стоматолог», date 23-го, time 10:00). Дату й час вказуй і для плану (task), якщо вони прозвучали. event — подія/зустріч з датою; task — справа без конкретного часу; expense — витратила гроші; income — отримала гроші; shop — що купити.' }] }],

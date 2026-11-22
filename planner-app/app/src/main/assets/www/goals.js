@@ -12,7 +12,7 @@ const MILESTONES = [[1, '🌱', 'Перший день'], [3, '✨', '3 дні']
 
 const NAG = {
   spicy: [
-    t => `«${t}» досі без галочки. Незібраний ти долбойоб 😂 Давай, ворушись!`,
+    t => `«${t}» досі без галочки. ${G('Незібраний ти долбойоб', 'Незібрана ти долбойобка')} 😂 Давай, ворушись!`,
     t => `Бубочка пульсує, совість гризе 🫠 «${t}» саме себе не зробить.`,
     t => `Знову «з понеділка почну»? 😏 «${t}» — сьогодні, а не колись.`,
     t => `Агов, ледащо! 🦥 «${t}» чекає. Відміть — і я відчеплюсь.`,
@@ -26,11 +26,11 @@ const NAG = {
   ]
 };
 const PRAISE = [
-  n => `Ти неймовірна! Уже ${n} ${plural(n, 'день', 'дні', 'днів')} 🏆`,
+  n => `Ти ${G('неймовірний', 'неймовірна')}! Уже ${n} ${plural(n, 'день', 'дні', 'днів')} 🏆`,
   n => `${n} ${plural(n, 'день', 'дні', 'днів')} сили волі! Пишаюсь тобою 💚`,
   n => `Ще один день перемоги — разом ${n}! 🔥`,
   n => `Так тримати! ${n} ${plural(n, 'день', 'дні', 'днів')} — це серйозно 💪`,
-  n => `Королева самоконтролю 👑 ${n} ${plural(n, 'день', 'дні', 'днів')}!`
+  n => `${G('Король', 'Королева')} самоконтролю 👑 ${n} ${plural(n, 'день', 'дні', 'днів')}!`
 ];
 const pick = (arr, seed) => arr[Math.abs(seed) % arr.length];
 const seedOf = s => [...String(s)].reduce((a, c) => a * 31 + c.charCodeAt(0) | 0, 7);
@@ -173,7 +173,7 @@ PAGES.goal = p => {
       ${per ? `<div style="margin:12px auto 0;max-width:240px">${progressBar(Math.min(100, big / g.times * 100), big >= g.times ? 'var(--green)' : '')}</div>` : ''}
       ${g.min ? `<div class="small muted" style="margin-top:4px">Мінімум: ${esc(g.min)}</div>` : ''}
       ${slip ? `<button class="btn ghost card-btn red" style="margin-top:16px" data-a="goalRelapse" data-id="${g.id}">Сьогодні зрив · прибрати</button>`
-        : `<button class="btn ${done ? 'ghost card-btn' : ''}" style="margin-top:16px" data-a="goalCheck" data-id="${g.id}">${done ? 'Сьогодні відмічено ✓' : quit ? 'Сьогодні тримаюсь' : 'Сьогодні виконала'}</button>`}
+        : `<button class="btn ${done ? 'ghost card-btn' : ''}" style="margin-top:16px" data-a="goalCheck" data-id="${g.id}">${done ? 'Сьогодні відмічено ✓' : quit ? 'Сьогодні тримаюсь' : G('Сьогодні виконав', 'Сьогодні виконала')}</button>`}
     </div>
     ${per ? `<h2>${g.per === 'week' ? 'Останні тижні' : 'Останні місяці'}</h2>
       <div class="card gp-weeks">${goalPeriods(g).map(pp => `<div class="gp ${pp.cur ? 'cur' : ''} ${pp.n >= g.times ? 'ok' : ''}"><div class="gp-dots">${Array.from({ length: g.times }, (_, k) => `<i class="${k < pp.n ? 'on' : ''}"></i>`).join('')}</div><span>${pp.label}</span></div>`).join('')}</div>`
@@ -188,7 +188,7 @@ PAGES.goal = p => {
         : `<div class="kv"><span>Найдовша серія</span><b>${Math.max(Goals.best(g), quit ? Goals.clean(g) : 0)} ${plural(Math.max(Goals.best(g), quit ? Goals.clean(g) : 0), 'день', 'дні', 'днів')}</b></div>`}
       ${g.time ? `<div class="kv"><span>Нагадування</span><b>о ${g.time}</b></div>` : ''}
       ${quit && (g.attempts || []).length ? `<div class="kv"><span>Попередні спроби</span><b>${g.attempts.map(a => a.days).join(', ')} дн.</b></div>` : ''}</div>
-    <div class="btns two">${quit ? `<button class="btn ghost card-btn" data-a="goalRelapse" data-id="${g.id}">${slip ? 'Прибрати зрив' : 'Зірвалась'}</button>` : `<button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button>`}
+    <div class="btns two">${quit ? `<button class="btn ghost card-btn" data-a="goalRelapse" data-id="${g.id}">${slip ? 'Прибрати зрив' : G('Зірвався', 'Зірвалась')}</button>` : `<button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button>`}
       <button class="btn ghost card-btn" data-a="goalEdit" data-id="${g.id}">Редагувати</button></div>
     ${quit ? `<div class="btns"><button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button></div>` : ''}`
   };
