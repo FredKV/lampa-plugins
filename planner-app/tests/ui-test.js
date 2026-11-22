@@ -507,6 +507,35 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8m. Цілі: N разів на тиждень / місяць');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => { U.stack = []; go('more'); navigate('goals'); A.fab(); }); await q.waitForTimeout(350);
+    await q.fill('#gTitle', 'Спортзал'); await q.click('[data-group=gPer][data-val=week]'); await q.waitForTimeout(100);
+    ok(await q.locator('#gTimesBox:visible').count() === 1, 'для «на тиждень» зʼявляється «скільки разів»');
+    await q.click('[data-a=goalTimes][data-d="-1"]'); await q.click('[data-a=goalSave]'); await q.waitForTimeout(200);
+    const g = await q.evaluate(() => S.goals[0]);
+    ok(g.per === 'week' && g.times === 2, 'збережено: спортзал 2 рази на тиждень');
+    const st = await q.evaluate(() => {
+      const g = S.goals[0], mon = mondayOf(today());
+      const a = { urgent: Goals.urgent(g), left: Goals.left(g), daysLeft: Goals.daysLeft(g) };
+      g.log = { [mon]: 1, [addDays(mon, 1) <= today() ? addDays(mon, 1) : mon]: 1 }; if (Object.keys(g.log).length < 2) g.log[addDays(mon, -7)] = 1;
+      g.log = {}; g.log[mon] = 1; g.log[addDays(mon, 2)] = 1; // two visits this week → target met
+      save();
+      const rem = REMINDER_PROVIDERS.flatMap(f => f()).filter(r => r.id.startsWith('goal-' + g.id) && r.at < parseYmd(addDays(mon, 7)).getTime());
+      return { ...a, metLeft: Goals.left(g), pend: Goals.pending().length, rem: rem.length, txt: goalText(g) };
+    });
+    ok(st.left === 2 && st.urgent === (st.daysLeft <= 2), `без відміток: «треба сьогодні» лише коли днів лишилось ≤ 2 (зараз ${st.daysLeft})`);
+    ok(st.metLeft === 0 && st.pend === 0 && st.rem === 0 && /2 з 2/.test(st.txt), 'ціль тижня виконано — без бубочки й нагадувань до наступного тижня');
+    await q.evaluate(() => navigate('goal', { id: S.goals[0].id })); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => /2\/2/.test($('.goal-big').textContent.replace(/\s/g, '')) && /тижнів поспіль/.test($('#view').textContent)), 'сторінка цілі: 2/2 цього тижня, тижнів поспіль');
+    await q.evaluate(() => settingsSheet()); await q.waitForTimeout(200);
+    ok(e2.length === 0, 'без JS-помилок (частота цілей) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);

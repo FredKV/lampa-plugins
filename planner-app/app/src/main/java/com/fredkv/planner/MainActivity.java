@@ -386,6 +386,12 @@ public class MainActivity extends Activity {
             return nm == null || nm.areNotificationsEnabled();
         }
 
+        /** Schedules a test reminder in `sec` seconds (checks the alarm path, not only notifications). */
+        @JavascriptInterface
+        public void testAlarm(int sec) {
+            Reminders.test(MainActivity.this, Math.max(10, Math.min(sec, 600)));
+        }
+
         /** Shows a notification right now (Settings → «Перевірити сповіщення»). */
         @JavascriptInterface
         public void notifyNow(String title, String text) {

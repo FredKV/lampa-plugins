@@ -51,13 +51,35 @@ const Goals = {
     days.forEach(d => { run = prev && addDays(prev, 1) === d ? run + 1 : 1; best = Math.max(best, run); prev = d; });
     return best;
   },
-  score: g => g.type === 'quit' ? Goals.clean(g) : Math.max(Goals.streak(g), Goals.best(g)),
-  pending: () => S.goals.filter(g => !Goals.doneToday(g)),
-  medals: g => MILESTONES.map(([n, ic, l]) => ({ n, ic, l, got: Goals.score(g) >= n }))
+  /* «N разів на тиждень / місяць» */
+  periodic: g => g.type === 'habit' && (g.per === 'week' || g.per === 'month') && (g.times || 0) > 0,
+  pStart: (g, d) => g.per === 'week' ? mondayOf(d) : d.slice(0, 8) + '01',
+  pEnd: (g, d) => g.per === 'week' ? addDays(mondayOf(d), 6) : addDays(addMonthsYmd(d.slice(0, 8) + '01', 1), -1),
+  doneIn(g, d) { const a = Goals.pStart(g, d), b = Goals.pEnd(g, d); return Object.keys(g.log || {}).filter(x => x >= a && x <= b).length; },
+  left: (g, d = today()) => Math.max(0, g.times - Goals.doneIn(g, d)),
+  daysLeft: (g, d = today()) => diffDays(d, Goals.pEnd(g, d)) + 1,
+  /** must be done today to still hit the period target */
+  urgent: (g, d = today()) => !Goals.doneOn(g, d) && Goals.left(g, d) > 0 && Goals.left(g, d) >= Goals.daysLeft(g, d),
+  /** completed periods in a row (the current one counts once it is met) */
+  pStreak(g) {
+    let d = Goals.doneIn(g, today()) >= g.times ? today() : addDays(Goals.pStart(g, today()), -1), n = 0;
+    while (n < 520 && Goals.doneIn(g, d) >= g.times) { n++; d = addDays(Goals.pStart(g, d), -1); }
+    return n;
+  },
+  total: g => Object.keys(g.log || {}).length,
+  score: g => g.type === 'quit' ? Goals.clean(g) : Goals.periodic(g) ? Goals.total(g) : Math.max(Goals.streak(g), Goals.best(g)),
+  pending: () => S.goals.filter(g => Goals.periodic(g) ? Goals.urgent(g) : !Goals.doneToday(g)),
+  medals: g => (Goals.periodic(g) ? MILESTONES_TIMES : MILESTONES).map(([n, ic, l]) => ({ n, ic, l, got: Goals.score(g) >= n })),
+  perWord: g => g.per === 'week' ? 'тиждень' : 'місяць',
+  perThis: g => g.per === 'week' ? 'цього тижня' : 'цього місяця'
 };
+const MILESTONES_TIMES = [[1, '🌱', 'Перший раз'], [5, '✨', '5 разів'], [10, '🔥', '10 разів'], [25, '💪', '25 разів'], [50, '🏅', '50 разів'],
+  [100, '🥈', '100 разів'], [150, '🥇', '150 разів'], [200, '💎', '200 разів'], [365, '👑', '365 разів']];
+const timesTxt = n => `${n} ${plural(n, 'раз', 'рази', 'разів')}`;
 
 function goalRow(g) {
   const done = Goals.doneToday(g);
+  if (Goals.periodic(g)) return goalRowPeriodic(g, done);
   const big = g.type === 'quit' ? Goals.clean(g) : Goals.streak(g);
   const sub = g.type === 'quit' ? `${big} ${plural(big, 'день', 'дні', 'днів')} без` : big ? `серія ${big} ${plural(big, 'день', 'дні', 'днів')} 🔥` : 'почни серію сьогодні';
   return `<div class="item goal-row ${done ? 'checked' : ''}">
@@ -68,12 +90,23 @@ function goalRow(g) {
     <div class="goal-num" data-a="goalOpen" data-id="${g.id}">${big}</div></div>`;
 }
 
+function goalRowPeriodic(g, done) {
+  const got = Goals.doneIn(g, today()), met = got >= g.times, urgent = Goals.urgent(g), left = Goals.left(g);
+  const sub = met ? `ціль ${Goals.perThis(g)} виконано ✓` : `${Goals.perThis(g)} ще ${timesTxt(left)}${urgent ? ' — сьогодні треба!' : ''}`;
+  return `<div class="item goal-row ${done || met ? 'checked' : ''}">
+    <button class="check round ${done ? 'on' : ''}" data-a="goalCheck" data-id="${g.id}" aria-label="Відмітити сьогодні"></button>
+    <div class="grow" style="min-width:0" data-a="goalOpen" data-id="${g.id}">
+      <div class="title ellipsis">🎯 ${esc(g.title)}${urgent ? '<i class="nag-dot"></i>' : ''}</div>
+      <div class="meta">${esc(sub)}${g.min ? ` · ${esc(g.min)}` : ''}</div></div>
+    <div class="goal-num" data-a="goalOpen" data-id="${g.id}">${got}<small>/${g.times}</small></div></div>`;
+}
+
 /** block for the home screen */
 function goalsHome() {
   if (!S.goals.length) return '';
   const pend = Goals.pending().length;
   return `<div class="row between" style="margin:22px 4px 10px"><h2 style="margin:0">Цілі на сьогодні</h2>
-    <span class="small ${pend ? 'red' : 'green'}">${pend ? `${pend} не відмічено` : 'усе відмічено ✓'}</span></div>
+    <span class="small ${pend ? 'red' : 'green'}">${pend ? `${pend} чекає на сьогодні` : 'на сьогодні все ✓'}</span></div>
     <div class="list">${S.goals.map(goalRow).join('')}</div>`;
 }
 
@@ -87,14 +120,15 @@ FABS.goals = () => goalSheet();
 
 PAGES.goal = p => {
   const g = S.goals.find(x => x.id === p.id); if (!g) return null;
-  const done = Goals.doneToday(g), quit = g.type === 'quit';
-  const big = quit ? Goals.clean(g) : Goals.streak(g);
+  const done = Goals.doneToday(g), quit = g.type === 'quit', per = Goals.periodic(g);
+  const big = quit ? Goals.clean(g) : per ? Goals.doneIn(g, today()) : Goals.streak(g);
   const days = Array.from({ length: 28 }, (_, i) => addDays(today(), i - 27));
   return {
     title: g.title, actions: shareBtn('goalShare', g.id), html: `
-    <div class="card goal-hero ${done ? '' : 'pending'}">
-      <div class="goal-big">${big}</div>
-      <div class="muted">${quit ? `${plural(big, 'день', 'дні', 'днів')} без зривів 💚` : `${plural(big, 'день', 'дні', 'днів')} поспіль`}</div>
+    <div class="card goal-hero ${done || (per && !Goals.urgent(g)) ? '' : 'pending'}">
+      <div class="goal-big">${big}${per ? `<small>/${g.times}</small>` : ''}</div>
+      <div class="muted">${quit ? `${plural(big, 'день', 'дні', 'днів')} без зривів 💚` : per ? `${Goals.perThis(g)} · ціль ${timesTxt(g.times)} на ${Goals.perWord(g)}` : `${plural(big, 'день', 'дні', 'днів')} поспіль`}</div>
+      ${per ? `<div style="margin:12px auto 0;max-width:240px">${progressBar(Math.min(100, big / g.times * 100), big >= g.times ? 'var(--green)' : '')}</div>` : ''}
       ${g.min ? `<div class="small muted" style="margin-top:4px">Мінімум: ${esc(g.min)}</div>` : ''}
       <button class="btn ${done ? 'ghost card-btn' : ''}" style="margin-top:16px" data-a="goalCheck" data-id="${g.id}">${done ? '✓ Сьогодні відмічено' : quit ? '✅ Сьогодні тримаюсь!' : '✅ Сьогодні виконала'}</button>
     </div>
@@ -104,7 +138,8 @@ PAGES.goal = p => {
     <div class="medals">${Goals.medals(g).map(m => `<div class="medal ${m.got ? 'got' : ''}"><span>${m.ic}</span><b>${m.l}</b></div>`).join('')}</div>
     <div class="card" style="margin-top:12px">
       <div class="kv"><span>${quit ? 'Без зривів з' : 'Почато'}</span><b>${shortDate(quit ? g.start : (g.created ? ymd(new Date(g.created)) : today()))}</b></div>
-      <div class="kv"><span>Найдовша серія</span><b>${Math.max(Goals.best(g), quit ? Goals.clean(g) : 0)} ${plural(Math.max(Goals.best(g), quit ? Goals.clean(g) : 0), 'день', 'дні', 'днів')}</b></div>
+      ${per ? `<div class="kv"><span>Виконано ${g.per === 'week' ? 'тижнів' : 'місяців'} поспіль</span><b>${Goals.pStreak(g)}</b></div><div class="kv"><span>Усього разів</span><b>${Goals.total(g)}</b></div>`
+        : `<div class="kv"><span>Найдовша серія</span><b>${Math.max(Goals.best(g), quit ? Goals.clean(g) : 0)} ${plural(Math.max(Goals.best(g), quit ? Goals.clean(g) : 0), 'день', 'дні', 'днів')}</b></div>`}
       ${g.time ? `<div class="kv"><span>Нагадування</span><b>о ${g.time}</b></div>` : ''}
       ${quit && (g.attempts || []).length ? `<div class="kv"><span>Попередні спроби</span><b>${g.attempts.map(a => a.days).join(', ')} дн.</b></div>` : ''}</div>
     <div class="btns two">${quit ? `<button class="btn ghost card-btn" data-a="goalRelapse" data-id="${g.id}">😔 Зірвалась</button>` : `<button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button>`}
@@ -114,11 +149,16 @@ PAGES.goal = p => {
 };
 
 function goalSheet(id) {
-  const g = S.goals.find(x => x.id === id) || { type: 'habit', title: '', min: '', time: '20:00', start: today() };
+  const g = S.goals.find(x => x.id === id) || { type: 'habit', title: '', min: '', time: '20:00', start: today(), per: 'day', times: 3 };
+  const per = g.per || 'day', times = g.times || 3;
   openSheet(`<h2>${id ? 'Редагувати ціль' : 'Нова ціль'}</h2>
-    ${seg('gType', [['habit', 'Звичка щодня'], ['quit', 'Відмова від…']], g.type)}
+    ${seg('gType', [['habit', 'Звичка'], ['quit', 'Відмова від…']], g.type)}
     <div class="field"><input class="input" id="gTitle" maxlength="80" placeholder="${g.type === 'quit' ? 'Напр. Кинути курити' : 'Напр. Читати книжку'}" value="${esc(g.title)}"></div>
-    <div class="field" id="gMinBox" ${g.type === 'quit' ? 'style="display:none"' : ''}><input class="input" id="gMin" maxlength="40" placeholder="Мінімум (напр. 30 хв)" value="${esc(g.min || '')}"></div>
+    <div id="gHabitBox" ${g.type === 'quit' ? 'style="display:none"' : ''}>
+      <div class="field"><label>Як часто</label>${seg('gPer', [['day', 'Щодня'], ['week', 'На тиждень'], ['month', 'На місяць']], per)}</div>
+      <div class="field row between" id="gTimesBox" ${per === 'day' ? 'style="display:none"' : ''}><span class="muted">Скільки разів</span>
+        <div class="stepper"><button data-a="goalTimes" data-d="-1">−</button><b id="gTimes" data-v="${times}">${times}</b><button data-a="goalTimes" data-d="1">+</button></div></div>
+      <div class="field" id="gMinBox"><input class="input" id="gMin" maxlength="40" placeholder="Мінімум (напр. 30 хв)" value="${esc(g.min || '')}"></div></div>
     <div class="row" style="gap:10px">
       <div class="field grow" id="gStartBox" ${g.type === 'quit' ? '' : 'style="display:none"'}><label>Не курю з</label><input type="date" class="input" id="gStart" max="${today()}" value="${g.start || today()}"></div>
       <div class="field grow"><label>Нагадувати о</label><input type="time" class="input" id="gTime" value="${g.time || ''}"></div></div>
@@ -126,11 +166,17 @@ function goalSheet(id) {
 }
 SEG_HOOKS.gType = v => {
   const q = v === 'quit';
-  $('#gMinBox').style.display = q ? 'none' : ''; $('#gStartBox').style.display = q ? '' : 'none';
+  $('#gHabitBox').style.display = q ? 'none' : ''; $('#gStartBox').style.display = q ? '' : 'none';
   $('#gTitle').placeholder = q ? 'Напр. Кинути курити' : 'Напр. Читати книжку';
 };
 
+SEG_HOOKS.gPer = v => {
+  $('#gTimesBox').style.display = v === 'day' ? 'none' : '';
+  const t = $('#gTimes'), max = v === 'week' ? 7 : 31; if (+t.dataset.v > max) { t.dataset.v = max; t.textContent = max; }
+};
+
 function goalText(g) {
+  if (Goals.periodic(g)) { const n = Goals.doneIn(g, today()); return `🎯 ${g.title}: ${n} з ${g.times} ${Goals.perThis(g)}${n >= g.times ? ' — ціль виконано! 🎉' : ''}`; }
   if (g.type === 'quit') { const n = Goals.clean(g); return `🚭 ${g.title}: уже ${n} ${plural(n, 'день', 'дні', 'днів')} без зривів! 💪`; }
   const n = Goals.streak(g); return `🎯 ${g.title}${g.min ? ` (мінімум ${g.min})` : ''}: серія ${n} ${plural(n, 'день', 'дні', 'днів')} поспіль 🔥`;
 }
@@ -143,14 +189,20 @@ REMINDER_PROVIDERS.push(() => {
     for (let k = 0; k < 7; k++) {
       const d = addDays(today(), k);
       if (Goals.doneOn(g, d)) continue;
+      let urgent = true;
+      if (Goals.periodic(g)) { // only while the target is still open; nag only when it can't wait
+        if (Goals.left(g, d) <= 0) continue;
+        urgent = Goals.urgent(g, d);
+      }
       for (let hh = h, i = 0; hh <= 22 && i < 5; hh += 2, i++) {
         const t = parseYmd(d); t.setHours(hh, i ? 0 : m, 0, 0);
         const seed = seedOf(g.id + d + i);
         const text = g.type === 'quit'
           ? `Уже ${Goals.clean(g) + k} ${plural(Goals.clean(g) + k, 'день', 'дні', 'днів')} без зривів! Відміть сьогоднішній день 💚`
+          : Goals.periodic(g) && !urgent ? `${Goals.perThis(g)[0].toUpperCase() + Goals.perThis(g).slice(1)} ще ${timesTxt(Goals.left(g, d))} — може, сьогодні? 💪`
           : pick(NAG[tone], seed)(g.title);
         out.push({ id: `goal-${g.id}-${d}-${i}`, at: t.getTime(), title: g.type === 'quit' ? `🚭 ${g.title}` : `🎯 ${g.title}`, text });
-        if (g.type === 'quit' || tone === 'soft') break; // only spicy habits nag repeatedly
+        if (g.type === 'quit' || tone === 'soft' || !urgent) break; // only spicy habits that can't wait nag repeatedly
       }
     }
   });
@@ -168,9 +220,18 @@ Object.assign(A, {
     g.log = g.log || {}; const t = today();
     if (g.log[t]) { delete g.log[t]; save(); render(); return; }
     g.log[t] = 1; save(); render();
+    if (Goals.periodic(g)) {
+      const got = Goals.doneIn(g, t), m = MILESTONES_TIMES.find(x => x[0] === Goals.total(g));
+      toast(m ? `${m[1]} Досягнення «${m[2]}»!` : got === g.times ? `🎉 Ціль ${Goals.perThis(g)} виконано: ${got} з ${g.times}!` : `Зараховано ✓ ${got} з ${g.times} ${Goals.perThis(g)}`);
+      return;
+    }
     const n = g.type === 'quit' ? Goals.clean(g) : Goals.streak(g);
     const m = MILESTONES.find(x => x[0] === n);
     toast(m ? `${m[1]} Досягнення «${m[2]}»! ${pick(PRAISE, seedOf(g.id + t))(n)}` : g.type === 'quit' ? pick(PRAISE, seedOf(g.id + t))(n) : `Виконано ✓ Серія: ${n} 🔥`);
+  },
+  goalTimes: d => {
+    const t = $('#gTimes'), max = (segVal($('#sheetBody'), 'gPer') || 'week') === 'week' ? 7 : 31;
+    const v = clamp(+t.dataset.v + +d.d, 1, max); t.dataset.v = v; t.textContent = v;
   },
   goalRelapse: async d => {
     const g = S.goals.find(x => x.id === d.id); if (!g) return;
@@ -183,7 +244,8 @@ Object.assign(A, {
     if (!title) return invalid('gTitle', 'Введіть назву');
     const type = segVal(r, 'gType') || 'habit', time = $('#gTime', r).value, start = $('#gStart', r).value || today();
     if (type === 'quit' && start > today()) return invalid('gStart', 'Дата не може бути в майбутньому');
-    const data = { type, title: title.slice(0, 80), min: type === 'habit' ? $('#gMin', r).value.trim().slice(0, 40) : '', time, start: type === 'quit' ? start : '' };
+    const per = type === 'habit' ? (segVal(r, 'gPer') || 'day') : 'day', times = per === 'day' ? 0 : +$('#gTimes', r).dataset.v;
+    const data = { type, title: title.slice(0, 80), min: type === 'habit' ? $('#gMin', r).value.trim().slice(0, 40) : '', time, start: type === 'quit' ? start : '', per, times };
     if (d.id) Object.assign(S.goals.find(x => x.id === d.id), data);
     else S.goals.push({ id: uid(), log: {}, attempts: [], created: Date.now(), ...data });
     if (time) ensureNotifPermission();

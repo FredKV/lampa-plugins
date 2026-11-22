@@ -32,6 +32,23 @@ final class Reminders {
         return PendingIntent.getBroadcast(c, code, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
+    /** Exact alarm when allowed (on time even in Doze), otherwise the best inexact one. */
+    static void schedule(AlarmManager am, long at, PendingIntent p) {
+        try {
+            if (Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms()) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, p);
+            else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, p);
+        } catch (SecurityException e) {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, p);
+        }
+    }
+
+    /** One-off check: a reminder in `sec` seconds through the same alarm path. */
+    static void test(Context c, int sec) {
+        AlarmManager am = c.getSystemService(AlarmManager.class);
+        if (am == null) return;
+        schedule(am, System.currentTimeMillis() + sec * 1000L, pi(c, 999998, "⏰ Нагадування працюють", "Це перевірка: так приходитимуть нагадування в потрібний час."));
+    }
+
     /** Replaces all scheduled reminders with the given list. */
     static void setAll(Context c, String json) {
         AlarmManager am = c.getSystemService(AlarmManager.class);
@@ -53,7 +70,7 @@ final class Reminders {
                 if (at <= now) continue;
                 int code = 1000 + Math.abs(o.optString("id").hashCode() % 1000000);
                 o.put("code", code);
-                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi(c, code, o.optString("title"), o.optString("text")));
+                schedule(am, at, pi(c, code, o.optString("title"), o.optString("text")));
                 saved.put(o);
             }
         } catch (Exception ignored) {}
