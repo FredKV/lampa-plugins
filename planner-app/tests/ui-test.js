@@ -819,6 +819,31 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8z. Цілі: значок за назвою, зрив — червоний день, старт наперед');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => { navigate('goals'); goalSheet(); }); await q.waitForTimeout(300);
+    await q.evaluate(() => $$('#sheetBody .seg button')[1].click());
+    await q.fill('#gTitle', 'Алкоголь'); await q.waitForTimeout(100);
+    const s1 = await q.evaluate(() => ({ label: $('#gStartL').textContent, ic: $('#gIcons button.on').dataset.v, max: $('#gStart').getAttribute('max') }));
+    ok(s1.label === 'Без зривів з' && s1.ic === '🍷' && !s1.max, 'відмова: без «Не курю», значок за назвою (алкоголь → 🍷), дату можна наперед ' + JSON.stringify(s1));
+    await q.evaluate(() => { $('#gStart').value = addDays(today(), 1); A.goalSave({ id: '' }); });
+    await q.waitForTimeout(300);
+    const s2 = await q.evaluate(() => { const g = S.goals[0]; return { start: g.start, icon: g.icon, pend: Goals.pending().length, row: $('#view .goal-row').textContent }; });
+    ok(s2.icon === '🍷' && s2.pend === 0 && /старт завтра/.test(s2.row), 'ціль зі стартом завтра: «старт завтра», не нагадує сьогодні ' + JSON.stringify(s2));
+    const s3 = await q.evaluate(() => { const g = S.goals[0]; g.start = addDays(today(), -10); save(); navigate('goal', { id: g.id }); A.goalRelapse({ id: g.id });
+      return { red: !!$('.goal-days i.today.bad'), sheet: $('#sheetBody').textContent.includes('Продовжити') && $('#sheetBody').textContent.includes('Почати спочатку'), clean: Goals.clean(g) }; });
+    ok(s3.red && s3.sheet && s3.clean === 10, 'зрив — сьогодні червоний, пропонує «Продовжити» або «Почати спочатку» ' + JSON.stringify(s3));
+    const s4 = await q.evaluate(() => { A.goalSlipKeep(); const g = S.goals[0]; return { start: g.start === addDays(today(), -10), slip: Goals.slipOn(g, today()) }; });
+    ok(s4.start && s4.slip, '«Продовжити» — рахунок не скидається');
+    const s5 = await q.evaluate(() => { const g = S.goals[0]; A.goalRelapse({ id: g.id }); const off = !Goals.slipOn(g, today()); A.goalRelapse({ id: g.id }); A.goalSlipReset({ id: g.id }); return { off, start: g.start === today(), att: g.attempts.length }; });
+    ok(s5.off && s5.start && s5.att === 1, 'повторне натискання прибирає зрив; «Почати спочатку» — новий відлік');
+    ok(e2.length === 0, 'без JS-помилок (цілі) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8w. Gemini: старі моделі вимкнено (404) → знаходить доступну');
   {
     const q = await b.newPage({ viewport: { width: 390, height: 844 } });

@@ -35,11 +35,31 @@ const PRAISE = [
 const pick = (arr, seed) => arr[Math.abs(seed) % arr.length];
 const seedOf = s => [...String(s)].reduce((a, c) => a * 31 + c.charCodeAt(0) | 0, 7);
 
+/* icons: chosen by the user or guessed from the title; quit icons get a red «ban» ring */
+const GOAL_IC = {
+  quit: ['⛔', '🚬', '🍷', '🍺', '🍬', '📱', '🍔', '☕', '🎰', '💸'],
+  habit: ['🎯', '🏋️', '🏃', '📚', '💧', '🧘', '😴', '🚶', '🧠', '🥗']
+};
+const GOAL_GUESS = {
+  quit: [[/кур|сигар|цигар|вейп|тютюн|нікот|кальян/, '🚬'], [/пив/, '🍺'], [/алко|вин[оа]|горіл|бух|спирт|коньяк|пити/, '🍷'], [/солод|цукор|цукер|шоколад|десерт/, '🍬'],
+    [/телефон|смартфон|соцмереж|інстаграм|тікток|tiktok|instagram|ютуб|youtube|рілс/, '📱'], [/фастфуд|бургер|чипс|фаст-фуд/, '🍔'], [/кав[аиу]/, '☕'], [/ставк|казино|азарт/, '🎰'], [/покуп|шопінг|витрат|марнотрат/, '💸']],
+  habit: [[/спорт|зал|трену|присід|віджим/, '🏋️'], [/біг/, '🏃'], [/чита|книж|книг/, '📚'], [/вод[аиуі]/, '💧'], [/медит|йог|дихан/, '🧘'], [/сон|спат|лягат/, '😴'], [/ходи|крок|прогул/, '🚶'], [/англ|мов[аиу]|вчит|навча|курс/, '🧠'], [/овоч|фрукт|салат|харч/, '🥗']]
+};
+const guessGoalIcon = (type, title) => { const t = String(title || '').toLowerCase(), k = type === 'quit' ? 'quit' : 'habit'; const m = GOAL_GUESS[k].find(([re]) => re.test(t)); return m ? m[1] : GOAL_IC[k][0]; };
+const goalIcon = g => g.icon || guessGoalIcon(g.type, g.title);
+const goalIconHtml = g => { const ic = goalIcon(g); return `<span class="gi ${g.type === 'quit' && ic !== '⛔' ? 'ban' : ''}">${ic}</span>`; };
+const goalIconTxt = g => g.type === 'quit' ? (goalIcon(g) === '⛔' ? '⛔' : '🚫' + goalIcon(g)) : goalIcon(g);
+
 const Goals = {
   doneOn: (g, d) => !!(g.log && g.log[d]),
+  slipOn: (g, d) => !!(g.slips && g.slips[d]),
+  started: (g, d = today()) => !g.start || g.start <= d,
   doneToday: g => Goals.doneOn(g, today()),
   /** days without (quit) */
-  clean: g => Math.max(0, diffDays(g.start || today(), today())),
+  clean: g => {
+    const s = g.start || today(), n = Math.max(0, diffDays(s, today()));
+    return Math.max(0, n - Object.keys(g.slips || {}).filter(d => d >= s && d < today()).length);
+  },
   /** consecutive checked days ending today (or yesterday, if today isn't checked yet) */
   streak(g) {
     let d = Goals.doneToday(g) ? today() : addDays(today(), -1), n = 0;
@@ -68,7 +88,7 @@ const Goals = {
   },
   total: g => Object.keys(g.log || {}).length,
   score: g => g.type === 'quit' ? Goals.clean(g) : Goals.periodic(g) ? Goals.total(g) : Math.max(Goals.streak(g), Goals.best(g)),
-  pending: () => S.goals.filter(g => Goals.periodic(g) ? Goals.urgent(g) : !Goals.doneToday(g)),
+  pending: () => S.goals.filter(g => Goals.started(g) && !Goals.slipOn(g, today()) && (Goals.periodic(g) ? Goals.urgent(g) : !Goals.doneToday(g))),
   medals: g => (Goals.periodic(g) ? MILESTONES_TIMES : MILESTONES).map(([n, ic, l]) => ({ n, ic, l, got: Goals.score(g) >= n })),
   perWord: g => g.per === 'week' ? 'тиждень' : 'місяць',
   perThis: g => g.per === 'week' ? 'цього тижня' : 'цього місяця'
@@ -78,14 +98,19 @@ const MILESTONES_TIMES = [[1, '🌱', 'Перший раз'], [5, '✨', '5 ра
 const timesTxt = n => `${n} ${plural(n, 'раз', 'рази', 'разів')}`;
 
 function goalRow(g, day) {
-  const D = day || today(), done = Goals.doneOn(g, D);
+  const D = typeof day === 'string' && day ? day : today(), done = Goals.doneOn(g, D), slip = Goals.slipOn(g, D); // .map() passes an index here
+  if (!Goals.started(g, D)) return `<div class="item goal-row" data-id="${g.id}">
+    <button class="check round" disabled aria-label="Ще не почалось" style="opacity:.35"></button>
+    <div class="grow" style="min-width:0" data-a="goalOpen" data-id="${g.id}"><div class="title ellipsis">${goalIconHtml(g)} ${esc(g.title)}</div>
+      <div class="meta">старт ${esc(dateLabel(g.start).toLowerCase())}</div></div>
+    <div class="goal-num muted" data-a="goalOpen" data-id="${g.id}">—</div></div>`;
   if (Goals.periodic(g)) return goalRowPeriodic(g, done, D);
   const big = g.type === 'quit' ? Goals.clean(g) : Goals.streak(g);
-  const sub = g.type === 'quit' ? `${big} ${plural(big, 'день', 'дні', 'днів')} без` : big ? `серія ${big} ${plural(big, 'день', 'дні', 'днів')} 🔥` : 'почни серію сьогодні';
+  const sub = slip ? 'зрив — завтра новий день 💚' : g.type === 'quit' ? `${big} ${plural(big, 'день', 'дні', 'днів')} без` : big ? `серія ${big} ${plural(big, 'день', 'дні', 'днів')} 🔥` : 'почни серію сьогодні';
   return `<div class="item goal-row ${done ? 'checked' : ''}" data-id="${g.id}" ${done ? '' : 'data-swr="goalCheck"'}>
-    <button class="check round ${done ? 'on' : ''}" data-a="goalCheck" data-id="${g.id}" data-d="${D}" aria-label="Відмітити"></button>
+    <button class="check round ${done ? 'on' : ''} ${slip ? 'slip' : ''}" data-a="goalCheck" data-id="${g.id}" data-d="${D}" aria-label="Відмітити"></button>
     <div class="grow" style="min-width:0" data-a="goalOpen" data-id="${g.id}">
-      <div class="title ellipsis">${g.type === 'quit' ? '🚭 ' : '🎯 '}${esc(g.title)}${!done ? '<i class="nag-dot"></i>' : ''}</div>
+      <div class="title ellipsis">${goalIconHtml(g)} ${esc(g.title)}${!done && !slip ? '<i class="nag-dot"></i>' : ''}</div>
       <div class="meta">${esc(sub)}${g.min ? ` · ${esc(g.min)}` : ''}</div></div>
     <div class="goal-num" data-a="goalOpen" data-id="${g.id}">${big}</div></div>`;
 }
@@ -96,7 +121,7 @@ function goalRowPeriodic(g, done, D = today()) {
   return `<div class="item goal-row ${done || met ? 'checked' : ''}" data-id="${g.id}" ${done ? '' : 'data-swr="goalCheck"'}>
     <button class="check round ${done ? 'on' : ''}" data-a="goalCheck" data-id="${g.id}" data-d="${D}" aria-label="Відмітити"></button>
     <div class="grow" style="min-width:0" data-a="goalOpen" data-id="${g.id}">
-      <div class="title ellipsis">🎯 ${esc(g.title)}${urgent ? '<i class="nag-dot"></i>' : ''}</div>
+      <div class="title ellipsis">${goalIconHtml(g)} ${esc(g.title)}${urgent ? '<i class="nag-dot"></i>' : ''}</div>
       <div class="meta">${esc(sub)}${g.min ? ` · ${esc(g.min)}` : ''}</div></div>
     <div class="goal-num" data-a="goalOpen" data-id="${g.id}">${got}<small>/${g.times}</small></div></div>`;
 }
@@ -130,7 +155,14 @@ function goalPeriods(g) {
 }
 PAGES.goal = p => {
   const g = S.goals.find(x => x.id === p.id); if (!g) return null;
-  const done = Goals.doneToday(g), quit = g.type === 'quit', per = Goals.periodic(g);
+  const done = Goals.doneToday(g), quit = g.type === 'quit', per = Goals.periodic(g), slip = Goals.slipOn(g, today());
+  if (!Goals.started(g)) {
+    const n = diffDays(today(), g.start);
+    return { title: g.title, actions: shareBtn('goalShare', g.id), html: `
+    <div class="card goal-hero"><div style="font-size:44px;line-height:1">${goalIconHtml(g)}</div>
+      <div class="goal-big">${n}</div><div class="muted">${plural(n, 'день', 'дні', 'днів')} до старту · ${esc(dateLabel(g.start).toLowerCase())}</div></div>
+    <div class="btns two"><button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button><button class="btn ghost card-btn" data-a="goalEdit" data-id="${g.id}">Редагувати</button></div>` };
+  }
   const big = quit ? Goals.clean(g) : per ? Goals.doneIn(g, today()) : Goals.streak(g);
   const days = Array.from({ length: 28 }, (_, i) => addDays(today(), i - 27));
   return {
@@ -140,46 +172,62 @@ PAGES.goal = p => {
       <div class="muted">${quit ? `${plural(big, 'день', 'дні', 'днів')} без зривів 💚` : per ? `${Goals.perThis(g)} · ціль ${timesTxt(g.times)} на ${Goals.perWord(g)}` : `${plural(big, 'день', 'дні', 'днів')} поспіль`}</div>
       ${per ? `<div style="margin:12px auto 0;max-width:240px">${progressBar(Math.min(100, big / g.times * 100), big >= g.times ? 'var(--green)' : '')}</div>` : ''}
       ${g.min ? `<div class="small muted" style="margin-top:4px">Мінімум: ${esc(g.min)}</div>` : ''}
-      <button class="btn ${done ? 'ghost card-btn' : ''}" style="margin-top:16px" data-a="goalCheck" data-id="${g.id}">${done ? 'Сьогодні відмічено ✓' : quit ? 'Сьогодні тримаюсь' : 'Сьогодні виконала'}</button>
+      ${slip ? `<button class="btn ghost card-btn red" style="margin-top:16px" data-a="goalRelapse" data-id="${g.id}">Сьогодні зрив · прибрати</button>`
+        : `<button class="btn ${done ? 'ghost card-btn' : ''}" style="margin-top:16px" data-a="goalCheck" data-id="${g.id}">${done ? 'Сьогодні відмічено ✓' : quit ? 'Сьогодні тримаюсь' : 'Сьогодні виконала'}</button>`}
     </div>
     ${per ? `<h2>${g.per === 'week' ? 'Останні тижні' : 'Останні місяці'}</h2>
       <div class="card gp-weeks">${goalPeriods(g).map(pp => `<div class="gp ${pp.cur ? 'cur' : ''} ${pp.n >= g.times ? 'ok' : ''}"><div class="gp-dots">${Array.from({ length: g.times }, (_, k) => `<i class="${k < pp.n ? 'on' : ''}"></i>`).join('')}</div><span>${pp.label}</span></div>`).join('')}</div>`
     : `<h2>Останні 2 тижні</h2>
-      <div class="card goal-days">${days.slice(-14).map(d => `<i class="${Goals.doneOn(g, d) || (quit && g.start && d >= g.start && d < today()) ? 'on' : ''} ${d === today() ? 'today' : ''}" title="${d}"></i>`).join('')}</div>`}
+      <div class="card goal-days">${days.slice(-14).map(d => `<i class="${Goals.slipOn(g, d) ? 'bad' : Goals.doneOn(g, d) || (quit && g.start && d >= g.start && d < today()) ? 'on' : ''} ${d === today() ? 'today' : ''}" title="${d}"></i>`).join('')}</div>`}
     ${(() => { const md = Goals.medals(g), got = md.filter(x => x.got); return `<details class="card fold"><summary><span>Досягнення <span class="gm-row">${got.map(x => x.ic).join('')}</span></span><span class="muted">${got.length} з ${md.length} ›</span></summary>
       <div class="medals" style="margin-top:10px">${md.map(m => `<div class="medal ${m.got ? 'got' : ''}"><span>${m.ic}</span><b>${m.l}</b></div>`).join('')}</div></details>`; })()}
     <div class="card" style="margin-top:12px">
-      <div class="kv"><span>${quit ? 'Без зривів з' : 'Почато'}</span><b>${shortDate(quit ? g.start : (g.created ? ymd(new Date(g.created)) : today()))}</b></div>
+      <div class="kv"><span>${quit ? 'Без зривів з' : 'Почато'}</span><b>${shortDate(g.start || (g.created ? ymd(new Date(g.created)) : today()))}</b></div>
+      ${quit && Object.keys(g.slips || {}).filter(d => d >= g.start).length ? `<div class="kv"><span>Зривів у цій спробі</span><b class="red">${Object.keys(g.slips).filter(d => d >= g.start).length}</b></div>` : ''}
       ${per ? `<div class="kv"><span>Виконано ${g.per === 'week' ? 'тижнів' : 'місяців'} поспіль</span><b>${Goals.pStreak(g)}</b></div><div class="kv"><span>Усього разів</span><b>${Goals.total(g)}</b></div>`
         : `<div class="kv"><span>Найдовша серія</span><b>${Math.max(Goals.best(g), quit ? Goals.clean(g) : 0)} ${plural(Math.max(Goals.best(g), quit ? Goals.clean(g) : 0), 'день', 'дні', 'днів')}</b></div>`}
       ${g.time ? `<div class="kv"><span>Нагадування</span><b>о ${g.time}</b></div>` : ''}
       ${quit && (g.attempts || []).length ? `<div class="kv"><span>Попередні спроби</span><b>${g.attempts.map(a => a.days).join(', ')} дн.</b></div>` : ''}</div>
-    <div class="btns two">${quit ? `<button class="btn ghost card-btn" data-a="goalRelapse" data-id="${g.id}">Зірвалась</button>` : `<button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button>`}
+    <div class="btns two">${quit ? `<button class="btn ghost card-btn" data-a="goalRelapse" data-id="${g.id}">${slip ? 'Прибрати зрив' : 'Зірвалась'}</button>` : `<button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button>`}
       <button class="btn ghost card-btn" data-a="goalEdit" data-id="${g.id}">Редагувати</button></div>
     ${quit ? `<div class="btns"><button class="btn danger" data-a="goalDel" data-id="${g.id}">Видалити</button></div>` : ''}`
   };
 };
 
+function goalIconChips(type, sel) {
+  const k = type === 'quit' ? 'quit' : 'habit';
+  return GOAL_IC[k].map(ic => `<button class="${ic === sel ? 'on' : ''}" data-a="goalIcon" data-v="${ic}"><span class="gi ${k === 'quit' && ic !== '⛔' ? 'ban' : ''}">${ic}</span></button>`).join('');
+}
+function goalIconSync() {
+  const box = $('#gIcons'); if (!box) return;
+  const type = segVal($('#sheetBody'), 'gType') || 'habit';
+  const cur = box.dataset.picked ? ($('button.on', box) || {}).dataset?.v : guessGoalIcon(type, $('#gTitle').value);
+  const list = GOAL_IC[type === 'quit' ? 'quit' : 'habit'];
+  box.innerHTML = goalIconChips(type, list.includes(cur) ? cur : guessGoalIcon(type, $('#gTitle').value));
+}
+document.addEventListener('input', e => { if (e.target.id === 'gTitle' && !($('#gIcons') || {}).dataset?.picked) goalIconSync(); });
 function goalSheet(id) {
   const g = S.goals.find(x => x.id === id) || { type: 'habit', title: '', min: '', time: '20:00', start: today(), per: 'day', times: 3 };
   const per = g.per || 'day', times = g.times || 3;
   openSheet(`<h2>${id ? 'Редагувати ціль' : 'Нова ціль'}</h2>
     ${seg('gType', [['habit', 'Звичка'], ['quit', 'Відмова від…']], g.type)}
-    <div class="field"><input class="input" id="gTitle" maxlength="80" placeholder="${g.type === 'quit' ? 'Напр. Кинути курити' : 'Напр. Читати книжку'}" value="${esc(g.title)}"></div>
+    <div class="field"><input class="input" id="gTitle" maxlength="80" placeholder="${g.type === 'quit' ? 'Напр. Алкоголь, солодке, куріння' : 'Напр. Читати книжку'}" value="${esc(g.title)}"></div>
+    <div class="gi-pick" id="gIcons" data-picked="${g.icon ? 1 : ''}">${goalIconChips(g.type, goalIcon(g))}</div>
     <div id="gHabitBox" ${g.type === 'quit' ? 'style="display:none"' : ''}>
       <div class="field"><label>Як часто</label>${seg('gPer', [['day', 'Щодня'], ['week', 'На тиждень'], ['month', 'На місяць']], per)}</div>
       <div class="field row between" id="gTimesBox" ${per === 'day' ? 'style="display:none"' : ''}><span class="muted">Скільки разів</span>
         <div class="stepper"><button data-a="goalTimes" data-d="-1">−</button><b id="gTimes" data-v="${times}">${times}</b><button data-a="goalTimes" data-d="1">+</button></div></div>
       <div class="field" id="gMinBox"><input class="input" id="gMin" maxlength="40" placeholder="Мінімум (напр. 30 хв)" value="${esc(g.min || '')}"></div></div>
     <div class="row" style="gap:10px">
-      <div class="field grow" id="gStartBox" ${g.type === 'quit' ? '' : 'style="display:none"'}><label>Не курю з</label><input type="date" class="input" id="gStart" max="${today()}" value="${g.start || today()}"></div>
+      <div class="field grow" id="gStartBox"><label id="gStartL">${g.type === 'quit' ? 'Без зривів з' : 'Початок'}</label><input type="date" class="input" id="gStart" value="${g.start || (g.created ? ymd(new Date(g.created)) : today())}"></div>
       <div class="field grow"><label>Нагадувати о</label><input type="time" class="input" id="gTime" value="${g.time || ''}"></div></div>
     <div class="btns"><button class="btn" data-a="goalSave" data-id="${id || ''}">Зберегти</button></div>`, r => { if (!id) setTimeout(() => $('#gTitle', r).focus(), 300); });
 }
 SEG_HOOKS.gType = v => {
   const q = v === 'quit';
-  $('#gHabitBox').style.display = q ? 'none' : ''; $('#gStartBox').style.display = q ? '' : 'none';
-  $('#gTitle').placeholder = q ? 'Напр. Кинути курити' : 'Напр. Читати книжку';
+  $('#gHabitBox').style.display = q ? 'none' : ''; $('#gStartL').textContent = q ? 'Без зривів з' : 'Початок';
+  $('#gTitle').placeholder = q ? 'Напр. Алкоголь, солодке, куріння' : 'Напр. Читати книжку';
+  $('#gIcons').dataset.picked = ''; goalIconSync();
 };
 
 SEG_HOOKS.gPer = v => {
@@ -189,7 +237,7 @@ SEG_HOOKS.gPer = v => {
 
 function goalText(g) {
   if (Goals.periodic(g)) { const n = Goals.doneIn(g, today()); return `🎯 ${g.title}: ${n} з ${g.times} ${Goals.perThis(g)}${n >= g.times ? ' — ціль виконано! 🎉' : ''}`; }
-  if (g.type === 'quit') { const n = Goals.clean(g); return `🚭 ${g.title}: уже ${n} ${plural(n, 'день', 'дні', 'днів')} без зривів! 💪`; }
+  if (g.type === 'quit') { const n = Goals.clean(g); return `${goalIconTxt(g)} ${g.title}: уже ${n} ${plural(n, 'день', 'дні', 'днів')} без зривів! 💪`; }
   const n = Goals.streak(g); return `🎯 ${g.title}${g.min ? ` (мінімум ${g.min})` : ''}: серія ${n} ${plural(n, 'день', 'дні', 'днів')} поспіль 🔥`;
 }
 
@@ -200,7 +248,7 @@ REMINDER_PROVIDERS.push(() => {
     const [h, m] = g.time.split(':').map(Number);
     for (let k = 0; k < 7; k++) {
       const d = addDays(today(), k);
-      if (Goals.doneOn(g, d)) continue;
+      if (Goals.doneOn(g, d) || Goals.slipOn(g, d) || !Goals.started(g, d)) continue;
       let urgent = true;
       if (Goals.periodic(g)) { // only while the target is still open; nag only when it can't wait
         if (Goals.left(g, d) <= 0) continue;
@@ -213,7 +261,7 @@ REMINDER_PROVIDERS.push(() => {
           ? `Уже ${Goals.clean(g) + k} ${plural(Goals.clean(g) + k, 'день', 'дні', 'днів')} без зривів! Відміть сьогоднішній день 💚`
           : Goals.periodic(g) && !urgent ? `${Goals.perThis(g)[0].toUpperCase() + Goals.perThis(g).slice(1)} ще ${timesTxt(Goals.left(g, d))} — може, сьогодні? 💪`
           : pick(NAG[tone], seed)(g.title);
-        out.push({ id: `goal-${g.id}-${d}-${i}`, at: t.getTime(), title: g.type === 'quit' ? `🚭 ${g.title}` : `🎯 ${g.title}`, text });
+        out.push({ id: `goal-${g.id}-${d}-${i}`, at: t.getTime(), title: `${goalIconTxt(g)} ${g.title}`, text });
         if (g.type === 'quit' || tone === 'soft' || !urgent) break; // only spicy habits that can't wait nag repeatedly
       }
     }
@@ -230,6 +278,8 @@ Object.assign(A, {
   goalCheck: d => {
     const g = S.goals.find(x => x.id === d.id); if (!g) return;
     g.log = g.log || {}; const t = d.d && d.d <= today() ? d.d : today();
+    if (!Goals.started(g, t)) { toast(`Ціль стартує ${dateLabel(g.start).toLowerCase()}`); return; }
+    if (g.slips && g.slips[t]) delete g.slips[t];
     if (t !== today()) { if (g.log[t]) delete g.log[t]; else g.log[t] = 1; save(); render(); toast(g.log[t] ? `Зараховано за ${shortDate(t)} ✓` : 'Відмітку знято'); return; }
     if (g.log[t]) { delete g.log[t]; save(); render(); return; }
     g.log[t] = 1; save(); render();
@@ -246,19 +296,32 @@ Object.assign(A, {
     const t = $('#gTimes'), max = (segVal($('#sheetBody'), 'gPer') || 'week') === 'week' ? 7 : 31;
     const v = clamp(+t.dataset.v + +d.d, 1, max); t.dataset.v = v; t.textContent = v;
   },
-  goalRelapse: async d => {
+  /* «Зірвалась»: today turns red; then choose — keep the count or start over */
+  goalRelapse: d => {
     const g = S.goals.find(x => x.id === d.id); if (!g) return;
-    if (!await ask({ title: 'Почати відлік заново?', text: `Нічого страшного — ${Goals.clean(g)} ${plural(Goals.clean(g), 'день', 'дні', 'днів')} уже були твоєю перемогою. Спробуємо ще раз 💚`, ok: 'Почати заново' })) return;
-    g.attempts = g.attempts || []; g.attempts.push({ start: g.start, end: today(), days: Goals.clean(g) });
-    g.start = today(); g.log = {}; save(); render(); toast('Новий старт — ти зможеш 💪');
+    const t = today(); g.slips = g.slips || {};
+    if (g.slips[t]) { delete g.slips[t]; save(); render(); toast('Зрив прибрано'); return; }
+    g.slips[t] = 1; if (g.log) delete g.log[t];
+    save(); render(); if (typeof haptic === 'function') haptic('heavy');
+    const n = Goals.clean(g);
+    openSheet(`<h2>Зрив відмічено</h2>
+      <div class="muted" style="margin:-4px 0 14px">Сьогоднішній день позначено червоним. Буває 💚 ${n ? `${n} ${plural(n, 'день', 'дні', 'днів')} без зривів — уже твоя перемога.` : ''}</div>
+      <div class="btns two"><button class="btn ghost card-btn" data-a="goalSlipReset" data-id="${g.id}">Почати спочатку</button><button class="btn" data-a="goalSlipKeep">Продовжити</button></div>`);
   },
+  goalSlipKeep: () => { closeSheet(); toast('Рахунок продовжується — завтра новий день 💪'); },
+  goalSlipReset: d => {
+    const g = S.goals.find(x => x.id === d.id); if (!g) return;
+    g.attempts = g.attempts || []; g.attempts.push({ start: g.start, end: today(), days: Goals.clean(g) });
+    g.start = today(); g.log = {}; save(); closeSheet(); render(); toast('Новий старт — ти зможеш 💪');
+  },
+  goalIcon: d => { const box = $('#gIcons'); if (!box) return; box.dataset.picked = '1'; $$('button', box).forEach(b => b.classList.toggle('on', b.dataset.v === d.v)); },
   goalSave: d => {
     const r = $('#sheetBody'); const title = $('#gTitle', r).value.trim();
     if (!title) return invalid('gTitle', 'Введіть назву');
-    const type = segVal(r, 'gType') || 'habit', time = $('#gTime', r).value, start = $('#gStart', r).value || today();
-    if (type === 'quit' && start > today()) return invalid('gStart', 'Дата не може бути в майбутньому');
+    const type = segVal(r, 'gType') || 'habit', time = $('#gTime', r).value, start = isDate($('#gStart', r).value) ? $('#gStart', r).value : today();
+    const icB = $('#gIcons button.on', r), icon = icB ? icB.dataset.v : '';
     const per = type === 'habit' ? (segVal(r, 'gPer') || 'day') : 'day', times = per === 'day' ? 0 : +$('#gTimes', r).dataset.v;
-    const data = { type, title: title.slice(0, 80), min: type === 'habit' ? $('#gMin', r).value.trim().slice(0, 40) : '', time, start: type === 'quit' ? start : '', per, times };
+    const data = { type, title: title.slice(0, 80), min: type === 'habit' ? $('#gMin', r).value.trim().slice(0, 40) : '', time, start, icon, per, times };
     if (d.id) Object.assign(S.goals.find(x => x.id === d.id), data);
     else S.goals.push({ id: uid(), log: {}, attempts: [], created: Date.now(), ...data });
     if (time) ensureNotifPermission();
