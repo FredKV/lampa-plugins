@@ -829,3 +829,7 @@ h2 { font-size: 20px; }
 .st-name { font-size: 18px; }
 .st-back { display: flex; align-items: center; gap: 2px; color: var(--blue); font-size: 15px; font-weight: 500; margin: -2px 0 8px -4px; }
 #sheetBody .st-group .del-btn { margin-right: -6px; }
+
+/* category chips: every row fills the full width */
+#xCats, #bCats, #rcCats { display: flex; flex-wrap: wrap; gap: 8px; }
+#xCats .chip, #bCats .chip, #rcCats .chip { flex: 1 1 auto; justify-content: center; text-align: center; margin: 0; }
