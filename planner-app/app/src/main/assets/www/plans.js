@@ -133,14 +133,11 @@ Object.assign(A, {
    ===================================================================== */
 VIEWS.home = () => {
   const tdy = today();
-  const ev = S.events.filter(e => repeatsOn(e.date, e.repeat, tdy)).sort((a, b) => (a.time || '99') < (b.time || '99') ? -1 : 1);
   const bdays = typeof Birthdays !== 'undefined' ? Birthdays.upcoming(7) : [];
   const cyc = typeof Cycle !== 'undefined' ? Cycle.todayLine() : '';
   const n = new Date();
   const lim = S.budget.total, spent = Fin.spentInMonth(null, n.getFullYear(), n.getMonth());
   const todayItems = [
-    ...ev.map(e => `<div class="item" data-a="eventEdit" data-id="${e.id}"><div class="emoji sm">${e.important ? '⭐' : '📌'}</div>
-      <div class="grow"><div class="title">${esc(e.title)}</div><div class="meta">${e.time ? esc(e.time) : 'Весь день'}</div></div></div>`),
     ...bdays.filter(b => b.days === 0).map(b => `<div class="item" data-a="go" data-page="person" data-id="${b.p.id}"><div class="emoji sm">🎂</div>
       <div class="grow"><div class="title">День народження: ${esc(b.p.name)}</div><div class="meta">${b.age ? b.age + ' ' + plural(b.age, 'рік', 'роки', 'років') : 'Сьогодні'}</div></div></div>`)
   ];
@@ -158,7 +155,7 @@ VIEWS.home = () => {
     ${lim ? `<div class="card" data-a="tabSeg" data-tab="finance" data-key="fin" data-val="budget" style="cursor:pointer">
       <div class="row between"><b>Бюджет на ${MONTHS[n.getMonth()].toLowerCase()}</b><span class="small muted">${money(spent)} з ${money(lim)}</span></div>
       ${progressBar(spent / lim * 100, spent > lim ? 'var(--red)' : spent > lim * .8 ? 'var(--amber)' : '')}</div>` : ''}
-    ${S.goals && S.goals.length ? homePager() : plansBlock()}`;
+    ${homePager()}`;
 };
 FABS.home = () => taskSheet();
 
@@ -171,16 +168,22 @@ function homePager() {
   const pend = isT ? Goals.pending().length : 0;
   const label = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
   const dayTasks = isT ? null : S.tasks.filter(t => t.due === D);
+  const ev = S.events.filter(e => repeatsOn(e.date, e.repeat, D)).sort((a, b) => (a.time || '99') < (b.time || '99') ? -1 : 1);
+  const N = ev.length ? 3 : 2; U.hpN = N; if (U.hpIdx > N - 1) U.hpIdx = N - 1;
+  const evRow = e => `<div class="item" data-a="eventEdit" data-id="${e.id}"><div class="emoji sm">${e.important ? '⭐' : '📌'}</div>
+      <div class="grow"><div class="title">${esc(e.title)}</div><div class="meta">${e.time ? esc(e.time) : 'Весь день'}</div></div></div>`;
   const slot = (i, name) => `<button class="hp-slot ${i === U.hpIdx ? 'on' : ''}" data-a="hpSlot" data-i="${i}"><span class="hp-roll" style="transform:translateY(${i === U.hpIdx ? -100 : 0}%)"><span class="hp-l">${name}</span><span class="hp-l">${label}<i class="hp-chev"></i></span></span></button>`;
-  return `<div class="hp-strip ${U.hpCal ? 'cal-open' : ''}" id="hpStrip"><span class="hp-pill" id="hpPill" style="transform:translateX(${U.hpIdx * 100}%)"></span>
-      ${slot(0, 'Плани')}${slot(1, `Цілі${pend ? ` <i class="hp-badge">${pend}</i>` : ''}`)}</div>
+  return `<div class="hp-strip ${U.hpCal ? 'cal-open' : ''}" id="hpStrip"><span class="hp-pill" id="hpPill" style="width:calc((100% - 8px) / ${N});transform:translateX(${U.hpIdx * 100}%)"></span>
+      ${slot(0, 'Плани')}${slot(1, `Цілі${pend ? ` <i class="hp-badge">${pend}</i>` : ''}`)}${N > 2 ? slot(2, `Події <i class="hp-badge blue">${ev.length}</i>`) : ''}</div>
     ${U.hpCal ? hpCalHtml(D) : ''}
-    <div class="hp-dots" id="hpDots">${[0, 1].map(i => `<i data-a="hpGo" data-i="${i}" class="${i === U.hpIdx ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="hp-dots" id="hpDots">${[...Array(N).keys()].map(i => `<i data-a="hpGo" data-i="${i}" class="${i === U.hpIdx ? 'on' : ''}"></i>`).join('')}</div>
     <div class="hpager" id="hpager">
       <section>${isT ? plansBlock(true) : `${dayTasks.length ? `<div class="list">${dayTasks.sort(taskSort).map(taskRow).join('')}</div>` : emptyCard('📝', `На ${dateLabel(D).toLowerCase()} планів немає`, null)}
         <div class="btns"><button class="btn ghost card-btn" data-a="hpAddTask">+ План на ${shortDate(D)}</button></div>`}</section>
-      <section><div class="list">${S.goals.map(g => goalRow(g, D)).join('')}</div>
-        <div class="small ${isT ? (pend ? 'red' : 'green') : 'muted'}" style="margin:8px 6px 0">${isT ? (pend ? `${pend} чекає на сьогодні` : 'На сьогодні все ✓') : `Відмітки за ${dateLabel(D)}`}</div></section></div>`;
+      <section>${S.goals.length ? `<div class="list">${S.goals.map(g => goalRow(g, D)).join('')}</div>
+        <div class="small ${isT ? (pend ? 'red' : 'green') : 'muted'}" style="margin:8px 6px 0">${isT ? (pend ? `${pend} чекає на сьогодні` : 'На сьогодні все ✓') : `Відмітки за ${dateLabel(D)}`}</div>`
+        : emptyCard('🏆', 'Цілей поки немає', { label: 'Додати ціль', attrs: 'data-a="goalNew"' })}</section>
+      ${N > 2 ? `<section><div class="list">${ev.map(evRow).join('')}</div></section>` : ''}</div>`;
 }
 function hpCalHtml(sel) {
   const { y, m } = U.hpCal, first = new Date(y, m, 1), start = (first.getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate(), tdy = today();
@@ -193,7 +196,7 @@ function hpCalHtml(sel) {
 let hpLastK = null;
 function hpSync(idx) {
   const pg = $('#hpager'); if (!pg) return;
-  const x = Math.max(0, Math.min(1, idx === undefined ? pg.scrollLeft / pg.clientWidth : idx)), k = Math.round(x);
+  const x = Math.max(0, Math.min((U.hpN || 2) - 1, idx === undefined ? pg.scrollLeft / pg.clientWidth : idx)), k = Math.round(x);
   const pill = $('#hpPill'); if (pill) pill.style.transform = `translateX(${x * 100}%)`;
   $$('#hpStrip .hp-slot').forEach((el, i) => { const t = Math.max(0, 1 - Math.abs(x - i)); el.firstChild.style.transform = `translateY(${-t * 50}%)`; el.classList.toggle('on', i === k); });
   $$('.hp-dots i').forEach((d, i) => d.classList.toggle('on', i === k));

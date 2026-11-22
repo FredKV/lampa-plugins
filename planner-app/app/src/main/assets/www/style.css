@@ -908,7 +908,7 @@ h2 { font-size: 20px; }
 
 /* strip v4: lower, centred, driven by the page position (no own transitions) */
 .hp-strip { padding: 4px; gap: 0; }
-.hp-strip .hp-pill { transition: none; width: calc(50% - 4px); }
+.hp-strip .hp-pill { transition: none; width: calc((100% - 8px) / 2); }
 .hp-strip .hp-slot { height: 34px; }
 .hp-roll { transition: none; height: 68px; }
 .hp-slot.on .hp-roll { transform: none; }
@@ -955,3 +955,4 @@ details.fold .list.flat { margin: 0 0 8px; }
 [data-theme="dark"] .pill.blue { background: rgba(110,150,255,.2); color: #9db7ff; }
 [data-theme="dark"] .hint.info { background: rgba(110,150,255,.14); color: #b6c8ff; }
 .shop-merge { margin: 4px 6px 8px; }
+.hp-badge.blue { background: var(--blue, #3b82f6); }

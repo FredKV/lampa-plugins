@@ -554,12 +554,16 @@ async function pickDate(p, id, v) {
       for (let i = 1; i <= 6; i++) el.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, touches: [t(x + dx * i / 6)], changedTouches: [t(x + dx * i / 6)] }));
       el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [t(x + dx)] }));
     }, [sel, dx]);
-    await swipe('.item[data-id=t2]', -160); await q.waitForTimeout(400);
-    ok(await q.evaluate(() => !S.tasks.some(t => t.id === 't2') && $('#undoBar.show') && window.__vib.includes('heavy')), 'свайп ← видаляє, зʼявляється «Повернути»');
+    // on Home a sideways swipe turns pages, so row swipes are checked in the shopping list
+    await q.evaluate(() => { S.shop.push({ id: 's1', name: 'Молоко', qty: '', price: 40, dish: 'Інше', store: '', bought: false }, { id: 's2', name: 'Хліб', qty: '', price: 30, dish: 'Інше', store: '', bought: false }); save(); U.shopMode = 'all'; U.shopMerge = false; go('shop'); });
+    await q.waitForTimeout(200);
+    await swipe('.item[data-id=s2]', -160); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => !S.shop.some(t => t.id === 's2') && $('#undoBar.show') && window.__vib.includes('heavy')), 'свайп ← видаляє, зʼявляється «Повернути»');
     await q.click('#undoBar [data-a=undoSwipe]'); await q.waitForTimeout(150);
-    ok(await q.evaluate(() => S.tasks.some(t => t.id === 't2')), '«Повернути» відновлює запис');
-    await swipe('.item[data-id=t2]', 160); await q.waitForTimeout(400);
-    ok(await q.evaluate(() => S.tasks.find(t => t.id === 't2').done), 'свайп → позначає виконаним');
+    ok(await q.evaluate(() => S.shop.some(t => t.id === 's2')), '«Повернути» відновлює запис');
+    await swipe('.item[data-id=s2]', 160); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => S.shop.find(t => t.id === 's2').bought), 'свайп → позначає купленим');
+    await q.evaluate(() => go('home')); await q.waitForTimeout(150);
     await q.evaluate(() => navigate('goals')); await q.waitForTimeout(60);
     ok(await q.evaluate(() => $('#view').classList.contains('pg-fwd')), 'нова сторінка виїжджає справа');
     await q.evaluate(() => back()); await q.waitForTimeout(60);
@@ -793,6 +797,25 @@ async function pickDate(p, id, v) {
     ok(r.ops === 2 && r.opsAll === 2 && r.opsSave === 1, 'у списку операцій лише доходи/витрати; відкладене — тільки у фільтрі «Відкладено»');
     ok(r.wish === 1000, 'на хотілці накопичено 1000');
     ok(e2.length === 0, 'без JS-помилок (відкладене) ' + e2.join('; '));
+    await q.close();
+  }
+
+  console.log('8y. Головна: перегортання завжди, події — третя вкладка');
+  {
+    const q = await b.newPage({ viewport: { width: 360, height: 800 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const r1 = await q.evaluate(() => { go('home'); return { pager: !!$('#hpager'), slots: $$('#hpStrip .hp-slot').length, goalsEmpty: !!$('#hpager [data-a=goalNew]') }; });
+    ok(r1.pager && r1.slots === 2 && r1.goalsEmpty, 'без цілей і подій — все одно дві вкладки «Плани · Цілі» ' + JSON.stringify(r1));
+    const r2 = await q.evaluate(() => {
+      S.events.push({ id: 'e1', title: 'Кіт срав', date: today(), time: '', note: '', important: true, remind: '' }); save(); render();
+      const names = $$('#hpStrip .hp-slot .hp-l:first-child').map(x => x.textContent.trim());
+      return { slots: names.length, names, secs: $('#hpager').children.length, inToday: $$('#view h2').some(h => h.textContent === 'Сьогодні'), ev: $('#hpager').children[2].textContent.includes('Кіт срав'), fit: $$('#hpStrip .hp-slot').every(s => s.scrollWidth <= s.clientWidth + 1) };
+    });
+    ok(r2.slots === 3 && /^Події/.test(r2.names[2]) && r2.secs === 3 && r2.ev && !r2.inToday && r2.fit, 'є подія — третя вкладка «Події», окремого блоку «Сьогодні» з подією немає ' + JSON.stringify(r2));
+    await q.evaluate(() => A.hpGo({ i: 2 })); await q.waitForTimeout(700);
+    ok(await q.evaluate(() => U.hpIdx === 2 && $$('#hpStrip .hp-slot')[2].classList.contains('on')), 'перегортання на «Події»');
+    ok(e2.length === 0, 'без JS-помилок (3 вкладки) ' + e2.join('; '));
     await q.close();
   }
 
