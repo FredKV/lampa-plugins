@@ -815,3 +815,17 @@ h2 { font-size: 20px; }
 
 .vc-said { font-size: 17px; font-style: italic; color: var(--muted); margin: -4px 2px 12px; }
 .head-actions .icon-btn + .icon-btn { margin-left: 8px; }
+
+/* settings list (variant A) */
+.st-group { background: var(--card2); border-radius: 18px; padding: 0 14px; margin-bottom: 12px; }
+.st-row { display: flex; align-items: center; gap: 12px; min-height: 54px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.st-row:last-child { border-bottom: 0; }
+.st-row .st-lbl { flex: 1; font-size: 16px; min-width: 0; }
+.st-ic { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: #fff; flex: none; }
+.st-mini { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.st-mini svg { width: 22px; height: auto; }
+.st-val { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 15px; flex: none; }
+.st-avawrap { display: flex; padding: 8px 0; flex: none; }
+.st-name { font-size: 18px; }
+.st-back { display: flex; align-items: center; gap: 2px; color: var(--blue); font-size: 15px; font-weight: 500; margin: -2px 0 8px -4px; }
+#sheetBody .st-group .del-btn { margin-right: -6px; }

@@ -81,7 +81,7 @@ async function readReceipt(dataUrl) {
 }
 U.rc = null;
 async function startReceipt() {
-  if (!Keys.has()) { toast('Для сканування чеків додайте ключ Gemini у Налаштуваннях'); settingsSheet(); return; }
+  if (!Keys.has()) { toast('Для сканування чеків додайте ключ Gemini у Налаштуваннях'); settingsSheet('gemini'); return; }
   const id = await pickPhoto(2000); if (!id) return;
   U.rc = { photo: id, loading: true, r: null, err: '' }; receiptSheet();
   try { const r = await readReceipt(await Photos.get(id)); if (!U.rc || U.rc.photo !== id) return; U.rc.r = r; if (!r.ok) U.rc.err = 'Не вдалося прочитати чек. Сфотографуйте рівно, щоб було видно підсумок, або введіть суму вручну.'; }

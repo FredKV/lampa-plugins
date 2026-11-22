@@ -325,7 +325,7 @@ async function pickDate(p, id, v) {
     const e2 = []; q.on('pageerror', e => e2.push(e.message));
     await q.addInitScript(() => { window.__icon = 'olive'; window.AndroidBridge = { getIcon: () => window.__icon, setIcon: v => { window.__icon = v; } }; });
     await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
-    await q.evaluate(() => settingsSheet()); await q.waitForTimeout(300);
+    await q.evaluate(() => settingsSheet('icon')); await q.waitForTimeout(300);
     ok(await q.locator('.icon-pick button').count() === 5 && await q.locator('.icon-pick button.on[data-v=olive]').count() === 1, 'у налаштуваннях 5 ярликів, вибраний поточний');
     await q.click('.icon-pick [data-v=yellow]'); await q.waitForTimeout(150);
     ok(await q.evaluate(() => window.__icon === 'yellow' && !!$('.icon-pick button.on[data-v=yellow]')), 'вибір жовтого ярлика передано в Android');
@@ -392,7 +392,7 @@ async function pickDate(p, id, v) {
     let hdr = null, url = '';
     await q.route('**/generativelanguage.googleapis.com/**', r => { hdr = r.request().headers()['x-goog-api-key']; url = r.request().url(); r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates: [{ content: { parts: [{ text: 'працює' }] } }] }) }); });
     await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
-    await q.evaluate(() => settingsSheet()); await q.waitForTimeout(300);
+    await q.evaluate(() => settingsSheet('gemini')); await q.waitForTimeout(300);
     const newKey = 'AQ.Ab8RN6KzT1x-9_qWeRtYuIoP.asdfGhjkL0987';
     await q.fill('#stKey', ' ' + newKey + '\n'); await q.click('[data-a=keySave]'); await q.waitForTimeout(200);
     ok(await q.evaluate(k => Keys.has() && localStorage.getItem(DEV_KEY) === k, newKey), 'ключ нового формату (AQ.…) прийнято');
@@ -452,7 +452,7 @@ async function pickDate(p, id, v) {
     const bd = r.pop().bd;
     const want = { bd14: -14, bd7: -7, bd0: 0 };
     ok(r.length === 3 && r.every(x => x.d === (q, addDaysN(bd, want[x.id]))), 'день народження: нагадування за 2 тижні, за тиждень і в день — ' + r.map(x => x.title).join(' / '));
-    await q.evaluate(() => settingsSheet()); await q.waitForTimeout(300);
+    await q.evaluate(() => settingsSheet('notif')); await q.waitForTimeout(300);
     await q.click('[data-a=notifTest]');
     ok(await q.evaluate(() => window.__now.length === 1 && /^ Сповіщення працюють/.test(window.__now[0])), 'кнопка «надіслати тестове» показує сповіщення');
     await q.close();
@@ -639,7 +639,7 @@ async function pickDate(p, id, v) {
     await q.fill('#plText', '🛒 Список покупок\n☐ Сметана — 300 г\n☐ Кріп\n\nНадіслано з ЛАД'); await q.click('[data-a=shopPasteDo]'); await q.waitForTimeout(150);
     ok(await q.evaluate(() => S.shop.some(i => i.name === 'Сметана' && i.qty === '300 г') && S.shop.some(i => i.name === 'Кріп') && !S.shop.some(i => /Надіслано/.test(i.name))), 'вставлений список додано в покупки');
     // backup
-    await q.evaluate(() => settingsSheet()); await q.waitForTimeout(250);
+    await q.evaluate(() => settingsSheet('backup')); await q.waitForTimeout(250);
     await q.click('[data-a=bkPick]'); await q.waitForTimeout(400);
     ok(await q.evaluate(() => { const d = JSON.parse(window.__bk.data); return d.app === 'tanichka' && d.data.shop.length >= 5 && !!S.settings.lastBackup; }), 'автокопію увімкнено, перша копія записана у файл');
     await q.evaluate(() => { S.shop = []; save(); closeSheet(); settingsSheet(); }); await q.waitForTimeout(300);
@@ -741,10 +741,11 @@ async function pickDate(p, id, v) {
   {
     await p.evaluate(() => { S.settings.pin = ''; save(); U.stack = []; go('home'); });
     await p.click('[data-a=settings]'); await p.waitForTimeout(400);
-    ok(await p.locator('#sheetBody .prof-card').count() === 1 && await p.locator('#sheetBody [data-a=keySave]').count() === 1, 'меню: профіль + компактні блоки');
+    ok(await p.locator('#sheetBody .st-row').count() >= 6 && await p.locator('#sheetBody .st-ic svg path[fill^="url(#gemG)"]').count() === 1 && await p.locator('#sheetBody input').count() === 0, 'меню: чистий список без зайвого тексту, значок Gemini');
+    await p.click('#sheetBody [data-a=stOpen][data-v=profile]'); await p.waitForTimeout(250);
     await p.fill('#stName', 'Танічка'); await p.evaluate(() => closeSheet()); await p.waitForTimeout(300);
     ok(await p.evaluate(() => S.settings.name === 'Танічка'), 'імʼя зберігається без кнопки «Зберегти»');
-    await p.click('[data-a=settings]'); await p.waitForTimeout(400);
+    await p.click('[data-a=settings]'); await p.waitForTimeout(400); await p.click('#sheetBody [data-a=stOpen][data-v=profile]'); await p.waitForTimeout(250);
     const [fc3] = await Promise.all([p.waitForEvent('filechooser'), p.click('[data-a=avatarMenu]')]); await fc3.setFiles(path.join(__dirname, 'fixtures', 'product.jpg'));
     await p.waitForSelector('#cropWrap img', { timeout: 5000 }); await p.waitForTimeout(300);
     await p.fill('#cropZoom', '2'); await p.evaluate(() => $('#cropZoom').dispatchEvent(new Event('input')));

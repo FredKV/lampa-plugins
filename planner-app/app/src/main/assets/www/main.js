@@ -31,46 +31,65 @@ function avatarHtml(size = 64) {
   return id ? `<div class="st-ava ph-box" style="width:${size}px;height:${size}px"><img data-photo="${esc(id)}" alt=""></div>`
     : `<div class="st-ava" style="width:${size}px;height:${size}px;font-size:${size * .5}px">🦝</div>`;
 }
-function settingsSheet() {
-  const s = S.settings, hint = Keys.hint();
-  openSheet(`
-    <div class="prof-card">
-      <button class="st-ava-btn" data-a="avatarMenu" aria-label="Фото профілю">${avatarHtml(64)}<span class="st-cam">${ICONS.camera.replace('<svg', '<svg width="14" height="14"')}</span></button>
-      <div class="grow" style="min-width:0"><input class="name-input" id="stName" maxlength="30" placeholder="Ваше імʼя" value="${esc(s.name)}">
-        <div class="small muted">${s.avatar ? 'Натисніть на фото, щоб змінити' : 'Натисніть, щоб додати фото'}</div></div>
-    </div>
-    <div class="card st-card">
-      <div class="seg flat" style="margin:0">${[['light', 'Світла'], ['dark', 'Темна'], ['auto', 'Як у системі']].map(([v, l]) => `<button data-a="seg" data-group="theme" data-val="${v}" class="${s.theme === v ? 'on' : ''}">${l}</button>`).join('')}</div>
-    </div>
-    ${Bridge && Bridge.setIcon ? `<div class="card st-card"><b>Ярлик додатка</b>
-      <div class="icon-pick">${APP_ICONS.map(([id, label, bg, line]) => `<button data-a="iconPick" data-v="${id}" class="${curIcon() === id ? 'on' : ''}" aria-label="${label}">
-        <span style="background:${bg}">${LAD_SIGN.replace('stroke="#000"', `stroke="${line}"`)}</span></button>`).join('')}</div></div>` : ''}
-    <div class="card st-card" style="padding:2px 14px">
-      <div class="switch"><b>🔔 Сповіщення</b>${toggleHtml('stNotif', s.notif).replace('data-a="toggle"', 'data-a="notifToggle"')}</div>
-      ${s.notif && Bridge && Bridge.notificationsAllowed ? (Bridge.notificationsAllowed()
-        ? `<div class="small muted" style="margin:-6px 0 10px">Працюють ✓ · <b class="link" data-a="notifTest">тестове зараз</b>${Bridge.testAlarm ? ' · <b class="link" data-a="alarmTest">нагадування через 1 хв</b>' : ''}</div>`
-        : `<div class="small red" style="margin:-6px 0 10px">Сповіщення заборонені на телефоні · <b class="link" data-a="notifFix">дозволити</b></div>`) : ''}
-      <div class="switch" style="border-top:1px solid var(--line)"><b>🔒 PIN-код</b>${toggleHtml('stPin', !!s.pin).replace('data-a="toggle"', 'data-a="pinToggle"')}</div>
-      ${s.pin && Bio.available() ? `<div class="switch" style="border-top:1px solid var(--line)"><b>👆 Відбиток / обличчя</b>${toggleHtml('stBio', !!s.bio).replace('data-a="toggle"', 'data-a="bioToggle"')}</div>` : ''}
-    </div>
-    <div class="card st-card">
-      ${hint ? `<div class="row between" style="align-items:center"><div><b>✨ Gemini AI</b><div class="small green" style="margin-top:2px">Ключ додано ✓ · <b class="link" data-a="testKey">перевірити</b></div></div>
-          <button class="del-btn" data-a="keyDel" aria-label="Видалити ключ">${ICONS.trash}</button></div>`
-      : `<div class="row between"><b>✨ Gemini AI</b><span class="pill">ключ не додано</span></div>
-      <div class="row" style="gap:8px;margin-top:10px"><input class="input grow" id="stKey" type="password" autocomplete="off" placeholder="Вставте ключ Gemini">
-        <button class="btn btn-inline" data-a="keySave">OK</button></div>
-      <div style="margin-top:8px"><b class="link small" data-a="openKey">Отримати безкоштовний ключ ↗</b></div>`}
+/* ---------------- settings: one clean list, details open on tap ---------------- */
+U.stSub = '';
+const GEMINI_IC = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><defs><linearGradient id="gemG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4796E3"/><stop offset=".55" stop-color="#9177C7"/><stop offset="1" stop-color="#CA6673"/></linearGradient></defs><path d="M12 2c.6 5.4 4.6 9.4 10 10-5.4.6-9.4 4.6-10 10-.6-5.4-4.6-9.4-10-10 5.4-.6 9.4-4.6 10-10z" fill="url(#gemG)"/></svg>`;
+const ST_IC = {
+  theme: '<path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/>', bell: '<path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21h4"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', finger: '<path d="M8 20c-1-2-1.5-4-1.5-7a5.5 5.5 0 0 1 11 0"/><path d="M12 13v3c0 2 .5 3.5 1.2 5"/><path d="M9.5 13a2.5 2.5 0 0 1 5 0v2"/>',
+  cloud: '<path d="M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.5 1.5A3.3 3.3 0 0 0 7 18z"/><path d="M12 11v5M9.8 13.6L12 16l2.2-2.4"/>',
+  data: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',
+  chev: '<path d="M9 6l6 6-6 6"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>'
+};
+const stSvg = (k, s = 18, c = 'currentColor') => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ST_IC[k]}</svg>`;
+const stBox = (bg, inner) => `<span class="st-ic" style="background:${bg}">${inner}</span>`;
+const stChev = val => `<span class="st-val">${val || ''}${stSvg('chev', 16)}</span>`;
+const stRow = (icon, label, right, attrs = '') => `<div class="st-row" ${attrs}>${icon}<span class="st-lbl">${label}</span>${right}</div>`;
+const THEMES = [['light', 'Світла'], ['dark', 'Темна'], ['auto', 'Як у системі']];
+const miniIcon = id => { const ic = APP_ICONS.find(x => x[0] === id) || APP_ICONS[0]; return `<span class="st-mini" style="background:${ic[2]}">${LAD_SIGN.replace('stroke="#000"', `stroke="${ic[3]}"`)}</span>`; };
+const stHead = title => `<button class="st-back" data-a="stOpen" data-v="">${stSvg('chev', 16).replace('M9 6l6 6-6 6', 'M15 6l-6 6 6 6')} Налаштування</button><h2>${title}</h2>`;
 
-    </div>
-    ${typeof backupCard === 'function' ? backupCard() : ''}
-    <div class="row" style="gap:8px">
-      <button class="btn ghost card-btn grow" data-a="exportData">⬆️ Експорт</button>
-      <button class="btn ghost card-btn grow" data-a="importData">⬇️ Імпорт</button>
-      <button class="btn danger" style="width:64px" data-a="resetData" aria-label="Видалити всі дані">🗑</button>
-    </div>
-    <div class="small muted" style="text-align:center;margin-top:16px">Усі дані зберігаються лише на цьому телефоні · схема v${SCHEMA}</div>`,
-    null, () => { const n = $('#stName'); if (n && n.value.trim() !== S.settings.name) { S.settings.name = n.value.trim().slice(0, 30); save(); render(); } });
+function settingsSheet(sub) {
+  if (sub !== undefined) U.stSub = sub;
+  const s = S.settings, k = U.stSub;
+  const onClose = () => { const n = $('#stName'); if (n && n.value.trim() !== S.settings.name) { S.settings.name = n.value.trim().slice(0, 30); save(); render(); } };
+  if (k) { openSheet(stHead(ST_SUB[k].title) + ST_SUB[k].html(s), null, onClose); return; }
+  const notifOk = !Bridge || !Bridge.notificationsAllowed || Bridge.notificationsAllowed();
+  openSheet(`<div class="st-list">
+    <div class="st-group">${stRow(`<span class="st-avawrap">${avatarHtml(46)}</span>`, `<b class="st-name">${esc(s.name || 'Ваше імʼя')}</b>`, stChev(), 'data-a="stOpen" data-v="profile"')}</div>
+    <div class="st-group">
+      ${stRow(stBox('#5b5bd6', stSvg('theme', 18, '#fff')), 'Тема', stChev(THEMES.find(t => t[0] === s.theme)[1]), 'data-a="stOpen" data-v="theme"')}
+      ${Bridge && Bridge.setIcon ? stRow(miniIcon(curIcon()), 'Ярлик', stChev(), 'data-a="stOpen" data-v="icon"') : ''}</div>
+    <div class="st-group">
+      ${stRow(stBox('#ff6b4a', stSvg('bell', 18, '#fff')), `<span data-a="stOpen" data-v="notif">Сповіщення${s.notif && !notifOk ? ' <span class="red">!</span>' : ''}</span>`, toggleHtml('stNotif', s.notif).replace('data-a="toggle"', 'data-a="notifToggle"'))}
+      ${stRow(stBox('#34a853', stSvg('lock', 18, '#fff')), 'PIN-код', toggleHtml('stPin', !!s.pin).replace('data-a="toggle"', 'data-a="pinToggle"'))}
+      ${s.pin && Bio.available() ? stRow(stBox('#2a78d6', stSvg('finger', 18, '#fff')), 'Відбиток', toggleHtml('stBio', !!s.bio).replace('data-a="toggle"', 'data-a="bioToggle"')) : ''}</div>
+    <div class="st-group">
+      ${stRow(`<span class="st-ic" style="background:var(--chip)">${GEMINI_IC}</span>`, 'Gemini', stChev(Keys.hint() ? `<span class="green">${stSvg('check', 16)}</span>` : 'Додати'), 'data-a="stOpen" data-v="gemini"')}
+      ${Bridge && Bridge.pickBackup ? stRow(stBox('#0ea5e9', stSvg('cloud', 18, '#fff')), 'Автокопія', stChev(Bridge.hasBackup() ? 'Щотижня' : 'Вимк.'), 'data-a="stOpen" data-v="backup"') : ''}
+      ${stRow(stBox('#8e8e93', stSvg('data', 18, '#fff')), 'Дані', stChev(), 'data-a="stOpen" data-v="data"')}</div>
+  </div>`, null, onClose);
 }
+const ST_SUB = {
+  profile: { title: 'Профіль', html: s => `<div class="prof-card">
+      <button class="st-ava-btn" data-a="avatarMenu" aria-label="Фото профілю">${avatarHtml(64)}<span class="st-cam">${ICONS.camera.replace('<svg', '<svg width="14" height="14"')}</span></button>
+      <div class="grow" style="min-width:0"><input class="name-input" id="stName" maxlength="30" placeholder="Ваше імʼя" value="${esc(s.name)}"></div></div>` },
+  theme: { title: 'Тема', html: s => `<div class="st-group">${THEMES.map(([v, l]) => stRow('', l, s.theme === v ? `<span class="green">${stSvg('check', 20)}</span>` : '', `data-a="themeSet" data-v="${v}"`)).join('')}</div>` },
+  icon: { title: 'Ярлик', html: () => `<div class="icon-pick">${APP_ICONS.map(([id, label, bg, line]) => `<button data-a="iconPick" data-v="${id}" class="${curIcon() === id ? 'on' : ''}" aria-label="${label}">
+        <span style="background:${bg}">${LAD_SIGN.replace('stroke="#000"', `stroke="${line}"`)}</span></button>`).join('')}</div>` },
+  notif: { title: 'Сповіщення', html: s => `<div class="st-group">${stRow('', 'Сповіщення', toggleHtml('stNotif', s.notif).replace('data-a="toggle"', 'data-a="notifToggle"'))}</div>
+      ${s.notif && Bridge && Bridge.notificationsAllowed ? (Bridge.notificationsAllowed()
+        ? `<div class="st-group">${stRow('', 'Тестове зараз', stChev(), 'data-a="notifTest"')}${Bridge.testAlarm ? stRow('', 'Нагадування через 1 хв', stChev(), 'data-a="alarmTest"') : ''}</div>`
+        : `<div class="st-group">${stRow('', '<span class="red">Заборонені на телефоні</span>', stChev('Дозволити'), 'data-a="notifFix"')}</div>`) : ''}` },
+  gemini: { title: 'Gemini', html: () => Keys.hint()
+      ? `<div class="st-group">${stRow(`<span class="st-ic" style="background:var(--chip)">${GEMINI_IC}</span>`, 'Ключ додано', `<span class="green">${stSvg('check', 18)}</span>`)}${stRow('', 'Перевірити', stChev(), 'data-a="testKey"')}${stRow('', '<span class="red">Видалити ключ</span>', `<button class="del-btn" data-a="keyDel" aria-label="Видалити ключ">${ICONS.trash}</button>`)}</div>`
+      : `<div class="row" style="gap:8px"><input class="input grow" id="stKey" type="password" autocomplete="off" placeholder="Вставте ключ Gemini">
+          <button class="btn btn-inline" data-a="keySave">OK</button></div>
+        <div style="margin:10px 4px 0"><b class="link small" data-a="openKey">Отримати безкоштовний ключ ↗</b></div>` },
+  backup: { title: 'Автокопія', html: () => typeof backupCard === 'function' ? backupCard() : '' },
+  data: { title: 'Дані', html: () => `<div class="st-group">${stRow('', 'Експорт', stChev(), 'data-a="exportData"')}${stRow('', 'Імпорт', stChev(), 'data-a="importData"')}${stRow('', '<span class="red">Видалити всі дані</span>', stChev(), 'data-a="resetData"')}</div>
+      <div class="small muted" style="text-align:center;margin-top:12px">Дані зберігаються лише на цьому телефоні</div>` }
+};
 
 /* ---------------- photo cropper (zoom · move · circle crop) ---------------- */
 function cropPhoto(src, out = 480) {
@@ -131,7 +150,9 @@ Object.assign(A, {
     if (SEG_HOOKS[d.group]) SEG_HOOKS[d.group](d.val);
   },
   toggle: (d, el) => el.classList.toggle('on'),
-  settings: () => settingsSheet(),
+  settings: () => settingsSheet(''),
+  stOpen: d => settingsSheet(d.v || ''),
+  themeSet: d => { S.settings.theme = d.v; save(); applyTheme(); settingsSheet(); },
   closeSheet: () => closeSheet(),
   fab: () => { const top = U.stack[U.stack.length - 1]; const f = FABS[top ? top.page : U.tab]; if (f) f(); },
 

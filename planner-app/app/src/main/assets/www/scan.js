@@ -30,7 +30,7 @@ async function readPriceTag(dataUrl) {
 }
 
 async function startScan() {
-  if (!Keys.has()) { toast('Для сканування цінників додайте ключ Gemini у Налаштуваннях'); settingsSheet(); return; }
+  if (!Keys.has()) { toast('Для сканування цінників додайте ключ Gemini у Налаштуваннях'); settingsSheet('gemini'); return; }
   const id = await pickPhoto(1600); if (!id) return;
   U.scan = { photo: id, loading: true, err: '', r: null };
   scanSheet();
