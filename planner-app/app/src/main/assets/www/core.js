@@ -313,6 +313,25 @@ const Keys = {
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-2.0-flash'];
 let geminiOk = '';   // model that answered last time in this session
 let GEMINI_TIMEOUT = 30000; // per model; then the next one is tried
+const GM_CACHE = 'lad.gmodels';
+let geminiFound = null;
+function geminiCached() { try { const c = JSON.parse(localStorage.getItem(GM_CACHE) || 'null'); if (c && Date.now() - c.t < 5 * 86400000 && c.m.length) return c.m; } catch (e) { } return null; }
+/** Asks Google which models this key can use; keeps flash models, newest first. */
+async function geminiDiscover() {
+  if (geminiFound) return geminiFound;
+  let r;
+  if (Bridge && Bridge.geminiModels) r = await new Promise(res => { const id = uid(); pendingCb[id] = res; Bridge.geminiModels(id); });
+  else r = await http('GET', 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', null, { 'x-goog-api-key': localStorage.getItem(DEV_KEY) || '' });
+  let m = [];
+  try {
+    m = (JSON.parse(r.text).models || []).filter(x => (x.supportedGenerationMethods || []).includes('generateContent'))
+      .map(x => String(x.name).replace(/^models\//, '')).filter(n => /^gemini-[\d.]+-flash(-lite)?$|^gemini-flash(-lite)?-latest$/.test(n));
+  } catch (e) { }
+  const ver = n => { const v = n.match(/gemini-([\d.]+)/); return v ? parseFloat(v[1]) : 99; };
+  m.sort((a, b) => ver(b) - ver(a) || (a.includes('lite') ? 1 : 0) - (b.includes('lite') ? 1 : 0));
+  if (m.length) { geminiFound = m; try { localStorage.setItem(GM_CACHE, JSON.stringify({ t: Date.now(), m })); } catch (e) { } }
+  return m;
+}
 function geminiRaw(body, model) {
   if (Bridge && Bridge.gemini) return new Promise(res => { const id = uid(); pendingCb[id] = res; Bridge.gemini(model, JSON.stringify(body), id); });
   const k = localStorage.getItem(DEV_KEY) || '';
@@ -321,15 +340,22 @@ function geminiRaw(body, model) {
 /** Calls Gemini and returns {text, data}. Throws Error with a human message. */
 async function gemini(body, opts = {}) {
   if (!Keys.has()) throw new Error('Додайте безкоштовний ключ Gemini у Налаштуваннях.');
-  const pref = opts.fast ? 'gemini-2.5-flash-lite' : geminiOk;
-  const order = (pref ? [pref, ...GEMINI_MODELS.filter(m => m !== pref)] : GEMINI_MODELS).slice(0, opts.fast ? 2 : 9);
+  const base = geminiCached() || GEMINI_MODELS;
+  const pref = opts.fast ? (base.find(m => m.includes('lite')) || base[0]) : geminiOk;
+  const order = pref ? [pref, ...base.filter(m => m !== pref)] : base.slice();
+  const tried = new Set(); let slow = 0, discovered = false;
   let r, data = null;
-  for (const model of order) {
+  for (let i = 0; i < order.length; i++) {
+    const model = order[i]; if (tried.has(model)) continue; tried.add(model);
+    if (opts.fast && slow >= 2) break;
     // 2.5 models «think» before answering — for recipes it only slows things down
     const b = model.startsWith('gemini-2.5') ? { ...body, generationConfig: { ...(body.generationConfig || {}), thinkingConfig: { thinkingBudget: 0 } } } : body;
     r = await Promise.race([geminiRaw(b, model), new Promise(res => setTimeout(() => res({ status: 408, text: '' }), opts.timeout || GEMINI_TIMEOUT))]);
     data = null; try { data = JSON.parse(r.text); } catch (e) { }
     if (r.status === 200) { if (!opts.fast) geminiOk = model; break; }
+    if (r.status !== 404) slow++;
+    // the model names changed — ask Google which ones this key has and try those
+    if (r.status === 404 && i === order.length - 1 && !discovered) { discovered = true; const found = await geminiDiscover(); found.forEach(m => { if (!tried.has(m)) order.push(m); }); continue; }
     if (![0, 404, 408, 429, 500, 503].includes(r.status) || (r.status === 0 && /UnknownHost|ENOTFOUND/i.test(r.text || ''))) break; // key/network problems: another model won't help
   }
   if (r.status !== 200) {
@@ -344,7 +370,7 @@ async function gemini(body, opts = {}) {
     }
     else if ((r.status === 400 && /api key/i.test(msg || '')) || r.status === 401) err = 'Ключ Gemini недійсний. Перевірте його в налаштуваннях.';
     else if (r.status === 403) err = 'Доступ заборонено (403). Перевірте ключ або чи доступний Gemini API у вашому регіоні.';
-    else if (r.status === 404) err = 'Gemini зараз недоступний для цього ключа. Спробуйте пізніше.';
+    else if (r.status === 404) err = `Для цього ключа не знайдено доступної моделі Gemini${msg ? ' (' + String(msg).slice(0, 120) + ')' : ''}. Перевірте, що ключ створено в Google AI Studio.`;
     else if (r.status === 408) err = 'Gemini занадто довго не відповідає. Спробуйте ще раз трохи пізніше.';
     else if (r.status === 429) err = 'Вичерпано безкоштовний ліміт запитів Gemini. Зачекайте й спробуйте пізніше.';
     else if (r.status >= 500) err = 'Сервіс Gemini тимчасово недоступний. Спробуйте пізніше.';

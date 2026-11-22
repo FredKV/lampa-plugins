@@ -15,7 +15,7 @@ function taskRow(t) {
   let due = '';
   if (t.due) {
     const over = !t.done && t.due < tdy;
-    due = `<span class="pill ${over ? 'red' : t.due === tdy ? 'blue' : ''}">${over ? 'Прострочено · ' : ''}${dateLabel(t.due, false)}</span>`;
+    due = `<span class="pill ${over ? 'red' : t.due === tdy ? 'blue' : ''}">${over ? 'Прострочено · ' : ''}${dateLabel(t.due, false)}${t.time ? ' · ' + esc(t.time) : ''}</span>`;
   }
   const pr = PRIO[t.prio || 1];
   return `<div class="item ${t.done ? 'done' : ''}" data-id="${t.id}" data-swr="taskToggle" data-swl="taskDel">
@@ -59,6 +59,9 @@ function taskSheet(id, presetDue) {
     <div class="field"><label>Пріоритет</label>${seg('prio', [['1', 'Низький'], ['2', 'Середній'], ['3', 'Високий']], String(t.prio || 2))}</div>
     <div class="field"><label>Термін</label>
       <div class="due-chips"><button class="chip" data-a="setDue" data-d="0">Сьогодні</button><button class="chip" data-a="setDue" data-d="1">Завтра</button><button class="chip" data-a="setDue" data-d="">Без дати</button></div></div>
+    <div class="field"><label>Час</label><input type="time" class="input" id="tTime" value="${t.time || ''}"></div>
+    <div class="field"><label>Час</label><input type="time" class="input" id="tTime" value="${t.time || ''}"></div>
+    <div class="field"><label>Час</label><input type="time" class="input" id="tTime" value="${t.time || ''}"></div>
     ${repeatChips(t.repeat, 'task')}
     <div class="field"><textarea class="input" id="tNote" maxlength="1000" placeholder="Нотатка (необовʼязково)">${esc(t.note)}</textarea></div>
     ${id ? `<div class="row" style="gap:8px;margin-bottom:10px"><button class="btn ghost grow" data-a="taskToEvent" data-id="${id}">У події</button><button class="btn ghost grow" data-a="taskShare" data-id="${id}">${ICONS.share} Поділитися</button></div>` : ''}
@@ -68,6 +71,18 @@ function taskSheet(id, presetDue) {
     </div>`, r => { syncDue(); if (!id) setTimeout(() => $('#tTitle', r).focus(), 300); });
 }
 document.addEventListener('change', e => { if (e.target.id === 'tDue') syncDue(); });
+REMINDER_PROVIDERS.push(() => S.tasks.filter(t => !t.done && t.due && t.time && t.due >= today()).map(t => {
+  const [h, mi] = t.time.split(':').map(Number), d = parseYmd(t.due); d.setHours(h, mi, 0, 0);
+  return { id: 'task-' + t.id, at: d.getTime(), title: '📝 ' + t.title, text: `${dateLabel(t.due)} о ${t.time}${t.note ? ' · ' + t.note : ''}` };
+}));
+REMINDER_PROVIDERS.push(() => S.tasks.filter(t => !t.done && t.due && t.time && t.due >= today()).map(t => {
+  const [h, mi] = t.time.split(':').map(Number), d = parseYmd(t.due); d.setHours(h, mi, 0, 0);
+  return { id: 'task-' + t.id, at: d.getTime(), title: '📝 ' + t.title, text: `${dateLabel(t.due)} о ${t.time}${t.note ? ' · ' + t.note : ''}` };
+}));
+REMINDER_PROVIDERS.push(() => S.tasks.filter(t => !t.done && t.due && t.time && t.due >= today()).map(t => {
+  const [h, mi] = t.time.split(':').map(Number), d = parseYmd(t.due); d.setHours(h, mi, 0, 0);
+  return { id: 'task-' + t.id, at: d.getTime(), title: '📝 ' + t.title, text: `${dateLabel(t.due)} о ${t.time}${t.note ? ' · ' + t.note : ''}` };
+}));
 Object.assign(A, {
   planFilter: d => { U.planFilter = d.v; render(); },
   taskNew: () => taskSheet(),
@@ -84,7 +99,7 @@ Object.assign(A, {
   taskToEvent: d => {
     const t = S.tasks.find(x => x.id === d.id); if (!t) return;
     const r = $('#sheetBody'), title = ($('#tTitle', r) || {}).value || t.title, due = ($('#tDue', r) || {}).value || t.due;
-    const ev = { id: uid(), title: title.trim().slice(0, 200), date: due || today(), time: '', note: (($('#tNote', r) || {}).value || t.note || '').trim(), important: (+segVal(r, 'prio') || t.prio) === 3, remind: 'day', repeat: t.repeat || '' };
+    const ev = { id: uid(), title: title.trim().slice(0, 200), date: due || today(), time: (($('#tTime', r) || {}).value || t.time || ''),  note: (($('#tNote', r) || {}).value || t.note || '').trim(), important: (+segVal(r, 'prio') || t.prio) === 3, remind: 'day', repeat: t.repeat || '' };
     S.events.push(ev); S.tasks = S.tasks.filter(x => x.id !== t.id); save(); render();
     toast(`📅 Перенесено в події: ${dateLabel(ev.date)} — можна вказати час`); eventSheet(ev.id); ensureNotifPermission();
   },
@@ -99,7 +114,8 @@ Object.assign(A, {
     const due = $('#tDue', r).value;
     if (due && !isDate(due)) return invalid('tDue', 'Некоректна дата');
     const repeat = repVal(r);
-    const data = { title: title.slice(0, 200), note: $('#tNote', r).value.trim().slice(0, 1000), prio: +segVal(r, 'prio') || 2, due: repeat && !due ? today() : due, repeat };
+    const time = /^\d\d:\d\d$/.test($('#tTime', r).value) ? $('#tTime', r).value : '';
+    const data = { title: title.slice(0, 200), note: $('#tNote', r).value.trim().slice(0, 1000), prio: +segVal(r, 'prio') || 2, due: (repeat || time) && !due ? today() : due, time, repeat };
     if (d.id) Object.assign(S.tasks.find(x => x.id === d.id), data);
     else S.tasks.unshift({ id: uid(), done: false, created: Date.now(), ...data });
     save(); closeSheet(); render();
@@ -183,13 +199,25 @@ function hpSync(idx) {
   $$('.hp-dots i').forEach((d, i) => d.classList.toggle('on', i === k));
   if (hpLastK !== null && k !== hpLastK && typeof haptic === 'function') haptic('tick');
   hpLastK = k;
-  const secs = pg.children; if (secs[k]) pg.style.height = secs[k].offsetHeight + 'px';
+}
+function hpFit(k) {
+  const pg = $('#hpager'); if (!pg) return;
+  const secs = pg.children; if (!secs[k]) return;
+  const h = secs[k].offsetHeight, tb = $('.tabbar'), top = pg.getBoundingClientRect().top + window.scrollY;
+  const extra = Math.max(0, Math.round(window.innerHeight - (tb ? tb.offsetHeight : 0) - top - h));
+  pg.style.height = (h + extra) + 'px'; pg.style.marginBottom = -extra + 'px';
 }
 AFTER_RENDER.push(() => {
   const pg = $('#hpager'); if (!pg) return;
-  pg.scrollLeft = U.hpIdx * pg.clientWidth; hpLastK = null; hpSync(U.hpIdx);
+  pg.scrollLeft = U.hpIdx * pg.clientWidth; hpLastK = null; hpSync(U.hpIdx); hpFit(U.hpIdx);
   let t = 0;
-  pg.addEventListener('scroll', () => { hpSync(); clearTimeout(t); t = setTimeout(() => { const k = Math.round(pg.scrollLeft / pg.clientWidth); if (k !== U.hpIdx) U.hpIdx = k; hpSync(k); }, 90); }, { passive: true });
+  let moving = false;
+  pg.addEventListener('scroll', () => {
+    // while the finger moves, the pager is as tall as the taller page — no height jumps mid-swipe
+    if (!moving) { moving = true; const h = Math.max(...[...pg.children].map(x => x.offsetHeight), pg.offsetHeight); const ex = parseFloat(pg.style.marginBottom) || 0; pg.style.marginBottom = (ex - (h - pg.offsetHeight)) + 'px'; pg.style.height = h + 'px'; }
+    hpSync(); clearTimeout(t);
+    t = setTimeout(() => { moving = false; const k = Math.round(pg.scrollLeft / pg.clientWidth); if (k !== U.hpIdx) U.hpIdx = k; hpSync(k); hpFit(k); }, 120);
+  }, { passive: true });
 });
 Object.assign(A, {
   hpSlot: d => { if (+d.i === U.hpIdx) A.hpCal(); else A.hpGo(d); },

@@ -272,8 +272,6 @@ public class MainActivity extends Activity {
             i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "uk-UA");
             i.putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-            i.putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 900L);
-            i.putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 700L);
             recognizer.startListening(i);
         } catch (Exception e) { js("window.__voiceCb&&window.__voiceCb('',true,'x')"); }
     }
@@ -452,6 +450,18 @@ public class MainActivity extends Activity {
                 Net.Res r = key.isEmpty()
                         ? new Net.Res(401, "{\"error\":{\"message\":\"API key not set\"}}")
                         : Net.request("POST", Net.geminiUrl(model), body, geminiHeaders(key));
+                js("window.__httpCb(" + JSONObject.quote(id) + "," + r.code + "," + JSONObject.quote(r.text) + ")");
+            }).start();
+        }
+
+        /** Lists Gemini models available for the saved key (names only are used by the web code). */
+        @JavascriptInterface
+        public void geminiModels(final String id) {
+            new Thread(() -> {
+                String key = Store.get(MainActivity.this, "gemini_key", "");
+                Net.Res r = key.isEmpty()
+                        ? new Net.Res(401, "{}")
+                        : Net.request("GET", "https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", null, geminiHeaders(key));
                 js("window.__httpCb(" + JSONObject.quote(id) + "," + r.code + "," + JSONObject.quote(r.text) + ")");
             }).start();
         }

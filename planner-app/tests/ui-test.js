@@ -745,6 +745,53 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8v. Голос: розбір фраз, час у плані, гортання головної');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const v = await q.evaluate(() => [parseLocal('запиши в план відвідування стоматолога 23 числа на 10 годину'), parseLocal('витрата 250 грн кава'),
+      parseLocal('запис до лікаря 5 грудня о 9 ранку'), parseLocal('нагадай візит до перукаря в пятницю на 3 годину дня')]);
+    ok(v[0].kind === 'task' && v[0].title === 'Стоматолог' && v[0].date.endsWith('-23') && v[0].time === '10:00', 'план «Стоматолог» на 23-те о 10:00 ' + JSON.stringify(v[0]));
+    ok(v[1].title === 'Кава' && v[1].amount === 250, 'витрата «Кава» 250');
+    ok(v[2].title === 'Лікар' && v[2].time === '09:00' && v[2].date.endsWith('-12-05'), 'лікар 5 грудня о 9:00');
+    ok(v[3].title === 'Перукар' && v[3].time === '15:00', 'перукар о 15:00');
+    await q.evaluate(() => { U.vc = { text: 'x', r: vcNorm({ kind: 'task', title: 'Стоматолог', date: addDays(today(), 1), time: '10:00' }) }; voiceSheet(); });
+    await q.waitForTimeout(300);
+    ok(await q.locator('#vcTime').count() === 1, 'у голосовому вікні для плану є час');
+    await q.click('[data-a=vcSave]'); await q.waitForTimeout(300);
+    ok(await q.evaluate(() => S.tasks[0].time === '10:00' && $$('.item .pill').some(x => x.textContent.includes('10:00'))), 'план збережено з часом, час видно в списку');
+    ok(await q.evaluate(() => { A.taskEdit({ id: S.tasks[0].id }); return $('#tTime').value === '10:00'; }), 'у вікні плану є поле «Час»');
+    ok(await q.evaluate(() => REMINDER_PROVIDERS.flatMap(f => f()).some(r => r.id.startsWith('task-'))), 'нагадування для плану з часом');
+    await q.evaluate(() => { closeSheet(); S.goals.push({ id: 'g1', type: 'habit', title: 'Біг', per: 'day', times: 1, log: {}, attempts: [] }); save(); go('home'); });
+    await q.waitForTimeout(400);
+    const g = await q.evaluate(() => { const pg = $('#hpager'), tb = $('.tabbar'); return { bottom: pg.getBoundingClientRect().bottom, tb: innerHeight - tb.offsetHeight, oy: getComputedStyle(pg).overflowY }; });
+    ok(Math.abs(g.bottom - g.tb) < 3 && g.oy === 'hidden', 'гортання вбік працює до самого низу, вертикально блок не прокручується ' + JSON.stringify(g));
+    ok(e2.length === 0, 'без JS-помилок (голос/план) ' + e2.join('; '));
+    await q.close();
+  }
+
+  console.log('8w. Gemini: старі моделі вимкнено (404) → знаходить доступну');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    await q.addInitScript(() => {
+      window.__calls = [];
+      window.AndroidBridge = {
+        hasApiKey: () => true,
+        geminiModels: id => setTimeout(() => window.__httpCb(id, 200, JSON.stringify({ models: [
+          { name: 'models/gemini-3.0-flash', supportedGenerationMethods: ['generateContent'] }, { name: 'models/gemini-3.0-flash-lite', supportedGenerationMethods: ['generateContent'] },
+          { name: 'models/text-embedding-004', supportedGenerationMethods: ['embedContent'] }] })), 30),
+        gemini: (model, body, id) => { window.__calls.push(model); setTimeout(() => window.__httpCb(id, model.startsWith('gemini-3') ? 200 : 404,
+          model.startsWith('gemini-3') ? JSON.stringify({ candidates: [{ content: { parts: [{ text: 'ok' }] } }] }) : JSON.stringify({ error: { message: 'models/' + model + ' is not found' } })), 20); }
+      };
+    });
+    await q.goto(URL);
+    const r = await q.evaluate(async () => { try { const a = await gemini({ contents: [] }); const b2 = await gemini({ contents: [] }, { fast: true }); return { a: a.text, b: b2.text, calls: window.__calls }; } catch (e) { return { err: e.message }; } });
+    ok(r.a === 'ok' && r.b === 'ok' && r.calls.includes('gemini-3.0-flash'), 'знайдено нову модель і отримано відповідь ' + JSON.stringify(r));
+    ok(r.calls && r.calls[r.calls.length - 1] === 'gemini-3.0-flash-lite', 'швидкий режим одразу бере знайдену lite-модель');
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);

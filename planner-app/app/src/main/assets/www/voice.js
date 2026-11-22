@@ -42,12 +42,20 @@ function listenSystem() {
   });
 }
 const WD_WORDS = { 'понеділ': 1, 'вівтор': 2, 'серед': 3, 'четвер': 4, 'пʼятниц': 5, "п'ятниц": 5, 'пятниц': 5, 'субот': 6, 'неділ': 0 };
+/** «відвідування стоматолога» → «стоматолог»: visit-type phrases keep just the person/place in the nominative */
+function vcVisit(t) {
+  const m = t.match(/^(?:відвідування|відвідати|візит до|похід до|сходити до|піти до|поїхати до|запис до|записатися до|прийом у|прийом до)\s+([а-яіїєґ'-]+)(.*)$/i);
+  if (!m) return t;
+  let w = m[1];
+  if (/[^аеиіоуяюєї]а$/i.test(w)) w = w.slice(0, -1); else if (/ря$/i.test(w)) w = w.slice(0, -1); else if (/я$/i.test(w)) w = w.slice(0, -1) + 'ь'; else return t;
+  return (w + m[2]).trim();
+}
 /** offline parser — enough for typical phrases when there is no Gemini key */
 /** explicit words decide the type: «запиши у витрати», «додай план», «подія», «дохід», «у покупки» */
 const VC_KW = [['expense', /витрат|витратил|заплатил|потратил|купил[аи]? за|оплатил/], ['income', /дохід|доход|отримал|зарплат|заробил|повернули мені/],
-  ['shop', /покупк|купити|в магазин|список покуп/], ['event', /поді[яюї]|зустріч|запис до|прийом/], ['task', /\bплан\b|у плани|в плани|справ[уа]|завдання/]];
+  ['shop', /покупк|купити|в магазин|список покуп/], ['event', /поді[яюї]|зустріч|запис до|прийом/], ['task', /(^|[^а-яіїєґ])план([иі]|у)?([^а-яіїєґ]|$)|справ[уа]|завдання/]];
 const kwKind = s => { s = s.toLowerCase(); const k = VC_KW.find(([, re]) => re.test(s)); return k ? k[0] : ''; };
-const VC_FILLER = /^(будь ласка\s+)?(запиши|записати|додай|додати|внеси|постав|створи|нагадай)(\s+мені)?\s*(у|в|до)?\s*(витрати|витрату|дохід|доходи|плани|план|події|подію|покупки|календар|список)?\s*/i;
+const VC_FILLER = /^(будь ласка\s+)?(запиши|записати|додай|додати|внеси|постав|створи|нагадай)(\s+мені)?(\s+(у|в|до)(?=\s))?(\s+(витрати|витрату|дохід|доходи|плани|план|події|подію|покупки|календар|список)(?=\s|$))?\s*/i;
 function vcNorm(r) {
   return { kind: r.kind || 'task', title: r.title || '', date: r.date || '', time: r.time || '', amount: +r.amount || 0, cat: r.cat || '', items: Array.isArray(r.items) ? r.items : [] };
 }
@@ -58,20 +66,24 @@ function parseLocal(t) {
   if (/післязавтра/.test(s)) date = addDays(tdy, 2); else if (/завтра/.test(s)) date = addDays(tdy, 1); else if (/сьогодні/.test(s)) date = tdy;
   const dm = s.match(/(\d{1,2})\s*(січ|лют|бер|квіт|трав|черв|лип|серп|вер|жовт|лист|груд)/);
   if (dm && !date) { const mi = ['січ', 'лют', 'бер', 'квіт', 'трав', 'черв', 'лип', 'серп', 'вер', 'жовт', 'лист', 'груд'].indexOf(dm[2]); const y = parseYmd(tdy).getFullYear(); let d = ymd(new Date(y, mi, +dm[1])); if (d < tdy) d = ymd(new Date(y + 1, mi, +dm[1])); date = d; }
+  const ch = s.match(/(?:^|\s)(\d{1,2})(?:-?го)?\s*(?:числа|число)/);
+  if (ch && !date && +ch[1] >= 1 && +ch[1] <= 31) { const n = parseYmd(tdy); let d = new Date(n.getFullYear(), n.getMonth(), +ch[1]); if (ymd(d) < tdy) d = new Date(n.getFullYear(), n.getMonth() + 1, +ch[1]); date = ymd(d); }
   const wd = Object.keys(WD_WORDS).find(k => s.includes(k)); if (wd && !date) { const want = WD_WORDS[wd], now = parseYmd(tdy).getDay(); date = addDays(tdy, ((want - now + 7) % 7) || 7); }
-  const tm = s.match(/(?:^|\s)(?:о|на|об)\s(\d{1,2})(?:[:.\s](\d{2}))?(?=\s|$)/); const time = tm && +tm[1] < 24 && !/грн|гривен/.test(s.slice(tm.index, tm.index + 20)) ? `${String(tm[1]).padStart(2, '0')}:${tm[2] || '00'}` : '';
+  const hm = s.match(/(\d{1,2})(?:[:.](\d{2}))?\s*(?:-?(?:у|ій|ої))?\s*(?:годин|год)/);
+  let tm = hm || s.match(/(?:^|\s)(?:о|на|об)\s(\d{1,2})(?:[:.\s](\d{2}))?(?=\s|$)(?!\s*(?:числ|-?го(?:\s|$)))/); const time = tm && +tm[1] < 24 && !/грн|гривен/.test(s.slice(tm.index, tm.index + 20)) ? `${String(+tm[1] + (+tm[1] < 12 && /вечора|(?:^|\s)дня(?:\s|$)/.test(s) ? 12 : 0)).padStart(2, '0')}:${tm[2] || '00'}` : '';
   const am = s.replace(/(\d)\s(?=\d{3}\b)/g, '$1').match(/(\d+(?:[.,]\d+)?)\s*(?:грн|гривень|гривні|гривня|₴|тис)/) || (!time ? s.replace(/(\d)\s(?=\d{3}\b)/g, '$1').match(/(\d+(?:[.,]\d+)?)/) : null);
   let amount = am ? num(am[1]) * (/тис/.test(am[0]) ? 1000 : 1) : 0;
   let kind = kwKind(s);
   if (!kind) kind = date || time ? 'event' : 'task';
-  let title = t.replace(VC_FILLER, '').replace(/(післязавтра|завтра|сьогодні)/ig, '').replace(/(?:^|\s)(?:о|на|об)\s\d{1,2}(?:[:.]\d{2})?\s*(?:годині|год\.?)?/ig, ' ')
-    .replace(/(і\s+|та\s+)?(за|на)?\s*\d[\d\s.,]*\s*(грн|гривень|гривні|гривня|₴|тис\.?)?/ig, ' ').replace(/\s+(за|на|у|в)\s*$/i, '').replace(/^(на|за|у|в)\s+/i, '').replace(/\s+/g, ' ').trim();
+  let title = t.replace(VC_FILLER, '').replace(/(післязавтра|завтра|сьогодні)/ig, '').replace(/(?:^|\s)(?:о|на|об)\s\d{1,2}(?:[:.]\d{2})?\s*(?:год[а-яіїєґ]*\.?)?/ig, ' ').replace(/\d{1,2}(?::\d{2})?\s*(?:-?(?:у|ій|ої))?\s*год[а-яіїєґ]*/ig, ' ').replace(/\d{1,2}(?:-?го)?\s*числ[а-яіїєґ]*/ig, ' ').replace(/\s(ранку|вечора|дня)(?=\s|$)/ig, ' ')
+    .replace(/((?:^|\s)(?:і|та)\s+)?((?:^|\s)(?:за|на))?\s*\d[\d\s.,]*\s*(грн|гривень|гривні|гривня|₴|тис\.?)?/ig, ' ').replace(/\s+(за|на|у|в)\s*$/i, '').replace(/^(на|за|у|в)\s+/i, '').replace(/\s+/g, ' ').trim();
   if (kind === 'shop') {
     const items = title.replace(/^(треба купити|купити|в магазин|до покупок|у покупки|в покупки)\s*/i, '').split(/,|\sі\s|\sта\s/).map(x => x.trim()).filter(Boolean);
     return vcNorm({ kind, items, title: items.join(', ') });
   }
-  title = title.replace(/(^|\s)\d{1,2}\s*(січ|лют|бер|квіт|трав|черв|лип|серп|вер|жовт|лист|груд)\S*/ig, ' ').replace(/^\s*(грудня|січня|лютого|березня|квітня|травня|червня|липня|серпня|вересня|жовтня|листопада)\s+/i, '')
-    .replace(/^(подія|подію|план|витрату?|витратила|витратив|заплатила|заплатив|отримала|отримав|дохід)\s+/i, '').replace(/\s+/g, ' ').replace(/^(на|за)\s+/i, '').trim();
+  title = title.replace(/(^|\s)\d{1,2}\s*(січ|лют|бер|квіт|трав|черв|лип|серп|вер|жовт|лист|груд)\S*/ig, ' ').replace(/(^|\s)(грудня|січня|лютого|березня|квітня|травня|червня|липня|серпня|вересня|жовтня|листопада)(?=\s|$)/ig, ' ').replace(/(^|\s)((в|у|на|до)\s+)?(понеділ|вівтор|серед|четвер|п[ʼ']?ятниц|субот|неділ)[а-яіїєґʼ']*(?=\s|$)/ig, ' ')
+    .replace(/^(подія|подію|план|витрат[аиу]?|витратила|витратив|заплатила|заплатив|отримала|отримав|дохід)\s+/i, '').replace(/\s+/g, ' ').replace(/^(на|за)\s+/i, '').trim();
+  title = vcVisit(title);
   title = title.charAt(0).toUpperCase() + title.slice(1);
   if (kind === 'expense' || kind === 'income') return vcNorm({ kind, amount, title, date: date || tdy });
   return vcNorm({ kind, title, date: kind === 'event' ? (date || tdy) : date, time });
@@ -83,7 +95,7 @@ async function parseVoice(text) {
     contents: [{ role: 'user', parts: [{ text: `Сьогодні ${today()} (${WD_FULL[parseYmd(today()).getDay()]}). Користувачка сказала: «${text}». ` +
       'Визнач, що додати в планер, і відповідай ЛИШЕ JSON: {"kind":"event"|"task"|"expense"|"income"|"shop","title":"коротко","date":"YYYY-MM-DD або порожньо","time":"HH:MM або порожньо",' +
       `"amount":число або 0,"cat":"для витрати одна з: ${cats}","items":["для покупок — список товарів"]}. ` +
-      'Якщо фраза прямо каже «витрата/витрати», «дохід», «план», «подія», «покупки» — це і є kind. title — суть без слів «запиши у витрати». event — подія/зустріч з датою; task — справа без конкретного часу; expense — витратила гроші; income — отримала гроші; shop — що купити.' }] }],
+      'Якщо фраза прямо каже «витрата/витрати», «дохід», «план», «подія», «покупки» — це і є kind. title — лише суть 1–3 словами в називному відмінку, без дати, часу і слів-команд (приклад: «запиши в план відвідування стоматолога 23 числа на 10 годину» → kind task, title «Стоматолог», date 23-го, time 10:00). Дату й час вказуй і для плану (task), якщо вони прозвучали. event — подія/зустріч з датою; task — справа без конкретного часу; expense — витратила гроші; income — отримала гроші; shop — що купити.' }] }],
     generationConfig: { temperature: 0.1, responseMimeType: 'application/json', maxOutputTokens: 200 }
   }, { fast: true, timeout: 8000 });
   const j = extractJson(out);
@@ -106,7 +118,7 @@ function voiceSheet() {
     ${money_ ? `<div class="field"><input class="input big" id="vcAmount" inputmode="decimal" placeholder="0 ₴" value="${r.amount || ''}"></div>` : ''}
     ${dated ? `<div class="row" style="gap:10px">
       <div class="field grow"><label>${r.kind === 'task' ? 'Термін' : 'Дата'}</label><input type="date" class="input" id="vcDate" value="${r.date || ''}"></div>
-      ${r.kind === 'event' ? `<div class="field" style="width:40%"><label>Час</label><input type="time" class="input" id="vcTime" value="${r.time || ''}"></div>` : ''}</div>
+      ${r.kind === 'event' || r.kind === 'task' ? `<div class="field" style="width:40%"><label>Час</label><input type="time" class="input" id="vcTime" value="${r.time || ''}"></div>` : ''}</div>
       ${r.date ? `<div class="small muted" style="margin:-4px 4px 10px">${esc(dateLabel(r.date))}${r.time ? ' о ' + r.time : ''}</div>` : ''}` : ''}
     <div class="btns two"><button class="btn ghost card-btn" data-a="vcAgain">Ще раз</button><button class="btn" data-a="vcSave">Додати</button></div>`);
 }
@@ -191,7 +203,7 @@ Object.assign(A, {
     if (r.kind === 'shop' && !r.items.length) return invalid('vcTitle', 'Які товари?');
     if ((r.kind === 'expense' || r.kind === 'income') && !(r.amount > 0)) return invalid('vcAmount', 'Вкажіть суму');
     if (r.kind === 'event') { S.events.push({ id: uid(), title: r.title, date: r.date || today(), time: r.time, note: '', important: false, remind: r.time ? 'hour' : 'day' }); msg = `📅 Подію додано: ${dateLabel(r.date || today())}`; }
-    else if (r.kind === 'task') { S.tasks.unshift({ id: uid(), title: r.title, note: '', prio: 2, due: r.date, done: false, created: Date.now() }); msg = '📝 План додано'; }
+    else if (r.kind === 'task') { S.tasks.unshift({ id: uid(), title: r.title, note: '', prio: 2, due: r.time && !r.date ? today() : r.date, time: r.time || '', done: false, created: Date.now() }); msg = '📝 План додано'; }
     else if (r.kind === 'expense' || r.kind === 'income') {
       Fin.add({ type: r.kind === 'expense' ? 'exp' : 'inc', amount: r.amount, cat: r.kind === 'expense' ? (r.cat || 'other') : 'other', note: r.title, date: r.date || today() });
       msg = `${r.kind === 'expense' ? '💸 Витрату' : '💰 Дохід'} ${money(r.amount)} записано`;
