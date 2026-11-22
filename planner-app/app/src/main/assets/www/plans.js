@@ -148,25 +148,39 @@ FABS.home = () => taskSheet();
 
 /* Home: «Цілі на сьогодні» ⇄ «Мої плани» — swipe pager; the tab strip slides with the pages, dots below */
 U.hpIdx = U.hpIdx || 0;
+U.hpDate = '';
+U.hpCal = null; // {y, m} when the dropdown calendar is open
 function homePager() {
-  const pend = Goals.pending().length, done = S.tasks.filter(t => t.done).length, pct = S.tasks.length ? Math.round(done / S.tasks.length * 100) : 0;
-  const d = new Date(), date = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
-  const segs = [['Цілі', pend], ['Плани', 0]];
-  return `<div class="hp-strip" id="hpStrip">${segs.map(([n, badge], i) => `<button data-a="hpGo" data-i="${i}" class="${i === U.hpIdx ? 'on' : ''}">
-      <span class="hp-name">${n}${badge ? ` <i class="hp-badge">${badge}</i>` : ''}</span><span class="hp-date">${date}</span></button>`).join('')}</div>
-    <div class="hp-dots" id="hpDots">${segs.map((_, i) => `<i data-a="hpGo" data-i="${i}" class="${i === U.hpIdx ? 'on' : ''}"></i>`).join('')}</div>
+  const D = U.hpDate || today(), isT = D === today(), d = parseYmd(D);
+  const pend = isT ? Goals.pending().length : 0;
+  const label = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
+  const dayTasks = isT ? null : S.tasks.filter(t => t.due === D);
+  return `<div class="hp-strip" id="hpStrip">
+      <button data-a="hpGo" data-i="0"><span>Цілі${pend ? ` <i class="hp-badge">${pend}</i>` : ''}</span></button>
+      <button data-a="hpGo" data-i="1"><span>Плани</span></button>
+      <button class="hp-pill ${U.hpCal ? 'open' : ''}" id="hpPill" data-a="hpCal">${label}<i class="hp-chev"></i></button></div>
+    ${U.hpCal ? hpCalHtml(D) : ''}
+    <div class="hp-dots" id="hpDots">${[0, 1].map(i => `<i data-a="hpGo" data-i="${i}" class="${i === U.hpIdx ? 'on' : ''}"></i>`).join('')}</div>
     <div class="hpager" id="hpager">
-      <section><div class="list">${S.goals.map(goalRow).join('')}</div>
-        <div class="small ${pend ? 'red' : 'green'}" style="margin:8px 6px 0">${pend ? `${pend} чекає на сьогодні` : 'На сьогодні все ✓'}</div></section>
-      <section>${plansBlock(true)}${S.tasks.length ? `<div class="small muted" style="margin:8px 6px 0">Виконано ${done} з ${S.tasks.length} · ${pct}%</div>` : ''}</section></div>`;
+      <section><div class="list">${S.goals.map(g => goalRow(g, D)).join('')}</div>
+        <div class="small ${isT ? (pend ? 'red' : 'green') : 'muted'}" style="margin:8px 6px 0">${isT ? (pend ? `${pend} чекає на сьогодні` : 'На сьогодні все ✓') : `Відмітки за ${dateLabel(D)}`}</div></section>
+      <section>${isT ? plansBlock(true) : `${dayTasks.length ? `<div class="list">${dayTasks.sort(taskSort).map(taskRow).join('')}</div>` : emptyCard('📝', `На ${dateLabel(D).toLowerCase()} планів немає`, null)}
+        <div class="btns"><button class="btn ghost card-btn" data-a="hpAddTask">+ План на ${shortDate(D)}</button></div>`}</section></div>`;
 }
-function hpSync(idx, smooth) {
+function hpCalHtml(sel) {
+  const { y, m } = U.hpCal, first = new Date(y, m, 1), start = (first.getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate(), tdy = today();
+  let cells = ''; for (let i = 0; i < start; i++) cells += '<span></span>';
+  for (let dd = 1; dd <= days; dd++) { const ds = ymd(new Date(y, m, dd)); cells += `<button data-a="hpPick" data-d="${ds}" class="${ds === sel ? 'sel' : ''} ${ds === tdy ? 'tdy' : ''}">${dd}</button>`; }
+  return `<div class="card hp-cal"><div class="row between"><button class="nav-btn sm" data-a="hpCalNav" data-d="-1">‹</button><b>${MONTHS[m]} ${y}</b><button class="nav-btn sm" data-a="hpCalNav" data-d="1">›</button></div>
+    <div class="hp-cal-g">${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map(w => `<span class="muted">${w}</span>`).join('')}${cells}</div>
+    ${sel !== tdy ? `<button class="chip card-bg" style="margin-top:8px" data-a="hpPick" data-d="${tdy}">Сьогодні</button>` : ''}</div>`;
+}
+function hpSync(idx) {
   const pg = $('#hpager'); if (!pg) return;
-  const w = pg.clientWidth, x = idx === undefined ? pg.scrollLeft / w : idx;
-  // tab strip follows the finger: active tab moves to the left, the other slides in
+  const w = pg.clientWidth, x = Math.max(0, Math.min(1, idx === undefined ? pg.scrollLeft / w : idx));
+  const pill = $('#hpPill'), strip = $('#hpStrip');
+  if (pill && strip) pill.style.transform = `translateX(${x * (strip.clientWidth - 8) / 2}px)`;
   $$('.hp-dots i').forEach((d, i) => d.classList.toggle('on', Math.round(x) === i));
-  // the active pill shows the date, the others their names — they crossfade while swiping
-  $$('#hpStrip button').forEach((el, i) => { const k = Math.max(0, 1 - Math.abs(x - i)); el.style.setProperty('--k', k.toFixed(3)); el.classList.toggle('on', Math.round(x) === i); });
   const secs = pg.children, k = Math.round(x); if (secs[k]) pg.style.height = secs[k].offsetHeight + 'px';
 }
 AFTER_RENDER.push(() => {
@@ -174,5 +188,11 @@ AFTER_RENDER.push(() => {
   pg.scrollLeft = U.hpIdx * pg.clientWidth; hpSync(U.hpIdx);
   let t = 0;
   pg.addEventListener('scroll', () => { hpSync(); clearTimeout(t); t = setTimeout(() => { const k = Math.round(pg.scrollLeft / pg.clientWidth); if (k !== U.hpIdx) { U.hpIdx = k; typeof haptic === 'function' && haptic('tick'); } hpSync(k); }, 90); }, { passive: true });
+});
+Object.assign(A, {
+  hpCal: () => { if (U.hpCal) U.hpCal = null; else { const d = parseYmd(U.hpDate || today()); U.hpCal = { y: d.getFullYear(), m: d.getMonth() }; } render(); },
+  hpCalNav: d => { let { y, m } = U.hpCal; m += +d.d; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } U.hpCal = { y, m }; render(); },
+  hpPick: d => { U.hpDate = d.d === today() ? '' : d.d; U.hpCal = null; render(); },
+  hpAddTask: () => taskSheet(null, U.hpDate)
 });
 A.hpGo = d => { const pg = $('#hpager'); if (!pg) return; U.hpIdx = +d.i; pg.scrollTo({ left: U.hpIdx * pg.clientWidth, behavior: 'smooth' }); };

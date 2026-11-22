@@ -715,13 +715,21 @@ async function pickDate(p, id, v) {
     await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
     await q.evaluate(() => { S.goals.push({ id: 'g1', type: 'habit', title: 'Читати', per: 'day', log: {}, attempts: [] }); S.tasks.push({ id: 't1', title: 'Помити авто', prio: 2, due: '', done: false, note: '' }); save(); go('home'); });
     await q.waitForTimeout(300);
-    ok(await q.locator('#hpager > section').count() === 2 && await q.locator('#hpStrip button').count() === 2 && await q.evaluate(() => getComputedStyle($('#hpStrip button.on .hp-date')).opacity === '1' && /\d\d\.\d\d\.\d{4}/.test($('#hpStrip button.on .hp-date').textContent)), 'смужка «Цілі | Плани», активна показує дату, крапки під нею');
+    ok(await q.locator('#hpager > section').count() === 2 && await q.evaluate(() => /\d\d\.\d\d\.\d{4}/.test($('#hpPill').textContent) && $$('#hpStrip > button:not(.hp-pill)').length === 2), 'смужка «Цілі | Плани» з плашкою-датою, крапки під нею');
     await q.click('#hpDots [data-i="1"]'); await q.waitForTimeout(700);
     ok(await q.evaluate(() => U.hpIdx === 1 && Math.abs($('#hpager').scrollLeft - $('#hpager').clientWidth) < 2), 'натискання на «Мої плани» перегортає сторінку');
     await q.evaluate(() => { const pg = $('#hpager'); pg.scrollLeft = 0; }); await q.waitForTimeout(400);
     ok(await q.evaluate(() => U.hpIdx === 0), 'перегортання назад (свайп) повертає «Цілі»');
     await q.click('[data-a=goalCheck]'); await q.waitForTimeout(200);
     ok(await q.evaluate(() => U.hpIdx === 0 && $('#hpager').scrollLeft < 2), 'після відмітки сторінка не стрибає');
+    await q.evaluate(() => { const pg = $('#hpager'); pg.style.scrollSnapType = 'none'; pg.scrollLeft = pg.clientWidth * .5; hpSync(); });
+    ok(await q.evaluate(() => { const m = $('#hpPill').style.transform.match(/translateX\(([\d.]+)px/); return m && +m[1] > 60 && +m[1] < 120; }), 'плашка з датою їде за пальцем (прокрутка, не зникнення)');
+    await q.evaluate(() => { const pg = $('#hpager'); pg.scrollLeft = 0; pg.style.scrollSnapType = ''; }); await q.waitForTimeout(300);
+    await q.click('#hpPill'); await q.waitForTimeout(150);
+    ok(await q.locator('.hp-cal').count() === 1, 'натискання на дату відкриває календар');
+    await q.evaluate(() => A.hpPick({ d: addDays(today(), -1) })); await q.waitForTimeout(150);
+    await q.click('[data-a=goalCheck]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => !$('.hp-cal') && S.goals[0].log[addDays(today(), -1)] === 1), 'обрано вчора — відмітка зараховується за вчора');
     ok(e2.length === 0, 'без JS-помилок (перегортання) ' + e2.join('; '));
     await q.close();
   }

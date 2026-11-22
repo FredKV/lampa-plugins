@@ -867,7 +867,7 @@ h2 { font-size: 20px; }
 
 /* Look-Car-like strip: names, the active one turns into today's date */
 .hp-strip { display: flex; background: var(--card); border-radius: 16px; padding: 4px; gap: 4px; box-shadow: var(--shadow); margin: 22px 0 0; }
-.hp-strip button { --k: 0; flex: 1; position: relative; height: 40px; border-radius: 12px; font-size: 14.5px; font-weight: 600; color: var(--muted); overflow: hidden;
+.hp-strip > button:not(.hp-pill) { --k: 0; flex: 1; position: relative; height: 40px; border-radius: 12px; font-size: 14.5px; font-weight: 600; color: var(--muted); overflow: hidden;
   background: color-mix(in srgb, var(--chip) calc(var(--k) * 100%), transparent); }
 .hp-strip .hp-name, .hp-strip .hp-date { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 4px; }
 .hp-strip .hp-name { opacity: calc(1 - var(--k)); transform: translateY(calc(var(--k) * -8px)); }
@@ -876,3 +876,17 @@ h2 { font-size: 20px; }
 .hp-dots { margin: 8px 0 10px; }
 .hp-badge { min-width: 18px; height: 18px; font-size: 11px; vertical-align: 1px; }
 .hp-dots i { background: var(--muted); opacity: .35; } .hp-dots i.on { opacity: 1; background: var(--text); }
+
+/* strip v2: names stay, the dark date pill slides between them */
+.hp-strip { position: relative; display: flex; }
+.hp-strip > button:not(.hp-pill) { flex: 1; height: 40px; border-radius: 12px; font-size: 14.5px; font-weight: 600; color: var(--muted); background: none; }
+.hp-strip > button:not(.hp-pill) span { display: inline-flex; align-items: center; gap: 4px; }
+.hp-strip .hp-pill { flex: none; position: absolute; left: 4px; top: 4px; height: 40px; width: calc(50% - 6px); border-radius: 12px; background: var(--primary); color: var(--onprimary);
+  font-size: 14.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; will-change: transform; z-index: 1; }
+.hp-chev { width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translateY(-2px); transition: transform .2s; }
+.hp-pill.open .hp-chev { transform: rotate(-135deg) translate(-2px, 0); }
+.hp-cal { margin: 8px 0 0; padding: 12px; animation: popIn .16s ease-out; }
+.hp-cal-g { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; text-align: center; font-size: 12px; }
+.hp-cal-g button { height: 36px; border-radius: 10px; font-size: 14.5px; }
+.hp-cal-g button.tdy { box-shadow: inset 0 0 0 1.5px var(--text); }
+.hp-cal-g button.sel { background: var(--primary); color: var(--onprimary); }

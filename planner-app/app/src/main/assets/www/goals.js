@@ -77,24 +77,24 @@ const MILESTONES_TIMES = [[1, '🌱', 'Перший раз'], [5, '✨', '5 ра
   [100, '🥈', '100 разів'], [150, '🥇', '150 разів'], [200, '💎', '200 разів'], [365, '👑', '365 разів']];
 const timesTxt = n => `${n} ${plural(n, 'раз', 'рази', 'разів')}`;
 
-function goalRow(g) {
-  const done = Goals.doneToday(g);
-  if (Goals.periodic(g)) return goalRowPeriodic(g, done);
+function goalRow(g, day) {
+  const D = day || today(), done = Goals.doneOn(g, D);
+  if (Goals.periodic(g)) return goalRowPeriodic(g, done, D);
   const big = g.type === 'quit' ? Goals.clean(g) : Goals.streak(g);
   const sub = g.type === 'quit' ? `${big} ${plural(big, 'день', 'дні', 'днів')} без` : big ? `серія ${big} ${plural(big, 'день', 'дні', 'днів')} 🔥` : 'почни серію сьогодні';
   return `<div class="item goal-row ${done ? 'checked' : ''}" data-id="${g.id}" ${done ? '' : 'data-swr="goalCheck"'}>
-    <button class="check round ${done ? 'on' : ''}" data-a="goalCheck" data-id="${g.id}" aria-label="Відмітити сьогодні"></button>
+    <button class="check round ${done ? 'on' : ''}" data-a="goalCheck" data-id="${g.id}" data-d="${D}" aria-label="Відмітити"></button>
     <div class="grow" style="min-width:0" data-a="goalOpen" data-id="${g.id}">
       <div class="title ellipsis">${g.type === 'quit' ? '🚭 ' : '🎯 '}${esc(g.title)}${!done ? '<i class="nag-dot"></i>' : ''}</div>
       <div class="meta">${esc(sub)}${g.min ? ` · ${esc(g.min)}` : ''}</div></div>
     <div class="goal-num" data-a="goalOpen" data-id="${g.id}">${big}</div></div>`;
 }
 
-function goalRowPeriodic(g, done) {
-  const got = Goals.doneIn(g, today()), met = got >= g.times, urgent = Goals.urgent(g), left = Goals.left(g);
+function goalRowPeriodic(g, done, D = today()) {
+  const got = Goals.doneIn(g, D), met = got >= g.times, urgent = D === today() && Goals.urgent(g, D), left = Goals.left(g, D);
   const sub = met ? `ціль ${Goals.perThis(g)} виконано ✓` : `${Goals.perThis(g)} ще ${timesTxt(left)}${urgent ? ' — сьогодні треба!' : ''}`;
   return `<div class="item goal-row ${done || met ? 'checked' : ''}" data-id="${g.id}" ${done ? '' : 'data-swr="goalCheck"'}>
-    <button class="check round ${done ? 'on' : ''}" data-a="goalCheck" data-id="${g.id}" aria-label="Відмітити сьогодні"></button>
+    <button class="check round ${done ? 'on' : ''}" data-a="goalCheck" data-id="${g.id}" data-d="${D}" aria-label="Відмітити"></button>
     <div class="grow" style="min-width:0" data-a="goalOpen" data-id="${g.id}">
       <div class="title ellipsis">🎯 ${esc(g.title)}${urgent ? '<i class="nag-dot"></i>' : ''}</div>
       <div class="meta">${esc(sub)}${g.min ? ` · ${esc(g.min)}` : ''}</div></div>
@@ -217,7 +217,8 @@ Object.assign(A, {
   goalTone: () => { S.settings.tone = S.settings.tone === 'spicy' ? 'soft' : 'spicy'; save(); render(); toast(S.settings.tone === 'spicy' ? 'Окей, буду жорсткою 😈' : 'Буду лагідною 🌸'); },
   goalCheck: d => {
     const g = S.goals.find(x => x.id === d.id); if (!g) return;
-    g.log = g.log || {}; const t = today();
+    g.log = g.log || {}; const t = d.d && d.d <= today() ? d.d : today();
+    if (t !== today()) { if (g.log[t]) delete g.log[t]; else g.log[t] = 1; save(); render(); toast(g.log[t] ? `Зараховано за ${shortDate(t)} ✓` : 'Відмітку знято'); return; }
     if (g.log[t]) { delete g.log[t]; save(); render(); return; }
     g.log[t] = 1; save(); render();
     if (Goals.periodic(g)) {
