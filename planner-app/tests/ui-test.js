@@ -536,6 +536,45 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8n. Анімації: вібрація, переходи, свайпи, числа');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.addInitScript(() => { window.__vib = []; window.AndroidBridge = { vibrate: k => window.__vib.push(k) }; });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => { S.tasks.push({ id: 't1', title: 'Помити авто', note: '', prio: 2, due: '', done: false }, { id: 't2', title: 'Купити квіти', note: '', prio: 2, due: '', done: false }); save(); go('home'); });
+    await q.waitForTimeout(150);
+    await q.click('[data-a=taskToggle][data-id=t1]'); await q.waitForTimeout(100);
+    ok(await q.evaluate(() => window.__vib[0] === 'tick' && S.tasks.find(t => t.id === 't1').done), 'галочка — легка вібрація');
+    const swipe = async (sel, dx) => q.evaluate(([sel, dx]) => {
+      const el = document.querySelector(sel), r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+      const t = cx => new Touch({ identifier: 7, target: el, clientX: cx, clientY: y });
+      el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [t(x)], changedTouches: [t(x)] }));
+      for (let i = 1; i <= 6; i++) el.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, touches: [t(x + dx * i / 6)], changedTouches: [t(x + dx * i / 6)] }));
+      el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [t(x + dx)] }));
+    }, [sel, dx]);
+    await swipe('.item[data-id=t2]', -160); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => !S.tasks.some(t => t.id === 't2') && $('#undoBar.show') && window.__vib.includes('heavy')), 'свайп ← видаляє, зʼявляється «Повернути»');
+    await q.click('#undoBar [data-a=undoSwipe]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => S.tasks.some(t => t.id === 't2')), '«Повернути» відновлює запис');
+    await swipe('.item[data-id=t2]', 160); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => S.tasks.find(t => t.id === 't2').done), 'свайп → позначає виконаним');
+    await q.evaluate(() => navigate('goals')); await q.waitForTimeout(60);
+    ok(await q.evaluate(() => $('#view').classList.contains('pg-fwd')), 'нова сторінка виїжджає справа');
+    await q.evaluate(() => back()); await q.waitForTimeout(60);
+    ok(await q.evaluate(() => $('#view').classList.contains('pg-back')), 'назад — зліва');
+    await q.evaluate(() => { U.seg.fin = 'overview'; go('finance'); }); await q.waitForTimeout(150);
+    await q.evaluate(() => { Fin.add({ type: 'inc', amount: 1000, cat: 'salary', note: '' }); save(); render(); }); await q.waitForTimeout(120);
+    const mid = await q.evaluate(() => $('.fin-tiles .ft b').textContent);
+    await q.waitForTimeout(700);
+    const end = await q.evaluate(() => $('.fin-tiles .ft b').textContent);
+    ok(/1\s?000/.test(end.replace(/ /g, ' ')) && mid !== end, `суми «перекручуються» до нового значення (${mid.trim()} → ${end.trim()})`);
+    await q.evaluate(() => toast('🎉 Ціль цього тижня виконано'));
+    ok(await q.evaluate(() => window.__vib.includes('success')), 'успіх — особлива вібрація (без конфеті)');
+    ok(e2.length === 0, 'без JS-помилок (анімації) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);

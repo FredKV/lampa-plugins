@@ -18,7 +18,7 @@ function taskRow(t) {
     due = `<span class="pill ${over ? 'red' : t.due === tdy ? 'blue' : ''}">${over ? 'Прострочено · ' : ''}${dateLabel(t.due, false)}</span>`;
   }
   const pr = PRIO[t.prio || 1];
-  return `<div class="item ${t.done ? 'done' : ''}">
+  return `<div class="item ${t.done ? 'done' : ''}" data-id="${t.id}" data-swr="taskToggle" data-swl="taskDel">
     <button class="check round ${t.done ? 'on' : ''}" data-a="taskToggle" data-id="${t.id}" aria-label="Виконано"></button>
     <div class="grow" data-a="taskEdit" data-id="${t.id}">
       <div class="title">${esc(t.title)}</div>

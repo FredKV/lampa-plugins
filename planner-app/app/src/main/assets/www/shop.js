@@ -35,7 +35,7 @@ function mergedItems(list) {
   return [...g.values()];
 }
 function itemRow(i, showDish) {
-  return `<div class="item ${i.bought ? 'done' : ''}">
+  return `<div class="item ${i.bought ? 'done' : ''}" data-id="${i.id}" data-swr="shopToggle" data-swl="shopDel">
     <button class="check ${i.bought ? 'on' : ''}" data-a="shopToggle" data-id="${i.id}" aria-label="Куплено"></button>
     <div class="grow" style="min-width:0" data-a="shopEdit" data-id="${i.id}"><div class="title">${esc(i.name)}</div>
       <div class="meta ellipsis">${esc([i.qty, i.store, i.buy, showDish && i.dish !== 'Інше' ? i.dish : ''].filter(Boolean).join(' · '))}</div></div>

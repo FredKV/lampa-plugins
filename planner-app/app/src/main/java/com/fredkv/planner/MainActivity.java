@@ -386,6 +386,22 @@ public class MainActivity extends Activity {
             return nm == null || nm.areNotificationsEnabled();
         }
 
+        /** Short haptic feedback: tick | heavy | success */
+        @JavascriptInterface
+        public void vibrate(String kind) {
+            try {
+                android.os.Vibrator v;
+                if (Build.VERSION.SDK_INT >= 31) v = ((android.os.VibratorManager) getSystemService(VIBRATOR_MANAGER_SERVICE)).getDefaultVibrator();
+                else v = (android.os.Vibrator) getSystemService(VIBRATOR_SERVICE);
+                if (v == null || !v.hasVibrator()) return;
+                android.os.VibrationEffect e;
+                if ("success".equals(kind)) e = android.os.VibrationEffect.createWaveform(new long[]{0, 18, 70, 30}, -1);
+                else if ("heavy".equals(kind)) e = android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_HEAVY_CLICK);
+                else e = android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_TICK);
+                v.vibrate(e);
+            } catch (Exception ignored) {}
+        }
+
         /** Schedules a test reminder in `sec` seconds (checks the alarm path, not only notifications). */
         @JavascriptInterface
         public void testAlarm(int sec) {
