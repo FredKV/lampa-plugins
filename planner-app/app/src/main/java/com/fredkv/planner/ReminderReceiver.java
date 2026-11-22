@@ -8,6 +8,6 @@ public class ReminderReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context c, Intent i) {
         Reminders.show(c, i.getIntExtra("nid", 1), Reminders.CHANNEL,
-                i.getStringExtra("title"), i.getStringExtra("text"));
+                i.getStringExtra("title"), i.getStringExtra("text"), i.getStringExtra("page"));
     }
 }

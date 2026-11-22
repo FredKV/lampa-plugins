@@ -24,10 +24,13 @@ final class Reminders {
         nm.deleteNotificationChannel("prices");
     }
 
-    private static PendingIntent pi(Context c, int code, String title, String text) {
+    private static PendingIntent pi(Context c, int code, String title, String text) { return pi(c, code, title, text, null); }
+
+    private static PendingIntent pi(Context c, int code, String title, String text, String page) {
         Intent i = new Intent(c, ReminderReceiver.class);
         i.putExtra("title", title);
         i.putExtra("text", text);
+        if (page != null && !page.isEmpty()) i.putExtra("page", page);
         i.putExtra("nid", code);
         return PendingIntent.getBroadcast(c, code, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
@@ -70,7 +73,7 @@ final class Reminders {
                 if (at <= now) continue;
                 int code = 1000 + Math.abs(o.optString("id").hashCode() % 1000000);
                 o.put("code", code);
-                schedule(am, at, pi(c, code, o.optString("title"), o.optString("text")));
+                schedule(am, at, pi(c, code, o.optString("title"), o.optString("text"), o.optString("page", "")));
                 saved.put(o);
             }
         } catch (Exception ignored) {}
@@ -79,12 +82,15 @@ final class Reminders {
 
     static void restore(Context c) { setAll(c, Store.get(c, "reminders", "[]")); }
 
-    static void show(Context c, int id, String channel, String title, String text) {
+    static void show(Context c, int id, String channel, String title, String text) { show(c, id, channel, title, text, null); }
+
+    static void show(Context c, int id, String channel, String title, String text, String page) {
         ensureChannels(c);
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         if (nm == null) return;
         Intent open = new Intent(c, MainActivity.class);
         open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        if (page != null && !page.isEmpty()) open.putExtra("page", page);
         PendingIntent p = PendingIntent.getActivity(c, id, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         android.app.Notification.Builder nb = new android.app.Notification.Builder(c, channel);
         if (title != null && !title.trim().isEmpty()) nb.setContentTitle(title);

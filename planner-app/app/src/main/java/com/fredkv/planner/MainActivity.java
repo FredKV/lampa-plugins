@@ -79,6 +79,7 @@ public class MainActivity extends Activity {
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         root.setBackgroundColor(prefs().getInt("bg_color", 0xFFE6F0FB));
         setContentView(root);
+        takePage(getIntent());
         if (cover.getVisibility() == View.VISIBLE) cover.postDelayed(this::hideCover, 5000);
 
         Window w = getWindow();
@@ -124,6 +125,7 @@ public class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 pageReady = true;
                 pushInsets();
+                openPendingPage();
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
@@ -194,6 +196,28 @@ public class MainActivity extends Activity {
 
     private void hideCover() {
         if (cover != null) cover.setVisibility(View.GONE);
+    }
+
+    private String pendingPage = null;
+
+    private void takePage(Intent i) {
+        if (i == null) return;
+        String p = i.getStringExtra("page");
+        if (p != null && p.matches("[a-zA-Z]{1,20}")) pendingPage = p;
+        i.removeExtra("page");
+    }
+
+    private void openPendingPage() {
+        if (pendingPage == null || !pageReady) return;
+        final String p = pendingPage; pendingPage = null;
+        web.evaluateJavascript("window.__openPage&&window.__openPage('" + p + "')", null);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        takePage(intent);
+        openPendingPage();
     }
 
     @Override

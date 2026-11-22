@@ -181,7 +181,9 @@ function vFinOverview() {
     <div class="row" style="gap:8px;margin-bottom:12px">
       <button class="btn sm card-btn grow" data-a="txNew" data-type="exp">− Витрата</button>
       <button class="btn sm card-btn grow" data-a="txNew" data-type="inc">+ Дохід</button>
+      <button class="btn sm card-btn grow" data-a="receiptStart">📷 Чек</button>
     </div>
+    ${U.finOff === 0 ? billsCard() : ''}
     ${lim && segOf('finPer', 'month') === 'month' && U.finOff === 0 ? `<div class="card" data-a="useg" data-key="fin" data-val="budget">
       <div class="row between"><b>Бюджет на місяць</b><span class="small muted">${money(spentM)} з ${money(lim)}</span></div>
       ${progressBar(spentM / lim * 100, spentM > lim ? 'var(--red)' : spentM > lim * .8 ? 'var(--amber)' : '')}

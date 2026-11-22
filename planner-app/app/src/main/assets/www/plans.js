@@ -135,6 +135,8 @@ VIEWS.home = () => {
     ${lim ? `<div class="card" data-a="tabSeg" data-tab="finance" data-key="fin" data-val="budget" style="cursor:pointer">
       <div class="row between"><b>Бюджет на ${MONTHS[n.getMonth()].toLowerCase()}</b><span class="small muted">${money(spent)} з ${money(lim)}</span></div>
       ${progressBar(spent / lim * 100, spent > lim ? 'var(--red)' : spent > lim * .8 ? 'var(--amber)' : '')}</div>` : ''}
+    ${[0, 1].includes(new Date().getDay()) && typeof weekStats === 'function' ? `<div class="card row" data-a="go" data-page="week" style="cursor:pointer;gap:12px"><div class="emoji">📊</div>
+      <div class="grow"><b>Підсумок тижня</b><div class="small muted">Витрати, цілі й що чекає далі</div></div><span class="muted">›</span></div>` : ''}
     ${typeof goalsHome === 'function' ? goalsHome() : ''}
     ${plansBlock()}`;
 };

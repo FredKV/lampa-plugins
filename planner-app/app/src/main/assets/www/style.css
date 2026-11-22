@@ -809,3 +809,6 @@ h2 { font-size: 20px; }
   background: #1f1f24; color: #fff; border-radius: 16px; padding: 12px 14px 12px 18px; box-shadow: 0 10px 30px rgba(0,0,0,.3); transform: translateY(140%); opacity: 0; transition: .25s; pointer-events: none; }
 .undo-bar.show { transform: none; opacity: 1; pointer-events: auto; }
 .undo-bar button { color: #7cb7ff; font-weight: 700; font-size: 15px; }
+
+.amber { color: var(--amber); }
+.chip.sm-chip { padding: 5px 10px; font-size: 12.5px; margin-top: 4px; }

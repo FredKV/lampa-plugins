@@ -575,6 +575,34 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8o. Платежі, чек, підсумок тижня');
+  {
+    const fx = n => path.join(__dirname, 'fixtures', n);
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.route('**/generativelanguage.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(
+      { ok: true, store: 'Сільпо', date: '', total: 412.6, cat: 'food', items: [{ name: 'Молоко', price: 46.9 }, { name: 'Хліб', price: 32 }, { name: 'Сир', price: 333.7 }] }) }] } }] }) }));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => { Keys.set('AQ.testkey1234567890abcdef'); U.seg.fin = 'overview'; go('finance'); }); await q.waitForTimeout(150);
+    await q.click('[data-a=billNew]'); await q.waitForTimeout(350);
+    await q.fill('#bAmount', '350'); await q.fill('#bName', 'Інтернет'); await q.evaluate(() => { $('#bNext').value = addDays(today(), 2); });
+    await q.click('[data-a=billSave]'); await q.waitForTimeout(200);
+    const b1 = await q.evaluate(() => ({ n: S.bills.length, cat: S.bills[0].cat, rem: REMINDER_PROVIDERS.flatMap(f => f()).filter(r => /^bill/.test(r.id)).map(r => ({ d: ymd(new Date(r.at)), page: r.page })), card: !!$('#view [data-a=billPay]') }));
+    ok(b1.n === 1 && b1.cat === 'utils' && b1.rem.length === 2 && b1.rem.every(r => r.page === 'bills') && b1.card, 'регулярний платіж: картка в «Огляді», нагадування за 3 дні й у день');
+    await q.click('#view [data-a=billPay]'); await q.waitForTimeout(200);
+    ok(await q.evaluate(() => S.tx.some(t => t.amount === 350 && /Інтернет/.test(t.note)) && S.bills[0].next === addMonthsYmd(addDays(today(), 2), 1)), '«Оплачено» → витрата і наступна дата через місяць');
+    const [fc] = await Promise.all([q.waitForEvent('filechooser'), q.click('[data-a=receiptStart]')]); await fc.setFiles(fx('product.jpg'));
+    await q.waitForSelector('#rcTotal', { timeout: 8000 }); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => $('#rcTotal').value === '412.6' && $('#rcStore').value === 'Сільпо' && /Позиції в чеку \(3\)/.test($('#sheetBody').textContent)), 'чек прочитано: сума, магазин, 3 позиції');
+    await q.click('[data-a=receiptSave]'); await q.waitForTimeout(200);
+    ok(await q.evaluate(() => { const t = S.tx.find(x => x.amount === 412.6); return t && t.cat === 'food' && /Сільпо: Молоко, Хліб, Сир/.test(t.note) && !!t.photo; }), 'витрату з чека записано разом із фото чека');
+    await q.evaluate(() => { window.__openPage('week'); }); await q.waitForTimeout(200);
+    ok(await q.evaluate(() => U.stack.at(-1).page === 'week' && /витрачено/.test($('#view').textContent)), 'сповіщення «Підсумок тижня» відкриває сторінку підсумку');
+    ok(await q.evaluate(() => REMINDER_PROVIDERS.flatMap(f => f()).some(r => /^week-/.test(r.id) && new Date(r.at).getDay() === 0 && new Date(r.at).getHours() === 19)), 'підсумок тижня — неділя, 19:00');
+    ok(e2.length === 0, 'без JS-помилок (платежі/чек/тиждень) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);

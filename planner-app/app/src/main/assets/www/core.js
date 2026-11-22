@@ -91,7 +91,7 @@ const DEF = {
   tasks: [], events: [], tx: [], shop: [], recipes: [],
   customCats: [], budget: { total: 0, cats: {} },
   cycle: { periods: [], remind: true, remindDays: 2, hide: false },
-  people: [], wishes: [], favs: [], debts: [], goals: [],
+  people: [], wishes: [], favs: [], debts: [], goals: [], bills: [],
   prices: { city: '', stores: null, lastRun: null },
   weather: { mode: 'auto', place: null },
   settings: { model: 'gemini-2.5-flash', theme: 'auto', name: '', pin: '', bio: false, notif: true, avatar: '', tone: 'spicy' }
@@ -158,7 +158,7 @@ function migrate(d) {
   out.cycle = { ...DEF.cycle, ...(d.cycle || {}) };
   out.prices = { ...DEF.prices, ...(d.prices || {}) };
   out.weather = { ...DEF.weather, ...(d.weather || {}) };
-  ['tasks', 'events', 'tx', 'shop', 'recipes', 'customCats', 'people', 'wishes', 'favs', 'debts', 'goals'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+  ['tasks', 'events', 'tx', 'shop', 'recipes', 'customCats', 'people', 'wishes', 'favs', 'debts', 'goals', 'bills'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   out.v = SCHEMA;
   return out;
 }
@@ -624,7 +624,7 @@ const Lock = {
     this.bioBusy = true;
     Bio.ask('Розблокувати ЛАД').then(ok => { this.bioBusy = false; if (ok && this.locked) this.hide(); });
   },
-  hide() { $('#lock').classList.remove('show'); this.locked = false; },
+  hide() { $('#lock').classList.remove('show'); this.locked = false; if (window.__afterUnlock) { const f = window.__afterUnlock; window.__afterUnlock = null; setTimeout(f, 50); } },
   title() { return this.mode === 'unlock' ? 'Введіть PIN-код' : this.first ? 'Повторіть PIN-код' : 'Новий PIN-код (4 цифри)'; },
   draw(err = '') {
     const name = S.settings.name, unlock = this.mode === 'unlock';
