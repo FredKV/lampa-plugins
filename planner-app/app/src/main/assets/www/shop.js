@@ -70,7 +70,7 @@ function vShop() {
   const merged = mergedItems(toBuy);
   const mergedCount = U.shopMerge && merged.length < toBuy.length ? ` → ${merged.length}` : '';
   const head = `${shopReceipt(S.shop, U.shopMode === 'all' ? mergedCount : '')}
-      <div class="sum-acts"><button class="chip card-bg grow" data-a="go" data-page="prices">🔎 Продукти для страви</button>
+      <div class="sum-acts"><button class="chip card-bg grow" data-a="go" data-page="prices">🔎 Для страви</button><button class="chip card-bg grow" data-a="scanStart">📷 Сканувати цінник</button>
         ${U.shopMode === 'all' && toBuy.length ? `<button class="chip ${U.shopMerge ? 'on' : 'card-bg'}" data-a="shopMerge">🔗 ${U.shopMerge ? 'Обʼєднано' : 'Обʼєднати'}</button>` : ''}</div>
     <div class="seg"><button data-a="shopMode" data-v="dishes" class="${U.shopMode === 'dishes' ? 'on' : ''}">Страви</button><button data-a="shopMode" data-v="all" class="${U.shopMode === 'all' ? 'on' : ''}">Усі продукти</button></div>`;
   if (!S.shop.length) return head + emptyCard('🛒', 'Список покупок порожній.<br>Додайте товар «+» або складіть список для страви з реальними цінами магазинів.', { label: 'Підібрати продукти для страви', attrs: 'data-a="go" data-page="prices"' });

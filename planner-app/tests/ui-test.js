@@ -261,7 +261,7 @@ async function pickDate(p, id, v) {
 
   console.log('8. Покупки / ще / налаштування / PIN');
   const sl = await p.evaluate(() => { const c = $('.sum-tiles'); return c ? { h: c.getBoundingClientRect().height, t: c.textContent + $('.sum-acts').textContent, n: $$('.sum-tiles .card').length } : null; });
-  ok(sl && sl.n === 2 && sl.h < 120 && /До сплати/.test(sl.t) && /У кошику/.test(sl.t) && /Продукти для страви/.test(sl.t), `підсумок покупок — дві плитки (${sl && Math.round(sl.h)}px)`);
+  ok(sl && sl.n === 2 && sl.h < 120 && /До сплати/.test(sl.t) && /У кошику/.test(sl.t) && /Для страви/.test(sl.t) && /Сканувати цінник/.test(sl.t), `підсумок покупок — дві плитки (${sl && Math.round(sl.h)}px)`);
   await p.evaluate(() => { S.shop.push({ id: 'v1', name: 'Картопля', qty: '800 г', price: 20, dish: 'Вареники з картоплею', store: 'АТБ', bought: false }, { id: 'v2', name: 'Борошно', qty: '500 г', price: 16, dish: 'Вареники з картоплею', bought: false }); save(); U.shopMode = 'dishes'; render(); });
   const dl = await p.evaluate(() => $$('#view [data-page=shopDish]').map(e => e.textContent.replace(/\s+/g, ' ').trim()));
   ok(dl.length >= 3 && dl.some(t => /Борщ український/.test(t) && /\/10 куплено/.test(t)) && dl.some(t => /Вареники/.test(t)), 'страви окремими картками з прогресом: ' + dl.length);
@@ -474,6 +474,36 @@ async function pickDate(p, id, v) {
     });
     ok(bodies[0] && bodies[0].b.generationConfig.thinkingConfig && bodies[0].b.generationConfig.thinkingConfig.thinkingBudget === 0, 'gemini-2.5: «думання» вимкнено — відповідає швидше');
     ok(res.src === 'builtin' && res.n > 3, `Gemini завис/перевантажений → вбудований рецепт карбонари за ${Math.round(res.ms / 1000)} с`);
+    await q.close();
+  }
+
+  console.log('8l. Сканер цінників');
+  {
+    const fx = n => path.join(__dirname, 'fixtures', n);
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    const tags = [
+      { name: 'Молоко 2,5%', brand: 'Галичина', price: 46.9, oldPrice: 52.5, weighted: false, size: '900 г', store: 'АТБ', ok: true },
+      { name: 'Банани', brand: '', price: 64.9, oldPrice: 0, weighted: true, size: '', store: '', ok: true }];
+    let k = 0;
+    await q.route('**/generativelanguage.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(tags[k++]) }] } }] }) }));
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => { Keys.set('AQ.testkey1234567890abcdef'); go('shop'); }); await q.waitForTimeout(150);
+    const [fc] = await Promise.all([q.waitForEvent('filechooser'), q.click('[data-a=scanStart]')]); await fc.setFiles(fx('product.jpg'));
+    await q.waitForSelector('#scName', { timeout: 8000 }); await q.waitForTimeout(200);
+    const f1 = await q.evaluate(() => ({ n: $('#scName').value, p: $('#scPrice').value, st: $('#scStore').value, sale: !!$('#sheetBody .small.green') }));
+    ok(/Молоко/.test(f1.n) && f1.p === '46.9' && f1.st === 'АТБ' && f1.sale, 'цінник прочитано: назва, ціна, магазин, акція');
+    await q.screenshot({ path: shots + '19-scan.png' });
+    const [fc2] = await Promise.all([q.waitForEvent('filechooser'), q.click('[data-a=scanAdd][data-more="1"]')]); await fc2.setFiles(fx('product.jpg'));
+    await q.waitForSelector('#scName', { timeout: 8000 }); await q.waitForTimeout(200);
+    ok(await q.evaluate(() => S.shop.length === 1 && S.shop[0].bought && S.shop[0].price === 46.9 && $('#scStore').value === 'АТБ' && /кг/.test($('#sheetBody').textContent)), '«У кошик і ще» → одразу наступний цінник, магазин запамʼятовано; ваговий товар питає вагу');
+    await q.click('[data-a=scanAdd]:not([data-more])'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => S.shop.length === 1), 'без ваги ваговий товар не додається');
+    await q.fill('#scQty', '1,2'); await q.click('[data-a=scanAdd]:not([data-more])'); await q.waitForTimeout(200);
+    ok(await q.evaluate(() => S.shop.length === 2 && S.shop[1].price === 77.88 && S.shop[1].qty === '1,2 кг'), 'банани 1,2 кг × 64,90 = 77,88 ₴ у кошику');
+    await q.evaluate(() => A.shopToExpense()); await q.waitForTimeout(200);
+    ok(await q.evaluate(() => S.tx.some(t => t.amount === 124.78 && /АТБ/.test(t.note)) && !S.shop.length), 'кошик → витрата 124,78 ₴');
+    ok(e2.length === 0, 'без JS-помилок (сканер) ' + e2.join('; '));
     await q.close();
   }
 
