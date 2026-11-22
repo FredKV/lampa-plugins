@@ -246,7 +246,11 @@ function applyWidgetTicks() {
   if (!Bridge || !Bridge.takeWidgetToggles) return;
   let q = []; try { q = JSON.parse(Bridge.takeWidgetToggles() || '[]'); } catch (e) { }
   if (!q.length) return;
-  q.forEach(t => { const g = S.goals.find(x => x.id === t.id); if (!g) return; g.log = g.log || {}; if (t.on) g.log[t.date] = 1; else delete g.log[t.date]; });
+  q.forEach(t => {
+    const g = S.goals.find(x => x.id === t.id); if (!g) return; g.log = g.log || {};
+    if (t.slip) { g.slips = g.slips || {}; g.slips[t.date] = 1; delete g.log[t.date]; return; }
+    if (t.on) { g.log[t.date] = 1; if (g.slips) delete g.slips[t.date]; } else delete g.log[t.date];
+  });
   save(); render();
 }
 (() => { const s0 = syncReminders; window.syncReminders = syncReminders = () => { s0(); pushWidget(); }; })();

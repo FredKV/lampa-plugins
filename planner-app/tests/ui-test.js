@@ -901,6 +901,28 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8na. Кнопки в пуші цілей');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.addInitScript(() => { window.__q = []; window.AndroidBridge = { takeWidgetToggles: () => { const r = JSON.stringify(window.__q); window.__q = []; return r; } }; });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    const r = await q.evaluate(() => {
+      S.settings.name = 'Федір';
+      S.goals.push({ id: 'g1', type: 'quit', title: 'Алкоголь', start: addDays(today(), -5), log: {}, attempts: [], time: '20:00' },
+        { id: 'g2', type: 'habit', title: 'Біг', per: 'day', log: {}, attempts: [], time: '20:00' }); save();
+      const rem = REMINDER_PROVIDERS.flatMap(f => f()).filter(x => x.goal);
+      const q1 = rem.find(x => x.goal === 'g1'), h1 = rem.find(x => x.goal === 'g2');
+      window.__q = [{ id: 'g1', date: today(), on: true, slip: true }, { id: 'g2', date: today(), on: true }];
+      applyWidgetTicks();
+      return { q1: [q1.a1, q1.a2, !!q1.date], h1: [h1.a1, h1.a2], slip: Goals.slipOn(S.goals[0], today()), done: Goals.doneOn(S.goals[1], today()) };
+    });
+    ok(r.q1[0] === '✓ Відмітити' && r.q1[1] === 'Зірвався' && r.q1[2] && r.h1[0] === '✓ Відмітити' && !r.h1[1], 'у пуші цілі-відмови — «✓ Відмітити» і «Зірвався», у звички — «✓ Відмітити» ' + JSON.stringify(r));
+    ok(r.slip && r.done, 'натискання в пуші застосовуються в додатку (зрив — червоний день, відмітка — галочка)');
+    ok(e2.length === 0, 'без JS-помилок (кнопки в пуші) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8w. Gemini: старі моделі вимкнено (404) → знаходить доступну');
   {
     const q = await b.newPage({ viewport: { width: 390, height: 844 } });

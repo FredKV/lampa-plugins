@@ -261,7 +261,8 @@ REMINDER_PROVIDERS.push(() => {
           ? `Уже ${Goals.clean(g) + k} ${plural(Goals.clean(g) + k, 'день', 'дні', 'днів')} без зривів! Відміть сьогоднішній день 💚`
           : Goals.periodic(g) && !urgent ? `${Goals.perThis(g)[0].toUpperCase() + Goals.perThis(g).slice(1)} ще ${timesTxt(Goals.left(g, d))} — може, сьогодні? 💪`
           : pick(NAG[tone], seed)(g.title);
-        out.push({ id: `goal-${g.id}-${d}-${i}`, at: t.getTime(), title: `${goalIconTxt(g)} ${g.title}`, text });
+        out.push({ id: `goal-${g.id}-${d}-${i}`, at: t.getTime(), title: `${goalIconTxt(g)} ${g.title}`, text, goal: g.id, date: d,
+          a1: '✓ Відмітити', a2: g.type === 'quit' ? G('Зірвався', 'Зірвалась') : '' });
         if (g.type === 'quit' || tone === 'soft' || !urgent) break; // only spicy habits that can't wait nag repeatedly
       }
     }

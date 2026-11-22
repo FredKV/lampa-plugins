@@ -35,13 +35,57 @@ final class Reminders {
 
     private static PendingIntent pi(Context c, int code, String title, String text) { return pi(c, code, title, text, null); }
 
-    private static PendingIntent pi(Context c, int code, String title, String text, String page) {
+    private static PendingIntent pi(Context c, int code, String title, String text, String page) { return pi(c, code, title, text, page, null); }
+
+    private static PendingIntent pi(Context c, int code, String title, String text, String page, JSONObject o) {
         Intent i = new Intent(c, ReminderReceiver.class);
         i.putExtra("title", title);
         i.putExtra("text", text);
         if (page != null && !page.isEmpty()) i.putExtra("page", page);
         i.putExtra("nid", code);
+        if (o != null && !o.optString("goal").isEmpty()) {
+            i.putExtra("goal", o.optString("goal"));
+            i.putExtra("gdate", o.optString("date"));
+            i.putExtra("a1", o.optString("a1"));
+            i.putExtra("a2", o.optString("a2"));
+        }
         return PendingIntent.getBroadcast(c, code, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    static final String ACTION_GOAL = "com.fredkv.planner.GOAL_ACTION";
+
+    /** «✓ Відмітити» / «Зірвався» pressed in a notification: queue it for the app (like widget taps) and drop the rest of today's nags. */
+    static void goalAction(Context c, Intent i) {
+        String gid = i.getStringExtra("goal"), d = i.getStringExtra("gdate"), op = i.getStringExtra("op");
+        if (gid == null || d == null) return;
+        try {
+            JSONArray q = new JSONArray(Store.get(c, "w_toggles", "[]"));
+            JSONObject e = new JSONObject().put("id", gid).put("date", d).put("on", true);
+            if ("slip".equals(op)) e.put("slip", true);
+            q.put(e);
+            Store.put(c, "w_toggles", q.toString());
+        } catch (Exception ignored) {}
+        AlarmManager am = c.getSystemService(AlarmManager.class);
+        try {
+            JSONArray old = new JSONArray(Store.get(c, "reminders", "[]")), keep = new JSONArray();
+            for (int k = 0; k < old.length(); k++) {
+                JSONObject o = old.getJSONObject(k);
+                if (am != null && gid.equals(o.optString("goal")) && d.equals(o.optString("date"))) am.cancel(pi(c, o.optInt("code"), o.optString("title"), o.optString("text")));
+                else keep.put(o);
+            }
+            Store.put(c, "reminders", keep.toString());
+        } catch (Exception ignored) {}
+        NotificationManager nm = c.getSystemService(NotificationManager.class);
+        if (nm != null) nm.cancel(i.getIntExtra("nid", 0));
+        android.widget.Toast.makeText(c, "slip".equals(op) ? "Зрив відмічено. Завтра новий день 💚" : "Відмічено ✓", android.widget.Toast.LENGTH_SHORT).show();
+    }
+
+    private static android.app.Notification.Action goalBtn(Context c, int nid, String label, String op, Intent src) {
+        Intent a = new Intent(c, ReminderReceiver.class).setAction(ACTION_GOAL);
+        a.putExtra("goal", src.getStringExtra("goal")); a.putExtra("gdate", src.getStringExtra("gdate"));
+        a.putExtra("op", op); a.putExtra("nid", nid);
+        PendingIntent p = PendingIntent.getBroadcast(c, nid * 2 + ("slip".equals(op) ? 1 : 0), a, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return new android.app.Notification.Action.Builder(null, label, p).build();
     }
 
     /** Exact alarm when allowed (on time even in Doze), otherwise the best inexact one. */
@@ -82,7 +126,7 @@ final class Reminders {
                 if (at <= now) continue;
                 int code = 1000 + Math.abs(o.optString("id").hashCode() % 1000000);
                 o.put("code", code);
-                schedule(am, at, pi(c, code, o.optString("title"), o.optString("text"), o.optString("page", "")));
+                schedule(am, at, pi(c, code, o.optString("title"), o.optString("text"), o.optString("page", ""), o));
                 saved.put(o);
             }
         } catch (Exception ignored) {}
@@ -93,7 +137,9 @@ final class Reminders {
 
     static void show(Context c, int id, String channel, String title, String text) { show(c, id, channel, title, text, null); }
 
-    static void show(Context c, int id, String channel, String title, String text, String page) {
+    static void show(Context c, int id, String channel, String title, String text, String page) { show(c, id, channel, title, text, page, null); }
+
+    static void show(Context c, int id, String channel, String title, String text, String page, Intent src) {
         ensureChannels(c);
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         if (nm == null) return;
@@ -103,6 +149,11 @@ final class Reminders {
         PendingIntent p = PendingIntent.getActivity(c, id, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         android.app.Notification.Builder nb = new android.app.Notification.Builder(c, channel);
         if (title != null && !title.trim().isEmpty()) nb.setContentTitle(title);
+        if (src != null && src.getStringExtra("goal") != null) {
+            String a1 = src.getStringExtra("a1"), a2 = src.getStringExtra("a2");
+            if (a1 != null && !a1.isEmpty()) nb.addAction(goalBtn(c, id, a1, "check", src));
+            if (a2 != null && !a2.isEmpty()) nb.addAction(goalBtn(c, id, a2, "slip", src));
+        }
         android.app.Notification n = nb
                 .setSmallIcon(R.drawable.ic_notif)
                 .setContentText(text)
