@@ -954,3 +954,4 @@ details.fold .list.flat { margin: 0 0 8px; }
 [data-theme="dark"] .bd-days { background: rgba(232,123,164,.2); color: #ff8ec0; }
 [data-theme="dark"] .pill.blue { background: rgba(110,150,255,.2); color: #9db7ff; }
 [data-theme="dark"] .hint.info { background: rgba(110,150,255,.14); color: #b6c8ff; }
+.shop-merge { margin: 4px 6px 8px; }

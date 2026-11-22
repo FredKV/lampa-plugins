@@ -261,7 +261,7 @@ async function pickDate(p, id, v) {
 
   console.log('8. Покупки / ще / налаштування / PIN');
   const sl = await p.evaluate(() => { const c = $('.sum-tiles'); return c ? { h: c.getBoundingClientRect().height, t: c.textContent + $('.sum-acts').textContent, n: $$('.sum-tiles .card').length } : null; });
-  ok(sl && sl.n === 2 && sl.h < 120 && /До сплати/.test(sl.t) && /У кошику/.test(sl.t) && /Для страви/.test(sl.t) && /Сканувати цінник/.test(sl.t), `підсумок покупок — дві плитки (${sl && Math.round(sl.h)}px)`);
+  ok(sl && sl.n === 2 && sl.h < 120 && /До сплати/.test(sl.t) && /У кошику/.test(sl.t) && /Для страви/.test(sl.t) && /Сканувати/.test(sl.t), `підсумок покупок — дві плитки (${sl && Math.round(sl.h)}px)`);
   await p.evaluate(() => { S.shop.push({ id: 'v1', name: 'Картопля', qty: '800 г', price: 20, dish: 'Вареники з картоплею', store: 'АТБ', bought: false }, { id: 'v2', name: 'Борошно', qty: '500 г', price: 16, dish: 'Вареники з картоплею', bought: false }); save(); U.shopMode = 'dishes'; render(); });
   const dl = await p.evaluate(() => $$('#view [data-page=shopDish]').map(e => e.textContent.replace(/\s+/g, ' ').trim()));
   ok(dl.length >= 3 && dl.some(t => /Борщ український/.test(t) && /\/10 куплено/.test(t)) && dl.some(t => /Вареники/.test(t)), 'страви окремими картками з прогресом: ' + dl.length);
@@ -272,6 +272,7 @@ async function pickDate(p, id, v) {
   ok(mg.potato && /×2 страви/.test(mg.potato) && /Борщ український · Вареники з картоплею/.test(mg.potato), 'усі продукти: однакові обʼєднано (' + (mg.potato || '').trim().slice(0, 60) + ')');
   await p.click('[data-a=shopToggleMany]'); await p.waitForTimeout(100);
   ok(await p.evaluate(() => S.shop.filter(i => /картопл/i.test(i.name)).every(i => i.bought)), 'одна галочка відмічає продукт в усіх стравах');
+  ok(await p.evaluate(() => { const r = $('.sum-acts').getBoundingClientRect(); return $$('.sum-acts > *').every(c => { const q = c.getBoundingClientRect(); return q.right <= r.right + 1 && c.scrollWidth <= c.clientWidth + 1; }) && !$('.sum-acts [data-a=shopMerge]'); }), 'кнопки під підсумком не накладаються, «Обʼєднати» — окремим рядком над списком');
   await p.click('[data-a=shopMerge]'); await p.waitForTimeout(100);
   ok(await p.evaluate(() => !U.shopMerge && $$('#view [data-a=shopMergedEdit]').length === 0), 'кнопка вимикає обʼєднання');
   await p.evaluate(() => { U.shopMerge = true; U.shopMode = 'dishes'; render(); });

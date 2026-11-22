@@ -70,8 +70,7 @@ function vShop() {
   const merged = mergedItems(toBuy);
   const mergedCount = U.shopMerge && merged.length < toBuy.length ? ` → ${merged.length}` : '';
   const head = `${shopReceipt(S.shop, U.shopMode === 'all' ? mergedCount : '')}
-      <div class="sum-acts"><button class="chip card-bg grow" data-a="go" data-page="prices">🔎 Для страви</button><button class="chip card-bg grow" data-a="scanStart">📷 Сканувати цінник</button>
-        ${U.shopMode === 'all' && toBuy.length ? `<button class="chip ${U.shopMerge ? 'on' : 'card-bg'}" data-a="shopMerge">🔗 ${U.shopMerge ? 'Обʼєднано' : 'Обʼєднати'}</button>` : ''}</div>
+      <div class="sum-acts"><button class="chip card-bg grow" data-a="go" data-page="prices">🔎 Для страви</button><button class="chip card-bg grow" data-a="scanStart">📷 Сканувати</button></div>
     <div class="seg"><button data-a="shopMode" data-v="dishes" class="${U.shopMode === 'dishes' ? 'on' : ''}">Страви</button><button data-a="shopMode" data-v="all" class="${U.shopMode === 'all' ? 'on' : ''}">Усі продукти</button></div>`;
   if (!S.shop.length) return head + emptyCard('🛒', 'Список покупок порожній.<br>Додайте товар «+» або складіть список для страви з реальними цінами магазинів.', { label: 'Підібрати продукти для страви', attrs: 'data-a="go" data-page="prices"' });
   if (U.shopMode === 'dishes') {
@@ -83,7 +82,9 @@ function vShop() {
       ${boughtActions()}`;
   }
   const bought = S.shop.filter(i => i.bought);
-  return head + `${merged.length ? `<div class="list">${merged.map(mergedRow).join('')}</div>` : `<div class="card empty" style="padding:20px">Усе куплено ✓</div>`}
+  const mergeBar = toBuy.length > 1 ? `<div class="row between shop-merge"><span class="small muted">До купівлі · ${merged.length}</span>
+      <button class="link small" data-a="shopMerge">${U.shopMerge ? 'Показати окремо' : 'Обʼєднати однакові'}</button></div>` : '';
+  return head + `${mergeBar}${merged.length ? `<div class="list">${merged.map(mergedRow).join('')}</div>` : `<div class="card empty" style="padding:20px">Усе куплено ✓</div>`}
     ${bought.length ? `<div class="group-h"><span>✅ У кошику</span><span>${money(bought.reduce((a, i) => a + num(i.price), 0))}</span></div><div class="list">${mergedItems(bought).map(mergedRow).join('')}</div>` : ''}
     ${boughtActions()}`;
 }
