@@ -72,6 +72,8 @@ const ICONS = {
   finger: `<span class="fp-mask" aria-hidden="true"></span>`,
   backspace: `<svg viewBox="0 0 24 24" ${P}><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/></svg>`,
   trash: `<svg viewBox="0 0 24 24" ${P}><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg>`,
+  mic: `<svg viewBox="0 0 24 24" ${P}><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/></svg>`,
+  inbox: `<svg viewBox="0 0 24 24" ${P}><path d="M12 3v11"/><path d="M7.5 9.5L12 14l4.5-4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>`,
   share: `<svg viewBox="0 0 24 24" ${P}><path d="M12 15V3"/><path d="M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>`,
   ext: `<svg viewBox="0 0 24 24" ${P}><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>`,
   pin: `<svg viewBox="0 0 24 24" ${P}><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`,
@@ -220,6 +222,7 @@ function renderHeader(title, actions) {
   head.innerHTML = `<div class="grow">
       <div class="hello">${esc(S.settings.name ? `${g}, ${S.settings.name}` : g)}</div>
       <div class="sub">${wd[0].toUpperCase() + wd.slice(1)}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}</div></div>
+    <button class="icon-btn" data-a="voiceStart" aria-label="Додати голосом" style="margin-right:8px">${ICONS.mic}</button>
     ${S.settings.avatar ? `<button class="head-ava ph-box" data-a="settings" aria-label="Налаштування"><img data-photo="${esc(S.settings.avatar)}" alt=""></button>` : `<button class="icon-btn" data-a="settings" aria-label="Налаштування">${ICONS.gear}</button>`}`;
 }
 function render() {

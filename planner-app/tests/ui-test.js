@@ -603,6 +603,52 @@ async function pickDate(p, id, v) {
     await q.close();
   }
 
+  console.log('8p. Голос, спільний список, автокопія');
+  {
+    const q = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const e2 = []; q.on('pageerror', e => e2.push(e.message));
+    await q.addInitScript(() => {
+      window.__said = ['завтра о 10 стоматолог', 'витратила 250 на каву', 'купити молоко, хліб і яйця'];
+      window.__bk = { uri: false, data: '' }; window.__shared = [];
+      window.AndroidBridge = {
+        voice: () => setTimeout(() => window.__voiceCb(window.__said.shift() || ''), 50),
+        share: t => window.__shared.push(t),
+        pickBackup: () => { window.__bk.uri = true; setTimeout(() => window.__bkPicked(true), 30); }, hasBackup: () => window.__bk.uri, backupName: () => 'LAD-backup.json',
+        writeBackup: j => { window.__bk.data = j; return true; }, forgetBackup: () => { window.__bk.uri = false; }, openBackup: () => setTimeout(() => window.__bkOpened(window.__bk.data), 30)
+      };
+    });
+    await q.goto(URL); await q.evaluate(() => { localStorage.clear(); }); await q.reload();
+    await q.evaluate(() => go('home')); await q.waitForTimeout(150);
+    // no Gemini key → offline parser
+    await q.click('#top [data-a=voiceStart]'); await q.waitForSelector('[data-a=vcSave]', { timeout: 4000 });
+    ok(await q.evaluate(() => U.vc.r.kind === 'event' && U.vc.r.date === addDays(today(), 1) && U.vc.r.time === '10:00' && /Стоматолог/.test(U.vc.r.title)), '«завтра о 10 стоматолог» → подія на завтра о 10:00');
+    await q.click('[data-a=vcSave]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => S.events.some(e => /Стоматолог/.test(e.title) && e.time === '10:00')), 'подію додано');
+    await q.click('#top [data-a=voiceStart]'); await q.waitForSelector('[data-a=vcSave]', { timeout: 4000 });
+    await q.click('[data-a=vcSave]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => S.tx.some(t => t.type === 'exp' && t.amount === 250)), '«витратила 250 на каву» → витрата 250 ₴');
+    await q.click('#top [data-a=voiceStart]'); await q.waitForSelector('[data-a=vcSave]', { timeout: 4000 });
+    await q.click('[data-a=vcSave]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => ['молоко', 'хліб', 'яйця'].every(n => S.shop.some(i => i.name === n))), '«купити молоко, хліб і яйця» → 3 товари в покупки');
+    // shared list
+    await q.evaluate(() => go('shop')); await q.waitForTimeout(150);
+    await q.click('#top [data-a=shopShare]'); await q.waitForTimeout(100);
+    const sent = await q.evaluate(() => window.__shared.at(-1));
+    ok(/☐ молоко/.test(sent) && /☐ яйця/.test(sent), 'список покупок надіслано текстом');
+    await q.click('#top [data-a=shopPaste]'); await q.waitForTimeout(350);
+    await q.fill('#plText', '🛒 Список покупок\n☐ Сметана — 300 г\n☐ Кріп\n\nНадіслано з ЛАД'); await q.click('[data-a=shopPasteDo]'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => S.shop.some(i => i.name === 'Сметана' && i.qty === '300 г') && S.shop.some(i => i.name === 'Кріп') && !S.shop.some(i => /Надіслано/.test(i.name))), 'вставлений список додано в покупки');
+    // backup
+    await q.evaluate(() => settingsSheet()); await q.waitForTimeout(250);
+    await q.click('[data-a=bkPick]'); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => { const d = JSON.parse(window.__bk.data); return d.app === 'tanichka' && d.data.shop.length >= 5 && !!S.settings.lastBackup; }), 'автокопію увімкнено, перша копія записана у файл');
+    await q.evaluate(() => { S.shop = []; save(); closeSheet(); settingsSheet(); }); await q.waitForTimeout(300);
+    await q.click('[data-a=bkRestore]'); await q.waitForTimeout(400);
+    ok(await q.evaluate(() => $('#impText') && $('#impText').value.length > 100), '«Відновити з файлу» підставляє копію в імпорт');
+    ok(e2.length === 0, 'без JS-помилок (голос/список/копія) ' + e2.join('; '));
+    await q.close();
+  }
+
   console.log('8b. Улюблені продукти');
   {
     const fx = n => path.join(__dirname, 'fixtures', n);

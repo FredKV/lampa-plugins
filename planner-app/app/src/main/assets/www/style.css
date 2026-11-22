@@ -812,3 +812,6 @@ h2 { font-size: 20px; }
 
 .amber { color: var(--amber); }
 .chip.sm-chip { padding: 5px 10px; font-size: 12.5px; margin-top: 4px; }
+
+.vc-said { font-size: 17px; font-style: italic; color: var(--muted); margin: -4px 2px 12px; }
+.head-actions .icon-btn + .icon-btn { margin-left: 8px; }

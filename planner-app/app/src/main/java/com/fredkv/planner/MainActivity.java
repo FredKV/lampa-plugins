@@ -43,6 +43,9 @@ public class MainActivity extends Activity {
     private static final int REQ_FILE = 41;
     private static final int REQ_LOCATION = 42;
     private static final int REQ_NOTIF = 43;
+    private static final int REQ_VOICE = 44;
+    private static final int REQ_BK_CREATE = 45;
+    private static final int REQ_BK_OPEN = 46;
 
     private WebView web;
     private FrameLayout root;
@@ -174,6 +177,38 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_VOICE) {
+            String text = "";
+            if (resultCode == RESULT_OK && data != null) {
+                java.util.ArrayList<String> r = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+                if (r != null && !r.isEmpty()) text = r.get(0);
+            }
+            js("window.__voiceCb&&window.__voiceCb(" + JSONObject.quote(text) + ")");
+            return;
+        }
+        if (requestCode == REQ_BK_CREATE) {
+            boolean ok = false;
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                Uri u = data.getData();
+                try { getContentResolver().takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION); } catch (Exception ignored) {}
+                Store.put(this, "backup_uri", u.toString());
+                ok = true;
+            }
+            js("window.__bkPicked&&window.__bkPicked(" + ok + ")");
+            return;
+        }
+        if (requestCode == REQ_BK_OPEN) {
+            String text = "";
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                try (java.io.InputStream in = getContentResolver().openInputStream(data.getData())) {
+                    java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream(); byte[] buf = new byte[16384]; int n;
+                    while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
+                    text = bo.toString("UTF-8");
+                } catch (Exception ignored) {}
+            }
+            js("window.__bkOpened&&window.__bkOpened(" + JSONObject.quote(text) + ")");
+            return;
+        }
         if (requestCode != REQ_FILE || fileCallback == null) return;
         Uri[] result = null;
         if (resultCode == RESULT_OK) {
@@ -408,6 +443,75 @@ public class MainActivity extends Activity {
             if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
             android.app.NotificationManager nm = getSystemService(android.app.NotificationManager.class);
             return nm == null || nm.areNotificationsEnabled();
+        }
+
+        /** Speech → text (Google voice input, Ukrainian); result via window.__voiceCb(text). */
+        @JavascriptInterface
+        public void voice() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                    i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                    i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "uk-UA");
+                    i.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Скажіть, що додати");
+                    startActivityForResult(i, REQ_VOICE);
+                } catch (Exception e) {
+                    js("window.__voiceCb&&window.__voiceCb('',true)");
+                }
+            });
+        }
+
+        /** Auto-backup: choose where the copy lives (any folder or Google Drive). */
+        @JavascriptInterface
+        public void pickBackup() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE); i.setType("application/json");
+                    i.putExtra(Intent.EXTRA_TITLE, "LAD-backup.json");
+                    startActivityForResult(i, REQ_BK_CREATE);
+                } catch (Exception e) { js("window.__bkPicked&&window.__bkPicked(false)"); }
+            });
+        }
+
+        @JavascriptInterface
+        public boolean hasBackup() { return !Store.get(MainActivity.this, "backup_uri", "").isEmpty(); }
+
+        @JavascriptInterface
+        public String backupName() {
+            String u = Store.get(MainActivity.this, "backup_uri", "");
+            if (u.isEmpty()) return "";
+            try (android.database.Cursor c = getContentResolver().query(Uri.parse(u), new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+                if (c != null && c.moveToFirst()) return c.getString(0);
+            } catch (Exception ignored) {}
+            return "LAD-backup.json";
+        }
+
+        /** Overwrites the chosen backup file; returns true on success. */
+        @JavascriptInterface
+        public boolean writeBackup(String json) {
+            String u = Store.get(MainActivity.this, "backup_uri", "");
+            if (u.isEmpty()) return false;
+            try (java.io.OutputStream o = getContentResolver().openOutputStream(Uri.parse(u), "wt")) {
+                if (o == null) return false;
+                o.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                return true;
+            } catch (Exception e) { return false; }
+        }
+
+        @JavascriptInterface
+        public void forgetBackup() { Store.put(MainActivity.this, "backup_uri", null); }
+
+        /** Pick a backup file to restore; text via window.__bkOpened(text). */
+        @JavascriptInterface
+        public void openBackup() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE); i.setType("*/*");
+                    startActivityForResult(i, REQ_BK_OPEN);
+                } catch (Exception e) { js("window.__bkOpened&&window.__bkOpened('')"); }
+            });
         }
 
         /** Short haptic feedback: tick | heavy | success */

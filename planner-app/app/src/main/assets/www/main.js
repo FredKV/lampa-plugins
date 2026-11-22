@@ -61,6 +61,7 @@ function settingsSheet() {
       <div style="margin-top:8px"><b class="link small" data-a="openKey">Отримати безкоштовний ключ ↗</b></div>`}
 
     </div>
+    ${typeof backupCard === 'function' ? backupCard() : ''}
     <div class="row" style="gap:8px">
       <button class="btn ghost card-btn grow" data-a="exportData">⬆️ Експорт</button>
       <button class="btn ghost card-btn grow" data-a="importData">⬇️ Імпорт</button>
@@ -277,5 +278,5 @@ window.addEventListener('error', e => console.error(e.message));
 })();
 
 TAB_HEADERS.finance = () => ({ title: 'Фінанси' });
-TAB_HEADERS.shop = () => ({ title: 'Покупки' });
+TAB_HEADERS.shop = () => ({ title: 'Покупки', actions: `<button class="icon-btn" data-a="shopPaste" aria-label="Вставити список">${ICONS.inbox}</button><button class="icon-btn" data-a="shopShare" aria-label="Надіслати список">${ICONS.share}</button>` });
 TAB_HEADERS.more = () => ({ title: 'Ще', actions: `<button class="icon-btn" data-a="settings" aria-label="Налаштування">${ICONS.gear}</button>` });
