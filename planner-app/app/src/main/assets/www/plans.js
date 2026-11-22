@@ -61,7 +61,7 @@ function taskSheet(id, presetDue) {
       <div class="due-chips"><button class="chip" data-a="setDue" data-d="0">Сьогодні</button><button class="chip" data-a="setDue" data-d="1">Завтра</button><button class="chip" data-a="setDue" data-d="">Без дати</button></div></div>
     ${repeatChips(t.repeat, 'task')}
     <div class="field"><textarea class="input" id="tNote" maxlength="1000" placeholder="Нотатка (необовʼязково)">${esc(t.note)}</textarea></div>
-    ${id ? `<button class="btn ghost" style="margin-bottom:10px" data-a="taskShare" data-id="${id}">${ICONS.share} Поділитися</button>` : ''}
+    ${id ? `<div class="row" style="gap:8px;margin-bottom:10px"><button class="btn ghost grow" data-a="taskToEvent" data-id="${id}">📅 У події</button><button class="btn ghost grow" data-a="taskShare" data-id="${id}">${ICONS.share} Поділитися</button></div>` : ''}
     <div class="btns ${id ? 'two' : ''}">
       ${id ? `<button class="btn danger" data-a="taskDel" data-id="${id}">Видалити</button>` : ''}
       <button class="btn" data-a="taskSave" data-id="${id || ''}">Зберегти</button>
@@ -80,6 +80,13 @@ Object.assign(A, {
       save(); render(); toast(`Виконано ✓ Наступного разу — ${dateLabel(nx)}`); return;
     }
     t.done = !t.done; save(); render(); if (t.done) toast('Виконано ✓');
+  },
+  taskToEvent: d => {
+    const t = S.tasks.find(x => x.id === d.id); if (!t) return;
+    const r = $('#sheetBody'), title = ($('#tTitle', r) || {}).value || t.title, due = ($('#tDue', r) || {}).value || t.due;
+    const ev = { id: uid(), title: title.trim().slice(0, 200), date: due || today(), time: '', note: (($('#tNote', r) || {}).value || t.note || '').trim(), important: (+segVal(r, 'prio') || t.prio) === 3, remind: 'day', repeat: t.repeat || '' };
+    S.events.push(ev); S.tasks = S.tasks.filter(x => x.id !== t.id); save(); render();
+    toast(`📅 Перенесено в події: ${dateLabel(ev.date)} — можна вказати час`); eventSheet(ev.id); ensureNotifPermission();
   },
   taskShare: d => { const t = S.tasks.find(x => x.id === d.id); if (t) shareText(recordText('task', t)); },
   taskEdit: d => taskSheet(d.id),
@@ -142,25 +149,24 @@ FABS.home = () => taskSheet();
 /* Home: «Цілі на сьогодні» ⇄ «Мої плани» — swipe pager; the tab strip slides with the pages, dots below */
 U.hpIdx = U.hpIdx || 0;
 function homePager() {
-  const pend = Goals.pending().length, done = S.tasks.filter(t => t.done).length;
-  const tabs = [`Цілі на сьогодні${pend ? ` <i class="hp-badge">${pend}</i>` : ''}`, `Мої плани${S.tasks.length ? ` <small>${done}/${S.tasks.length}</small>` : ''}`];
-  return `<div class="hp-head"><div class="hp-tabs" id="hpTabs">${tabs.map((t, i) => `<button data-a="hpGo" data-i="${i}" class="${i === U.hpIdx ? 'on' : ''}">${t}</button>`).join('')}<span class="hp-line" id="hpLine"></span></div>
-      <div class="hp-dots">${tabs.map((_, i) => `<i class="${i === U.hpIdx ? 'on' : ''}"></i>`).join('')}</div></div>
+  const pend = Goals.pending().length, done = S.tasks.filter(t => t.done).length, pct = S.tasks.length ? Math.round(done / S.tasks.length * 100) : 0;
+  const d = new Date(), date = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
+  const segs = [['Цілі', pend], ['Плани', 0]];
+  return `<div class="hp-strip" id="hpStrip">${segs.map(([n, badge], i) => `<button data-a="hpGo" data-i="${i}" class="${i === U.hpIdx ? 'on' : ''}">
+      <span class="hp-name">${n}${badge ? ` <i class="hp-badge">${badge}</i>` : ''}</span><span class="hp-date">${date}</span></button>`).join('')}</div>
+    <div class="hp-dots" id="hpDots">${segs.map((_, i) => `<i data-a="hpGo" data-i="${i}" class="${i === U.hpIdx ? 'on' : ''}"></i>`).join('')}</div>
     <div class="hpager" id="hpager">
       <section><div class="list">${S.goals.map(goalRow).join('')}</div>
         <div class="small ${pend ? 'red' : 'green'}" style="margin:8px 6px 0">${pend ? `${pend} чекає на сьогодні` : 'На сьогодні все ✓'}</div></section>
-      <section>${plansBlock(true)}</section></div>`;
+      <section>${plansBlock(true)}${S.tasks.length ? `<div class="small muted" style="margin:8px 6px 0">Виконано ${done} з ${S.tasks.length} · ${pct}%</div>` : ''}</section></div>`;
 }
 function hpSync(idx, smooth) {
   const pg = $('#hpager'); if (!pg) return;
   const w = pg.clientWidth, x = idx === undefined ? pg.scrollLeft / w : idx;
   // tab strip follows the finger: active tab moves to the left, the other slides in
-  const tabs = $('#hpTabs'); if (tabs) {
-    const b = [...tabs.querySelectorAll('button')], over = Math.max(0, tabs.scrollWidth - tabs.parentNode.clientWidth);
-    tabs.style.transform = `translateX(${-x * over}px)`;
-    b.forEach((el, i) => el.style.opacity = String(Math.max(.35, 1 - Math.abs(x - i) * .65)));
-    const ul = $('#hpLine'); if (ul && b[1]) { const l = b[0].offsetLeft + (b[1].offsetLeft - b[0].offsetLeft) * x, w = b[0].offsetWidth + (b[1].offsetWidth - b[0].offsetWidth) * x; ul.style.transform = `translateX(${l}px)`; ul.style.width = w + 'px'; } }
   $$('.hp-dots i').forEach((d, i) => d.classList.toggle('on', Math.round(x) === i));
+  // the active pill shows the date, the others their names — they crossfade while swiping
+  $$('#hpStrip button').forEach((el, i) => { const k = Math.max(0, 1 - Math.abs(x - i)); el.style.setProperty('--k', k.toFixed(3)); el.classList.toggle('on', Math.round(x) === i); });
   const secs = pg.children, k = Math.round(x); if (secs[k]) pg.style.height = secs[k].offsetHeight + 'px';
 }
 AFTER_RENDER.push(() => {

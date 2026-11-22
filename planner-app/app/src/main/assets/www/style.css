@@ -861,4 +861,18 @@ h2 { font-size: 20px; }
 .hp-tabs { position: relative; padding-bottom: 8px; }
 .hp-tabs button { font-size: 19px; }
 .hp-line { position: absolute; left: 0; bottom: 0; height: 3px; border-radius: 9px; background: var(--text); width: 0; }
-.hp-dots { display: none; }
+.hp-dots { display: flex; justify-content: center; gap: 6px; margin: 18px 0 2px; }
+.hp-dots i { cursor: pointer; }
+.hp-h { margin: 10px 4px 10px; }
+
+/* Look-Car-like strip: names, the active one turns into today's date */
+.hp-strip { display: flex; background: var(--card); border-radius: 16px; padding: 4px; gap: 4px; box-shadow: var(--shadow); margin: 22px 0 0; }
+.hp-strip button { --k: 0; flex: 1; position: relative; height: 40px; border-radius: 12px; font-size: 14.5px; font-weight: 600; color: var(--muted); overflow: hidden;
+  background: color-mix(in srgb, var(--chip) calc(var(--k) * 100%), transparent); }
+.hp-strip .hp-name, .hp-strip .hp-date { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.hp-strip .hp-name { opacity: calc(1 - var(--k)); transform: translateY(calc(var(--k) * -8px)); }
+.hp-strip .hp-date { opacity: var(--k); color: var(--text); transform: translateY(calc((1 - var(--k)) * 8px)); }
+.hp-strip .hp-date::after { content: ''; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translateY(-2px); margin-left: 6px; }
+.hp-dots { margin: 8px 0 10px; }
+.hp-badge { min-width: 18px; height: 18px; font-size: 11px; vertical-align: 1px; }
+.hp-dots i { background: var(--muted); opacity: .35; } .hp-dots i.on { opacity: 1; background: var(--text); }
