@@ -79,9 +79,10 @@ PAGES.wish = p => {
         <div class="kv"><span>Залишок</span><b>${money(i.left)}</b></div>
         ${w.due ? `<div class="kv"><span>Купити до</span><b>${shortDate(w.due)}</b></div>` : ''}
       </div></div>
-    ${i.left > 0 ? `<div class="hint ${i.overdue ? 'warn' : 'info'}">${i.monthly ? `Щоб встигнути до ${shortDate(w.due)}, відкладайте <b>${money(i.monthly)}</b> щомісяця (${i.months} ${plural(i.months, 'місяць', 'місяці', 'місяців')}).`
-      : i.overdue ? `Бажана дата минула. Залишилось відкласти ${money(i.left)} — оновіть дату, щоб перерахувати план.` : `Вкажіть бажану дату — ЛАД порахує, скільки відкладати щомісяця.`}</div>`
-      : `<div class="hint ok">🎉 Ціль досягнуто! Можна купувати.</div>`}
+    ${i.left > 0 && !w.due ? `<div class="card st-row-card" data-a="wishEdit" data-id="${w.id}"><span>Ціль до дати</span><span class="muted">Додати ›</span></div>` : ''}
+    ${i.left > 0 && w.due ? `<div class="hint ${i.overdue ? 'warn' : 'info'}">${i.monthly ? `Щоб встигнути до ${shortDate(w.due)}, відкладайте <b>${money(i.monthly)}</b> щомісяця (${i.months} ${plural(i.months, 'місяць', 'місяці', 'місяців')}).`
+      : i.overdue ? `Бажана дата минула. Залишилось відкласти ${money(i.left)} — оновіть дату, щоб перерахувати план.` : ''}</div>`
+      : i.left > 0 ? '' : `<div class="hint ok">🎉 Ціль досягнуто! Можна купувати.</div>`}
     <div class="btns two"><button class="btn" data-a="wishAdd" data-id="${w.id}">+ Відкласти</button>
       <button class="btn ghost card-btn" data-a="wishTake" data-id="${w.id}" ${i.saved > 0 ? '' : 'disabled'}>Забрати</button></div>
     <div class="btns"><button class="btn card-btn ghost" data-a="wishBuy" data-id="${w.id}">Придбано — закрити ціль</button></div>`

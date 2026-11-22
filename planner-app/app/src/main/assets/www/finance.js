@@ -239,7 +239,8 @@ function vFinBudget() {
         : ``}</div></div>`;
   };
   const cats = Fin.cats('exp');
-  const withLim = cats.filter(c => S.budget.cats[c[0]]), without = cats.filter(c => !S.budget.cats[c[0]]);
+  const used = c => S.budget.cats[c[0]] || Fin.spentInMonth(c[0], y, m) > 0;
+  const shown = cats.filter(used).sort((a, b) => (S.budget.cats[b[0]] ? 1 : 0) - (S.budget.cats[a[0]] ? 1 : 0) || Fin.spentInMonth(b[0], y, m) - Fin.spentInMonth(a[0], y, m)), rest = cats.filter(c => !used(c));
   return `
     <div class="card" data-a="budTotal">
       <div class="row between"><b>Загальний ліміт на ${MONTHS[m].toLowerCase()}</b><span class="link small">${lim ? 'Змінити' : 'Встановити'}</span></div>
@@ -249,7 +250,8 @@ function vFinBudget() {
         : `<div class="small muted" style="margin-top:6px">Задайте суму, яку плануєте витратити за місяць.</div>`}
     </div>
     <h2>Ліміти за категоріями</h2>
-    <div class="list">${withLim.concat(without).map(row).join('')}</div>
+    ${shown.length ? `<div class="list">${shown.map(row).join('')}</div>` : `<div class="card empty" style="padding:20px">Цього місяця витрат ще немає</div>`}
+    ${rest.length ? `<details class="card fold"><summary><span>Інші категорії</span><span class="muted">${rest.length} ›</span></summary><div class="list flat">${rest.map(row).join('')}</div></details>` : ''}
     <h2>Власні категорії</h2>
     <div class="list">${S.customCats.length ? S.customCats.map(c => `<div class="item"><div class="emoji">${esc(c.emoji)}</div>
       <div class="grow"><div class="title">${esc(c.name)}</div><div class="meta">${c.type === 'inc' ? 'Дохід' : 'Витрата'}</div></div>

@@ -86,7 +86,7 @@ async function pickDate(p, id, v) {
   ok(fs1 && fs1.h < 190 && /Баланс/.test(fs1.txt) && /Доходи/.test(fs1.txt) && /Витрати/.test(fs1.txt) && /Відкладено/.test(fs1.txt) && !(await p.locator('#view .mono').count()), `компактний підсумок фінансів (${fs1 && Math.round(fs1.h)}px)`);
   await p.screenshot({ path: shots + '02-finance.png', fullPage: true });
   await p.click('[data-a=useg][data-val=budget]'); await p.waitForTimeout(100);
-  await p.click('[data-a=budCat][data-cat=cafe]'); await p.fill('#askNum', '2000'); await p.click('[data-a=askNumOk]'); await p.waitForTimeout(350);
+  await p.evaluate(() => $$('details.fold').forEach(d => d.open = true)); await p.click('[data-a=budCat][data-cat=cafe]'); await p.fill('#askNum', '2000'); await p.click('[data-a=askNumOk]'); await p.waitForTimeout(350);
   ok(await p.evaluate(() => S.budget.cats.cafe === 2000), 'ліміт «Кафе» 2000');
   await p.click('#fab'); await p.waitForTimeout(350);
   await p.fill('#xAmount', '1700'); await p.click('[data-a=pickCat][data-cat=cafe]'); await p.click('[data-a=seg][data-group=pay][data-val=cash]');

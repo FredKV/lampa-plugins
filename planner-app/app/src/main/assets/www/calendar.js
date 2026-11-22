@@ -330,6 +330,22 @@ function cycleSheet(id, start = '', end = '') {
       <button class="btn" data-a="cycSave" data-id="${id || ''}">Зберегти</button></div>`);
 }
 
+/** ring: the whole cycle, period (red), fertile window (green), ovulation dot, today marker */
+function cycleRing(st, len, pLen) {
+  const R = 64, C = 2 * Math.PI * R, day = Math.max(1, Math.min(len, st.day || 1)), ovuDay = st.next ? Math.max(1, len - 14) : 0;
+  const arc = (from, to, col, w = 12) => `<circle cx="80" cy="80" r="${R}" fill="none" stroke="${col}" stroke-width="${w}" stroke-dasharray="${C * (to - from + 1) / len} ${C}" stroke-dashoffset="${-C * (from - 1) / len}" transform="rotate(-90 80 80)"/>`;
+  const at = d => { const a = (d - .5) / len * 2 * Math.PI - Math.PI / 2; return [80 + R * Math.cos(a), 80 + R * Math.sin(a)]; };
+  const [tx, ty] = at(day), [ox, oy] = at(ovuDay || 1);
+  const big = st.ongoing ? `${st.day}` : st.next && st.next.late > 0 ? `+${st.next.late}` : st.next ? `${st.next.inDays}` : '—';
+  const sub = st.ongoing ? 'день менструації' : st.next && st.next.late > 0 ? 'днів затримки' : 'днів до менструації';
+  return `<div class="cyc-ring"><svg viewBox="0 0 160 160" width="180" height="180">
+      <circle cx="80" cy="80" r="${R}" fill="none" stroke="var(--chip)" stroke-width="12"/>
+      ${arc(1, Math.min(pLen, len), 'var(--period)')}${ovuDay ? arc(Math.max(1, ovuDay - 5), Math.min(len, ovuDay + 1), 'rgba(24,160,88,.45)') : ''}
+      ${ovuDay ? `<circle cx="${ox}" cy="${oy}" r="5" fill="var(--green)"/>` : ''}
+      <circle cx="${tx}" cy="${ty}" r="9" fill="var(--card)" stroke="var(--text)" stroke-width="3"/>
+      <text x="80" y="80" text-anchor="middle" class="cyc-big">${big}</text><text x="80" y="100" text-anchor="middle" class="cyc-sub">${sub}</text></svg>
+    <div class="small muted" style="text-align:center">${st.day ? `${st.day}-й день циклу` : esc(st.line)}</div></div>`;
+}
 PAGES.cycle = () => {
   const st = Cycle.status(), reg = Cycle.regularity(), ps = Cycle.periods().reverse();
   const avgC = Cycle.avgCycle(), avgP = Cycle.avgPeriod();
@@ -343,25 +359,15 @@ PAGES.cycle = () => {
   }).join('');
   return {
     title: 'Мій цикл', html: `
-    ${st ? `<div class="card cycle-hero">
-      <div class="small muted">Сьогодні</div><div class="big-line">${esc(st.line)}</div>
-      ${st.day ? `<div class="small muted">${st.day}-й день циклу</div>` : ''}
-      <div class="sep"></div>
+    ${st ? `<div class="card cycle-hero">${cycleRing(st, avgC, avgP)}
       <div class="kv"><span>Наступна менструація</span><b>${st.next ? shortDate(st.next.date) : '—'}</b></div>
       <div class="kv"><span>Овуляція (орієнтовно)</span><b>${st.ovu ? shortDate(st.ovu) : '—'}</b></div>
       <div class="kv"><span>Фертильне вікно</span><b>${st.ovu ? `${shortDate(addDays(st.ovu, -5))} – ${shortDate(addDays(st.ovu, 1))}` : '—'}</b></div>
       ${st.ongoing ? `<div class="btns"><button class="btn" data-a="cycEnd" data-d="${today()}">Сьогодні останній день</button></div>`
         : `<div class="btns"><button class="btn" data-a="cycStart" data-d="${today()}">Почалась сьогодні</button></div>`}
+      <div class="cyc-stats"><span>Цикл <b>${avgC}</b> дн.</span><span>Менструація <b>${avgP}</b> дн.</span>${reg ? `<span class="pill ${reg.label === 'Регулярний' ? 'green' : reg.label === 'Нерегулярний' ? 'red' : 'blue'}">${reg.label}</span>` : `<span class="muted">${S.cycle.periods.length} ${plural(S.cycle.periods.length, 'запис', 'записи', 'записів')}</span>`}</div>
     </div>` : `<div class="card empty"><div class="big">🌸</div>Позначте перший день останньої менструації — і ЛАД порахує прогноз.
       <div class="btns"><button class="btn sm" style="margin:0 auto" data-a="cycNew">Додати</button></div></div>`}
-    ${st ? `<h2>Статистика</h2><div class="stats">
-      <div class="stat"><b>${avgC}</b><span>сер. цикл, дн.</span></div>
-      <div class="stat"><b>${avgP}</b><span>сер. менструація</span></div>
-      <div class="stat"><b>${S.cycle.periods.length}</b><span>${plural(S.cycle.periods.length, 'запис', 'записи', 'записів')}</span></div></div>
-      <div class="card"><b>Регулярність</b>
-      ${reg ? `<div style="margin-top:6px"><span class="pill ${reg.label === 'Регулярний' ? 'green' : reg.label === 'Нерегулярний' ? 'red' : 'blue'}">${reg.label}</span></div>
-        <div class="small muted" style="margin-top:8px;line-height:1.45">Тривалість циклу від ${reg.min} до ${reg.max} днів, відхилення ±${reg.sd} дн. (за ${reg.n} ${plural(reg.n, 'циклом', 'циклами', 'циклами')}).</div>`
-        : `<div class="small muted" style="margin-top:6px">Потрібно щонайменше 3 записи, щоб оцінити регулярність.</div>`}</div>` : ''}
     ${ps.length ? `<div class="row between" style="margin:22px 4px 10px"><h2 style="margin:0">Попередні цикли</h2><button class="link small" data-a="cycNew">+ Додати</button></div><div class="list">${hist}</div>` : ''}
     <h2>Налаштування</h2>
     <div class="card">

@@ -118,6 +118,16 @@ PAGES.goals = () => ({
 });
 FABS.goals = () => goalSheet();
 
+/** last 6 weeks/months with how many times the goal was done */
+function goalPeriods(g) {
+  const out = []; let d = today();
+  for (let k = 0; k < 6; k++) {
+    const st = Goals.pStart(g, d), dt = parseYmd(st);
+    out.unshift({ n: Goals.doneIn(g, d), cur: k === 0, label: g.per === 'week' ? `${dt.getDate()} ${MONTHS_SHORT[dt.getMonth()]}` : MONTHS_SHORT[dt.getMonth()] });
+    d = addDays(st, -1);
+  }
+  return out;
+}
 PAGES.goal = p => {
   const g = S.goals.find(x => x.id === p.id); if (!g) return null;
   const done = Goals.doneToday(g), quit = g.type === 'quit', per = Goals.periodic(g);
@@ -132,10 +142,12 @@ PAGES.goal = p => {
       ${g.min ? `<div class="small muted" style="margin-top:4px">Мінімум: ${esc(g.min)}</div>` : ''}
       <button class="btn ${done ? 'ghost card-btn' : ''}" style="margin-top:16px" data-a="goalCheck" data-id="${g.id}">${done ? 'Сьогодні відмічено ✓' : quit ? 'Сьогодні тримаюсь' : 'Сьогодні виконала'}</button>
     </div>
-    <h2>Останні 4 тижні</h2>
-    <div class="card goal-days">${days.map(d => `<i class="${Goals.doneOn(g, d) || (quit && g.start && d >= g.start && d < today()) ? 'on' : ''} ${d === today() ? 'today' : ''}" title="${d}"></i>`).join('')}</div>
-    <h2>Досягнення</h2>
-    <div class="medals">${Goals.medals(g).map(m => `<div class="medal ${m.got ? 'got' : ''}"><span>${m.ic}</span><b>${m.l}</b></div>`).join('')}</div>
+    ${per ? `<h2>${g.per === 'week' ? 'Останні тижні' : 'Останні місяці'}</h2>
+      <div class="card gp-weeks">${goalPeriods(g).map(pp => `<div class="gp ${pp.cur ? 'cur' : ''} ${pp.n >= g.times ? 'ok' : ''}"><div class="gp-dots">${Array.from({ length: g.times }, (_, k) => `<i class="${k < pp.n ? 'on' : ''}"></i>`).join('')}</div><span>${pp.label}</span></div>`).join('')}</div>`
+    : `<h2>Останні 2 тижні</h2>
+      <div class="card goal-days">${days.slice(-14).map(d => `<i class="${Goals.doneOn(g, d) || (quit && g.start && d >= g.start && d < today()) ? 'on' : ''} ${d === today() ? 'today' : ''}" title="${d}"></i>`).join('')}</div>`}
+    ${(() => { const md = Goals.medals(g), got = md.filter(x => x.got); return `<details class="card fold"><summary><span>Досягнення <span class="gm-row">${got.map(x => x.ic).join('')}</span></span><span class="muted">${got.length} з ${md.length} ›</span></summary>
+      <div class="medals" style="margin-top:10px">${md.map(m => `<div class="medal ${m.got ? 'got' : ''}"><span>${m.ic}</span><b>${m.l}</b></div>`).join('')}</div></details>`; })()}
     <div class="card" style="margin-top:12px">
       <div class="kv"><span>${quit ? 'Без зривів з' : 'Почато'}</span><b>${shortDate(quit ? g.start : (g.created ? ymd(new Date(g.created)) : today()))}</b></div>
       ${per ? `<div class="kv"><span>Виконано ${g.per === 'week' ? 'тижнів' : 'місяців'} поспіль</span><b>${Goals.pStreak(g)}</b></div><div class="kv"><span>Усього разів</span><b>${Goals.total(g)}</b></div>`

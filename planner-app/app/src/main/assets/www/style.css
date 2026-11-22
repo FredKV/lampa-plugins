@@ -917,3 +917,40 @@ h2 { font-size: 20px; }
 .hp-strip > .hp-slot { height: 36px; }
 .hp-strip > .hp-slot .hp-roll { height: 72px; }
 .hp-strip > .hp-slot .hp-l { height: 36px; line-height: 36px; }
+
+/* folded sections */
+details.fold { padding: 0 16px; }
+details.fold > summary { list-style: none; display: flex; justify-content: space-between; align-items: center; min-height: 52px; cursor: pointer; font-weight: 600; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold[open] > summary .muted { opacity: .6; }
+details.fold .list.flat { margin: 0 0 8px; }
+.gm-row { font-size: 15px; margin-left: 6px; letter-spacing: 1px; }
+/* goal: weeks strip */
+.gp-weeks { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; padding: 14px 10px; }
+.gp { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 2px; border-radius: 12px; }
+.gp.cur { background: var(--chip); }
+.gp.ok .gp-dots i.on { background: var(--green); }
+.gp-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 40px; }
+.gp-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.gp-dots i.on { background: var(--text); }
+.gp span { font-size: 11px; color: var(--muted); white-space: nowrap; }
+/* birthdays: white «next» card */
+.bd-next { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.bd-days { flex: none; min-width: 74px; height: 74px; border-radius: 20px; background: rgba(232,123,164,.14); color: #d6408a; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 26px; }
+.bd-days b { font-size: 28px; line-height: 1; letter-spacing: -1px; }
+.bd-days span { font-size: 12px; font-weight: 600; margin-top: 2px; }
+/* wish: date row */
+.st-row-card { display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 500; }
+/* cycle ring */
+.cyc-ring { display: flex; flex-direction: column; align-items: center; margin: 4px 0 10px; }
+.cyc-big { font-size: 34px; font-weight: 800; fill: var(--text); letter-spacing: -1px; }
+.cyc-sub { font-size: 10.5px; fill: var(--muted); }
+.cyc-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+.cyc-stats b { color: var(--text); }
+/* 7. dark theme: brighter tinted tiles */
+[data-theme="dark"] .fin-tiles .ft.g { background: rgba(61,214,140,.16); } [data-theme="dark"] .fin-tiles .ft.r { background: rgba(255,107,112,.16); } [data-theme="dark"] .fin-tiles .ft.v { background: rgba(160,140,255,.18); }
+[data-theme="dark"] .fin-tiles .ft b.green, [data-theme="dark"] .green { color: #3dd68c; }
+[data-theme="dark"] .violet { color: #a89bff; }
+[data-theme="dark"] .bd-days { background: rgba(232,123,164,.2); color: #ff8ec0; }
+[data-theme="dark"] .pill.blue { background: rgba(110,150,255,.2); color: #9db7ff; }
+[data-theme="dark"] .hint.info { background: rgba(110,150,255,.14); color: #b6c8ff; }

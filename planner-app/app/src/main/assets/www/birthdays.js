@@ -66,11 +66,10 @@ PAGES.birthdays = () => {
   const list = Birthdays.upcoming();
   return {
     title: 'Дні народження', html: list.length ? `
-      ${list.slice(0, 1).map(x => `<div class="mono bd-hero" data-a="go" data-page="person" data-id="${x.p.id}">
-        <div class="lbl">Найближчий</div><div class="row" style="gap:14px;margin-top:10px">${avatar(x.p, 58)}
-        <div class="grow"><div style="font-size:22px;font-weight:700">${esc(x.p.name)}</div>
-        <div style="opacity:.75">${shortDate(x.date)}${x.age ? ` · виповнюється ${x.age}` : ''}</div></div></div>
-        <div class="countdown">${x.days === 0 ? 'Сьогодні! 🎉' : `<b>${x.days}</b> ${plural(x.days, 'день', 'дні', 'днів')}`}</div></div>`).join('')}
+      ${list.slice(0, 1).map(x => `<div class="card bd-next" data-a="go" data-page="person" data-id="${x.p.id}">
+        <div class="grow" style="min-width:0"><div class="small muted">Найближчий</div><div style="font-size:21px;font-weight:700;margin-top:2px">${esc(x.p.name)}</div>
+        <div class="muted small">${shortDate(x.date)}${x.age ? ` · виповнюється ${x.age}` : ''}</div></div>
+        <div class="bd-days">${x.days === 0 ? '🎉' : `<b>${x.days}</b><span>${plural(x.days, 'день', 'дні', 'днів')}</span>`}</div></div>`).join('')}
       <div class="list">${list.map(x => `<div class="item" data-a="go" data-page="person" data-id="${x.p.id}">${avatar(x.p)}
         <div class="grow"><div class="title">${esc(x.p.name)}</div>
         <div class="meta">${shortDate(x.date)}${x.age ? ` · ${x.age} ${plural(x.age, 'рік', 'роки', 'років')}` : ''}${(x.p.gifts || []).length ? ` · 🎁 ${x.p.gifts.length}` : ''}</div></div>
@@ -88,12 +87,11 @@ PAGES.person = p => {
   return {
     actions: shareBtn('personShare', pr.id), title: pr.name, html: `
     <div class="card" style="text-align:center">
-      <div style="display:flex;justify-content:center">${avatar(pr, 84)}</div>
-      <div style="font-size:22px;font-weight:700;margin-top:10px">${esc(pr.name)}</div>
+      <div style="font-size:22px;font-weight:700;margin-top:4px">${esc(pr.name)}</div>
       <div class="muted">${pr.noYear ? `${+pr.bday.slice(8)} ${MONTHS_GEN[+pr.bday.slice(5, 7) - 1]}` : `${+pr.bday.slice(8)} ${MONTHS_GEN[+pr.bday.slice(5, 7) - 1]} ${pr.bday.slice(0, 4)}`}${age !== null ? ` · ${age} ${plural(age, 'рік', 'роки', 'років')}` : ''}</div>
       <div class="countdown-box">${days === 0 ? '🎉 Сьогодні свято!' : `До свята: <b>${days}</b> ${plural(days, 'день', 'дні', 'днів')}`}${nextAge ? ` · виповниться ${nextAge}` : ''}</div>
       ${pr.note ? `<div class="small muted" style="margin-top:8px">${esc(pr.note)}</div>` : ''}
-      <div class="small muted" style="margin-top:6px">🔔 ${pr.remind ? `Нагадування за ${pr.remind} ${plural(pr.remind, 'день', 'дні', 'днів')} і в день свята` : 'Нагадування в день свята'}</div>
+      <div class="small muted" style="margin-top:8px">🔔 Нагадаю за 2 тижні, за тиждень і в день свята</div>
       <div class="btns"><button class="btn ghost" data-a="personEdit" data-id="${pr.id}">Редагувати</button></div>
     </div>
     <div class="card" data-a="personBudget" data-id="${pr.id}">
